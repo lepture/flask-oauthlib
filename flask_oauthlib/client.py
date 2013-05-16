@@ -104,7 +104,11 @@ def get_etree():
 
 
 def parse_response(resp, content, strict=False, content_type=None):
-    content_type = resp.headers.get('content-type', content_type)
+    """
+    Parse the response returned by :class:`make_request`.
+    """
+    if not content_type:
+        content_type = resp.headers.get('content-type', 'application/json')
     ct, options = parse_options_header(content_type)
 
     if ct in ('application/json', 'text/javascript'):
@@ -114,9 +118,8 @@ def parse_response(resp, content, strict=False, content_type=None):
         charset = options.get('charset', 'utf-8')
         return get_etree().fromstring(content.decode(charset))
 
-    if ct != 'application/x-www-form-urlencoded':
-        if strict:
-            return content
+    if ct != 'application/x-www-form-urlencoded' and strict:
+        return content
     charset = options.get('charset', 'utf-8')
     return url_decode(content, charset=charset).to_dict()
 
@@ -127,6 +130,21 @@ def make_request(uri, headers, data=None):
     content = resp.read()
     resp.close()
     return resp, content
+
+
+class OAuthResponse(object):
+    def __init__(self, resp, content, content_type=None):
+        self._resp = resp
+        self.raw_data = content
+        self.data = parse_response(
+            resp, content, strict=True,
+            content_type=content_type,
+        )
+
+    @property
+    def status(self):
+        """The status code of the response."""
+        return self._resp.code
 
 
 class OAuthException(RuntimeError):
@@ -161,6 +179,9 @@ class OAuthRemoteApp(object):
                                 forward to the access token url
     :param access_token_method: the HTTP method that should be used for
                                 the access_token_url. Default is ``GET``
+    :param content_type: force to parse the content with this content_type,
+                         usually used when the server didn't return the
+                         right content type.
     """
     def __init__(
         self, oauth, name,
@@ -170,6 +191,7 @@ class OAuthRemoteApp(object):
         request_token_params=None,
         access_token_params=None,
         access_token_method='GET',
+        content_type=None,
         encoding='utf-8',
     ):
 
@@ -184,6 +206,7 @@ class OAuthRemoteApp(object):
         self.request_token_params = request_token_params or {}
         self.access_token_params = access_token_params or {}
         self.access_token_method = access_token_method
+        self.content_type = content_type
         self.encoding = encoding
 
         # request_token_url is for oauth1
