@@ -18,6 +18,13 @@ from flask import request, redirect, json, session
 from werkzeug import url_quote, url_decode, parse_options_header
 
 
+__all__ = [
+    'OAuth', 'OAuthRemoteApp', 'OAuthResponse', 'OAuthException',
+    'twitter_urls', 'facebook_urls', 'google_urls',
+    'weibo_urls', 'douban_urls',
+]
+
+
 class OAuth(object):
     """Registry for remote applications.
 
