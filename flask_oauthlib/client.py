@@ -11,6 +11,7 @@ Implemnts OAuth1 and OAuth2 support for Flask.
 import urllib2
 import oauthlib.oauth1
 import oauthlib.oauth2
+from functools import wraps
 from oauthlib.common import to_unicode
 from urlparse import urljoin
 from flask import request, redirect, json, session
@@ -120,6 +121,14 @@ def parse_response(resp, content, strict=False, content_type=None):
     return url_decode(content, charset=charset).to_dict()
 
 
+def make_request(uri, headers, data=None):
+    req = urllib2.Request(uri, headers=headers, data=data)
+    resp = urllib2.urlopen(req)
+    content = resp.read()
+    resp.close()
+    return resp, content
+
+
 class OAuthException(RuntimeError):
     def __init__(self, message, type=None, data=None):
         self.message = message
@@ -196,15 +205,14 @@ class OAuthRemoteApp(object):
         uri, headers, _ = self._client.sign(
             self.expand_url(self.request_token_url)
         )
-        req = urllib2.Request(uri, headers=headers)
-        resp = urllib2.urlopen(req)
+        # reset callback uri
+        self._client.callback_uri = None
+        resp, content = make_request(uri, headers)
         if resp.code not in (200, 201):
             raise OAuthException(
                 'Failed to generate request token',
                 type='token_generation_failed'
             )
-        content = resp.read()
-        resp.close()
         data = parse_response(resp, content)
         if data is None:
             raise OAuthException(
@@ -212,13 +220,18 @@ class OAuthRemoteApp(object):
                 type='token_generation_failed'
             )
         tup = (data['oauth_token'], data['oauth_token_secret'])
-        session['%s_oauthtok'] = tup
+        session['%s_oauthtok' % self.name] = tup
         return tup
 
-    def make_client(self, token=None):
+    def request(self, url, data="", headers=None, format='urlencoded',
+                method='GET', content_type=None, token=None):
         pass
 
     def authorize(self, callback=None):
+        """
+        Returns a redirect response to the remote authorization URL with
+        the signed callback given.
+        """
         if self.request_token_url:
             token = self.generate_request_token(callback)[0]
             url = '%s?oauth_token=%s' % (
@@ -237,10 +250,48 @@ class OAuthRemoteApp(object):
         return f
 
     def handle_oauth1_response(self):
-        pass
+        """Handles an oauth1 authorization response."""
+        self._client.verifier = request.args.get('oauth_verifier')
+        tup = session.get('%s_oauthtok' % self.name)
+        self._client.resource_owner_key = tup[0]
+        self._client.resource_owner_secret = tup[1]
+
+        uri, headers, data = self._client.sign(
+            self.expand_url(self.access_token_url),
+            _encode(self.access_token_method)
+        )
+
+        # reset
+        self._client.verifier = None
+        self._client.resource_owner_key = None
+        self._client.resource_owner_secret = None
+
+        resp, content = make_request(uri, headers, data)
+        data = parse_response(resp, content)
+        if resp.code not in (200, 201):
+            raise OAuthException(
+                'Invalid response from %s' % self.name,
+                type='invalid_response', data=data
+            )
+        return data
 
     def handle_oauth2_response(self):
         pass
+
+    def authorized_handler(self, f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            if 'oauth_verifier' in request.args:
+                data = self.handle_oauth1_response()
+            elif 'code' in request.args:
+                data = self.handle_oauth2_response()
+            else:
+                data = self.handle_unknown_response()
+
+            # free request token
+            session.pop('%s_oauthtok' % self.name, None)
+            return f(*((data,) + args), **kwargs)
+        return decorated
 
 
 def _encode(text, encoding='utf-8'):

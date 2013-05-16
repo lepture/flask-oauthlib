@@ -19,8 +19,16 @@ twitter = oauth.remote_app(
 
 @twitter.tokengetter
 def get_twitter_token():
-    if 'twitter_token' in session and 'twitter_secret' in session:
-        return session['twitter_token'], session['twitter_secret']
+    resp = session['twitter_token']
+    if resp:
+        return resp['oauth_token'], resp['oauth_token_secret']
+
+
+@app.route('/')
+def index():
+    if 'twitter_oauth' in session:
+        resp = twitter.get('statuses/home_timeline.json')
+        return resp
 
 
 @app.route('/login')
@@ -30,8 +38,12 @@ def login():
 
 
 @app.route('/oauthorized')
-def oauthorized():
-    pass
+@twitter.authorized_handler
+def oauthorized(resp):
+    if resp is None:
+        return 'denied'
+    session['twitter_oauth'] = resp
+    return 'success'
 
 
 if __name__ == '__main__':
