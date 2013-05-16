@@ -11,4 +11,5 @@ parts
 .installed.cfg
 docs/_build
 cover/
+venv/
 .tox

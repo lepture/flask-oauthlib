@@ -9,7 +9,7 @@ except ImportError:
 
 import imp
 from email.utils import parseaddr
-info = imp.load_source('info', 'init/info.py')
+info = imp.load_source('info', 'flask_oauthlib/info.py')
 author, author_email = parseaddr(info.AUTHOR)
 
 setup(
@@ -18,13 +18,13 @@ setup(
     author=author,
     author_email=author_email,
     url=info.REPOSITORY,
-    packages=["flask-oauthlib"],
+    packages=["flask_oauthlib"],
     description="OAuthlib for Flask",
     long_description=open('README.rst').read(),
     license=open('LICENSE').read(),
     install_requires=[
         'Flask',
-        'oauthlib'
+        'oauthlib',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
