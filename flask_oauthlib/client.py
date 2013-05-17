@@ -115,15 +115,20 @@ def parse_response(resp, content, strict=False, content_type=None):
     return url_decode(content, charset=charset).to_dict()
 
 
-def make_request(uri, headers=None, data=None, method='GET'):
+def make_request(uri, headers=None, data=None, method=None):
     if headers is None:
         headers = {}
 
-    req = urllib2.Request(uri, headers=headers, data=data)
-
-    if data and method == 'GET':
+    if data and not method:
         method = 'POST'
+    elif not method:
+        method = 'GET'
 
+    if method == 'GET' and data:
+        uri = add_query(uri, data)
+        data = None
+
+    req = urllib2.Request(uri, headers=headers, data=data)
     req.get_method = lambda: method.upper()
     try:
         resp = urllib2.urlopen(req)
