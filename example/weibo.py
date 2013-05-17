@@ -1,5 +1,5 @@
 from flask import Flask, redirect, url_for, session, request
-from flask_oauthlib.client import OAuth, weibo_service
+from flask_oauthlib.client import OAuth
 
 
 app = Flask(__name__)
@@ -12,7 +12,13 @@ weibo = oauth.remote_app(
     consumer_key='909122383',
     consumer_secret='2cdc60e5e9e14398c1cbdf309f2ebd3a',
     request_token_params={'scope': 'email,statuses_to_me_read'},
-    **weibo_service
+    base_url='https://api.weibo.com/2/',
+    authorize_url='https://api.weibo.com/oauth2/authorize',
+    request_token_url=None,
+    access_token_method='POST',
+    access_token_url='https://api.weibo.com/oauth2/access_token',
+    # since weibo's response is a shit, we need to force parse the content
+    content_type='application/json',
 )
 
 

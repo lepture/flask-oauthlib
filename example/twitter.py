@@ -3,7 +3,7 @@
 from flask import Flask
 from flask import g, session, request, url_for, flash
 from flask import redirect, render_template
-from flask_oauthlib.client import OAuth, twitter_service
+from flask_oauthlib.client import OAuth
 
 
 app = Flask(__name__)
@@ -16,7 +16,10 @@ twitter = oauth.remote_app(
     'twitter',
     consumer_key='xBeXxg9lyElUgwZT6AZ0A',
     consumer_secret='aawnSpNTOVuDCjx7HMh6uSXetjNN8zWLpZwCEU4LBrk',
-    **twitter_service
+    base_url='https://api.twitter.com/1/',
+    request_token_url='https://api.twitter.com/oauth/request_token',
+    access_token_url='https://api.twitter.com/oauth/access_token',
+    authorize_url='https://api.twitter.com/oauth/authenticate',
 )
 
 
