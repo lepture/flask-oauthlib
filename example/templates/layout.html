@@ -1,0 +1,17 @@
+<!doctype html>
+<title>{% block title %}Welcome{% endblock %} | Flask OAuth Example</title>
+<link rel=stylesheet type=text/css href="{{ url_for('static',
+  filename='style.css') }}">
+<h1>Flask OAuth Example</h1>
+<ul class=navigation>
+  <li><a href="{{ url_for('index') }}">overview</a>
+  {% if g.user %}
+  <li><a href="{{ url_for('logout') }}">sign out [{{ g.user.screen_name}}]</a>
+  {% else %}
+  <li><a href="{{ url_for('login') }}">sign in</a>
+  {% endif %}
+</ul>
+{% for message in get_flashed_messages() %}
+  <p class=message>{{ message }}
+{% endfor %}
+{% block body %}{% endblock %}

@@ -138,6 +138,16 @@ def add_query(url, args):
     return url + ('?' in url and '&' or '?') + url_encode(args)
 
 
+def encode_request_data(data, format):
+    if format is None:
+        return data, None
+    if format == 'json':
+        return json.dumps(data or {}), 'application/json'
+    if format == 'urlencoded':
+        return url_encode(data or {}), 'application/x-www-form-urlencoded'
+    raise TypeError('Unknown format %r' % format)
+
+
 class OAuthResponse(object):
     def __init__(self, resp, content, content_type=None):
         self._resp = resp
@@ -218,7 +228,7 @@ class OAuthRemoteApp(object):
 
     def make_client(self, token=None):
         # request_token_url is for oauth1
-        if request_token_url:
+        if self.request_token_url:
             client = oauthlib.oauth1.Client(
                 self.consumer_key, self.consumer_secret
             )
@@ -227,6 +237,22 @@ class OAuthRemoteApp(object):
         else:
             client = oauthlib.oauth2.WebApplicationClient(self.consumer_key)
         return client
+
+    def get(self, *args, **kwargs):
+        kwargs['method'] = 'GET'
+        return self.request(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        kwargs['method'] = 'POST'
+        return self.request(*args, **kwargs)
+
+    def put(self, *args, **kwargs):
+        kwargs['method'] = 'PUT'
+        return self.request(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        kwargs['method'] = 'DELETE'
+        return self.request(*args, **kwargs)
 
     def request(self, url, data=None, headers=None, format='urlencoded',
                 method='GET', content_type=None, token=None):
@@ -245,7 +271,17 @@ class OAuthRemoteApp(object):
                 data = None
         else:
             if content_type is None:
-                pass
+                data, content_type = encode_request_data(data, format)
+            if content_type is not None:
+                headers['Content-Type'] = content_type
+
+        uri, headers, body = client.sign(
+            url, http_method=method, body=data, headers=headers
+        )
+        resp, content = make_request(
+            uri, headers, data=body, method=method
+        )
+        return OAuthResponse(resp, content, self.content_type)
 
     def authorize(self, callback=None):
         """
@@ -300,7 +336,10 @@ class OAuthRemoteApp(object):
 
     def get_request_token(self):
         assert self.tokengetter_func is not None, 'missing tokengetter'
-        return self.tokengetter_func()
+        rv = self.tokengetter_func()
+        if rv is None:
+            raise OAuthException('No token available', type='token_missing')
+        return rv
 
     def handle_oauth1_response(self):
         """Handles an oauth1 authorization response."""
