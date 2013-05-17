@@ -11,13 +11,20 @@ weibo = oauth.remote_app(
     'weibo',
     consumer_key='909122383',
     consumer_secret='2cdc60e5e9e14398c1cbdf309f2ebd3a',
-    request_token_params={'scope': 'email'},
+    request_token_params={'scope': 'email,statuses_to_me_read'},
     **weibo_service
 )
 
 
 @app.route('/')
 def index():
+    if 'oauth_token' in session:
+        access_token = session['oauth_token'][0]
+        # weibo is a shit !!!! It cannot be authorized by Bearer Token.
+        resp = weibo.get('statuses/home_timeline.json', data={
+            'access_token': access_token
+        })
+        return resp.raw_data
     return redirect(url_for('login'))
 
 
@@ -26,6 +33,12 @@ def login():
     return weibo.authorize(callback=url_for('authorized',
         next=request.args.get('next') or request.referrer or None,
         _external=True))
+
+
+@app.route('/logout')
+def logout():
+    session.pop('oauth_token', None)
+    return redirect(url_for('index'))
 
 
 @app.route('/login/authorized')
@@ -37,9 +50,7 @@ def authorized(resp):
             request.args['error_description']
         )
     session['oauth_token'] = (resp['access_token'], '')
-    #TODO: 403
-    timeline = weibo.get('statuses/home_timeline.json')
-    return str(timeline)
+    return redirect(url_for('index'))
 
 
 @weibo.tokengetter

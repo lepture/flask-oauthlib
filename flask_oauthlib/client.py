@@ -129,7 +129,10 @@ def make_request(uri, headers=None, data=None, method='GET'):
         method = 'POST'
 
     req.get_method = lambda: method.upper()
-    resp = urllib2.urlopen(req)
+    try:
+        resp = urllib2.urlopen(req)
+    except urllib2.HTTPError as resp:
+        pass
     content = resp.read()
     resp.close()
     return resp, content
