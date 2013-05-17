@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, session, request
+from flask import Flask, redirect, url_for, session, request, jsonify
 from flask_oauthlib.client import OAuth
 
 
@@ -30,7 +30,7 @@ def index():
         resp = weibo.get('statuses/home_timeline.json', data={
             'access_token': access_token
         })
-        return resp.raw_data
+        return jsonify(resp.data)
     return redirect(url_for('login'))
 
 
