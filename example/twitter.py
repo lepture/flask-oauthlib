@@ -19,6 +19,7 @@ twitter = oauth.remote_app(
     **twitter_urls
 )
 
+
 @twitter.tokengetter
 def get_twitter_token():
     if 'twitter_oauth' in session:

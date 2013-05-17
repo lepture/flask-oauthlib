@@ -100,7 +100,7 @@ def get_etree():
 
 def parse_response(resp, content, strict=False, content_type=None):
     """
-    Parse the response returned by :class:`make_request`.
+    Parse the response returned by :meth:`make_request`.
     """
     if not content_type:
         content_type = resp.headers.get('content-type', 'application/json')
@@ -239,26 +239,51 @@ class OAuthRemoteApp(object):
         return client
 
     def get(self, *args, **kwargs):
+        """Sends a ``GET`` request. Accepts the same paramters as
+        :meth:`request`.
+        """
         kwargs['method'] = 'GET'
         return self.request(*args, **kwargs)
 
     def post(self, *args, **kwargs):
+        """Sends a ``POST`` request. Accepts the same paramters as
+        :meth:`request`.
+        """
         kwargs['method'] = 'POST'
         return self.request(*args, **kwargs)
 
     def put(self, *args, **kwargs):
+        """Sends a ``PUT`` request. Accepts the same paramters as
+        :meth:`request`.
+        """
         kwargs['method'] = 'PUT'
         return self.request(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
+        """Sends a ``DELETE`` request. Accepts the same paramters as
+        :meth:`request`.
+        """
         kwargs['method'] = 'DELETE'
         return self.request(*args, **kwargs)
 
     def request(self, url, data=None, headers=None, format='urlencoded',
                 method='GET', content_type=None, token=None):
+        """
+        Sends a request to the remote server with OAuth tokens attached.
+
+        :param data: the data to be sent to the server.
+        :param headers: an optional dictionary of headers.
+        :param format: the format for the `data`. Can be `urlencoded` for
+                       URL encoded data or `json` for JSON.
+        :param method: the HTTP request method to use.
+        :param content_type: an optional content type. If a content type
+                             is provided, the data is passed as it, and
+                             the `format` is ignored.
+        :param token: an optional token to pass, if it is None, token will
+                      be generated be tokengetter.
+        """
 
         headers = dict(headers or {})
-
         if not token:
             token = self.get_request_token()
 
