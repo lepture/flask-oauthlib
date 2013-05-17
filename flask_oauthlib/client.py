@@ -430,7 +430,7 @@ class OAuthRemoteApp(object):
             body = client.prepare_request_body(**remote_args)
             resp, content = make_request(
                 self.expand_url(self.access_token_url),
-                data=url_decode(body),
+                data=body,
                 method=self.access_token_method
             )
         elif self.access_token_method == 'GET':
@@ -495,6 +495,12 @@ google_urls = dict(
     access_token_url='https://accounts.google.com/o/oauth2/token',
 )
 weibo_urls = dict(
+    base_url='https://api.weibo.com/2/',
+    authorize_url='https://api.weibo.com/oauth2/authorize',
+    request_token_url=None,
+    content_type='application/json',
+    access_token_method='POST',
+    access_token_url='https://api.weibo.com/oauth2/access_token',
 )
 douban_urls = dict(
 )
