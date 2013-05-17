@@ -119,7 +119,10 @@ def parse_response(resp, content, strict=False, content_type=None):
     return url_decode(content, charset=charset).to_dict()
 
 
-def make_request(uri, headers, data=None, method='GET'):
+def make_request(uri, headers=None, data=None, method='GET'):
+    if headers is None:
+        headers = {}
+
     req = urllib2.Request(uri, headers=headers, data=data)
 
     if data and method == 'GET':
@@ -235,7 +238,11 @@ class OAuthRemoteApp(object):
             if token and isinstance(token, (tuple, list)):
                 client.resource_owner_key, client.resource_owner_secret = token
         else:
-            client = oauthlib.oauth2.WebApplicationClient(self.consumer_key)
+            if token and isinstance(token, (tuple, list)):
+                token = {'access_token': token[0]}
+            client = oauthlib.oauth2.WebApplicationClient(
+                self.consumer_key, token=token
+            )
         return client
 
     def get(self, *args, **kwargs):
@@ -300,9 +307,16 @@ class OAuthRemoteApp(object):
             if content_type is not None:
                 headers['Content-Type'] = content_type
 
-        uri, headers, body = client.sign(
-            url, http_method=method, body=data, headers=headers
-        )
+        if self.request_token_url:
+            # oauth1
+            uri, headers, body = client.sign(
+                url, http_method=method, body=data, headers=headers
+            )
+        else:
+            # oauth2
+            uri, headers, body = client.add_token(
+                url, http_method=method, body=data, headers=headers
+            )
         resp, content = make_request(
             uri, headers, data=body, method=method
         )
@@ -321,6 +335,20 @@ class OAuthRemoteApp(object):
         else:
             assert callback is not None, 'Callback is required OAuth2'
 
+            params = dict(self.request_token_params)
+            client = self.make_client()
+
+            scope = params.pop('scope')
+            if isinstance(scope, str):
+                scope = _encode(scope, self.encoding)
+
+            session['%s_oauthredir' % self.name] = callback
+            url = client.prepare_request_uri(
+                self.expand_url(self.authorize_url),
+                redirect_uri=callback,
+                scope=scope,
+                **params
+            )
         return redirect(url)
 
     def tokengetter(self, f):
@@ -389,7 +417,40 @@ class OAuthRemoteApp(object):
         return data
 
     def handle_oauth2_response(self):
-        pass
+        """Handles an oauth2 authorization response."""
+
+        client = self.make_client()
+        remote_args = {
+            'code': request.args.get('code'),
+            'client_secret': self.consumer_secret,
+            'redirect_uri': session.get('%s_oauthredir' % self.name)
+        }
+        remote_args.update(self.access_token_params)
+        if self.access_token_method == 'POST':
+            body = client.prepare_request_body(**remote_args)
+            resp, content = make_request(
+                self.expand_url(self.access_token_url),
+                data=url_decode(body),
+                method=self.access_token_method
+            )
+        elif self.access_token_method == 'GET':
+            url = client.prepare_request_uri(
+                self.expand_url(self.access_token_url), **remote_args
+            )
+            resp, content = make_request(url, method=self.access_token_method)
+        else:
+            raise OAuthException(
+                'Unsupported access_token_method: %s' % \
+                self.access_token_method
+            )
+
+        data = parse_response(resp, content, content_type=self.content_type)
+        if resp.code not in (200, 201):
+            raise OAuthException(
+                'Invalid response from %s' % self.name,
+                type='invalid_response', data=data
+            )
+        return data
 
     def authorized_handler(self, f):
         @wraps(f)
@@ -403,6 +464,7 @@ class OAuthRemoteApp(object):
 
             # free request token
             session.pop('%s_oauthtok' % self.name, None)
+            session.pop('%s_oauthredir' % self.name, None)
             return f(*((data,) + args), **kwargs)
         return decorated
 
