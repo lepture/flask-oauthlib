@@ -38,13 +38,13 @@ class OAuth(object):
             self.init_app(app)
 
     def init_app(self, app):
-        """
+        """Init app with Flask instance.
+
         You can also pass the instance of Flask later::
 
             oauth = OAuth()
             oauth.init_app(app)
         """
-
         self.app = app
         app.extensions = getattr(app, 'extensions', {})
         app.extensions['oauth-client'] = self
@@ -339,6 +339,7 @@ class OAuthRemoteApp(object):
 
             scope = params.pop('scope')
             if isinstance(scope, str):
+                # oauthlib need unicode
                 scope = _encode(scope, self.encoding)
 
             session['%s_oauthredir' % self.name] = callback
