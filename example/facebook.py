@@ -1,5 +1,5 @@
 from flask import Flask, redirect, url_for, session, request
-from flask_oauthlib.client import OAuth, facebook_urls
+from flask_oauthlib.client import OAuth, facebook_service
 
 
 FACEBOOK_APP_ID = '188477911223606'
@@ -16,7 +16,7 @@ facebook = oauth.remote_app(
     consumer_key=FACEBOOK_APP_ID,
     consumer_secret=FACEBOOK_APP_SECRET,
     request_token_params={'scope': 'email'},
-    **facebook_urls
+    **facebook_service
 )
 
 

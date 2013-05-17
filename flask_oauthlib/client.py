@@ -20,8 +20,8 @@ from werkzeug import url_quote, url_decode, url_encode, parse_options_header
 
 __all__ = [
     'OAuth', 'OAuthRemoteApp', 'OAuthResponse', 'OAuthException',
-    'twitter_urls', 'facebook_urls', 'google_urls',
-    'weibo_urls', 'douban_urls',
+    'twitter_service', 'facebook_service', 'google_service',
+    'weibo_service', 'douban_service',
 ]
 
 
@@ -476,25 +476,25 @@ def _encode(text, encoding='utf-8'):
 
 
 # some common services
-twitter_urls = dict(
+twitter_service = dict(
     base_url='https://api.twitter.com/1/',
     request_token_url='https://api.twitter.com/oauth/request_token',
     access_token_url='https://api.twitter.com/oauth/access_token',
     authorize_url='https://api.twitter.com/oauth/authenticate',
 )
-facebook_urls = dict(
+facebook_service = dict(
     base_url='https://graph.facebook.com',
     request_token_url=None,
     access_token_url='/oauth/access_token',
     authorize_url='https://www.facebook.com/dialog/oauth'
 )
-google_urls = dict(
+google_service = dict(
     base_url='https://www.google.com/accounts/',
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     request_token_url=None,
     access_token_url='https://accounts.google.com/o/oauth2/token',
 )
-weibo_urls = dict(
+weibo_service = dict(
     base_url='https://api.weibo.com/2/',
     authorize_url='https://api.weibo.com/oauth2/authorize',
     request_token_url=None,
@@ -502,5 +502,5 @@ weibo_urls = dict(
     access_token_method='POST',
     access_token_url='https://api.weibo.com/oauth2/access_token',
 )
-douban_urls = dict(
+douban_service = dict(
 )
