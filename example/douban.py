@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, session, request
+from flask import Flask, redirect, url_for, session, request, jsonify
 from flask_oauthlib.client import OAuth
 
 
@@ -26,7 +26,7 @@ douban = oauth.remote_app(
 def index():
     if 'douban_token' in session:
         resp = douban.get('user/~me')
-        return resp.raw_data
+        return jsonify(resp.data)
     return redirect(url_for('login'))
 
 
