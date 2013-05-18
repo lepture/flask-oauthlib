@@ -321,6 +321,13 @@ class OAuthRemoteApp(object):
             uri, headers, body = client.add_token(
                 url, http_method=method, body=data, headers=headers
             )
+
+        if hasattr(self, 'pre_request'):
+            # this is desgined for some rubbish serice like weibo
+            # since they don't follow the standards, we need to
+            # change the uri, headers, or body
+            uri, headers, body = self.pre_request(uri, headers, body)
+
         resp, content = make_request(
             uri, headers, data=body, method=method
         )

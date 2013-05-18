@@ -26,10 +26,7 @@ weibo = oauth.remote_app(
 def index():
     if 'oauth_token' in session:
         access_token = session['oauth_token'][0]
-        # weibo is a shit !!!! It cannot be authorized by Bearer Token.
-        resp = weibo.get('statuses/home_timeline.json', data={
-            'access_token': access_token
-        })
+        resp = weibo.get('statuses/home_timeline.json')
         return jsonify(resp.data)
     return redirect(url_for('login'))
 
@@ -62,6 +59,18 @@ def authorized(resp):
 @weibo.tokengetter
 def get_weibo_oauth_token():
     return session.get('oauth_token')
+
+
+def change_weibo_header(uri, headers, body):
+    """Since weibo is a rubbish server, it does not follow the standard,
+    we need to change the authorization header for it."""
+    auth = headers.get('Authorization')
+    if auth:
+        auth = auth.replace('Bearer', 'OAuth2')
+        headers['Authorization'] = auth
+    return uri, headers, body
+
+weibo.pre_request = change_weibo_header
 
 
 if __name__ == '__main__':
