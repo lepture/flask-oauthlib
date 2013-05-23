@@ -24,7 +24,7 @@ github = oauth.remote_app(
 def index():
     if 'github_token' in session:
         me = github.get('user')
-        return jsonify(me)
+        return jsonify(me.data)
     return redirect(url_for('login'))
 
 
@@ -49,7 +49,7 @@ def authorized(resp):
         )
     session['github_token'] = (resp['access_token'], '')
     me = github.get('user')
-    return jsonify(me)
+    return jsonify(me.data)
 
 
 @github.tokengetter
