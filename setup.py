@@ -20,6 +20,9 @@ setup(
     url=info.REPOSITORY,
     packages=["flask_oauthlib"],
     description="OAuthlib for Flask",
+    zip_safe=False,
+    include_package_data=True,
+    platforms='any',
     long_description=open('README.rst').read(),
     license=open('LICENSE').read(),
     install_requires=[
