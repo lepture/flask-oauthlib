@@ -13,6 +13,16 @@ The client part of Flask-OAuthlib share the same API as Flask-OAuth,
 which is pretty and simple.
 
 
+Features
+--------
+
+- Support for OAuth 1.0a, OAuth2
+- Friendly API (same with Flask-OAuth)
+- Direct integration with Flask
+- Basic support for remote method invocation of RESTful APIs
+- Client part finished
+
+
 User's Guide
 ------------
 
@@ -24,6 +34,8 @@ instructions for getting the most out of Flask-OAuthlib
    :maxdepth: 2
 
    intro
+   install
+   getstarted
 
 
 API Documentation
