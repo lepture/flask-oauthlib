@@ -8,8 +8,10 @@ Implemnts OAuth2 provider support for Flask.
 :copyright: (c) 2013 by Hsiaoming Yang.
 """
 
+from oauthlib.oauth2 import Server
 
-class OAuth(object):
+
+class OAuth(Server):
     """Provide secure services using OAuth2.
 
     ::
