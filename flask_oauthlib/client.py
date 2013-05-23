@@ -1,11 +1,11 @@
 # coding: utf-8
 """
-Flask-OAuthlib
---------------
+    flask_oauthlib.client
+    ~~~~~~~~~~~~~~~~~~~~~
 
-Implemnts OAuth1 and OAuth2 support for Flask.
+    Implemnts OAuth1 and OAuth2 support for Flask.
 
-:copyright: (c) 2013 by Hsiaoming Yang.
+    :copyright: (c) 2013 by Hsiaoming Yang.
 """
 
 import urllib2
