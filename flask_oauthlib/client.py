@@ -9,6 +9,7 @@
 """
 
 import urllib2
+import logging
 import oauthlib.oauth1
 import oauthlib.oauth2
 from functools import wraps
@@ -19,6 +20,8 @@ from werkzeug import url_quote, url_decode, url_encode, parse_options_header
 
 
 __all__ = ['OAuth', 'OAuthRemoteApp', 'OAuthResponse', 'OAuthException']
+
+log = logging.getLogger('flask_oauthlib.client')
 
 
 class OAuth(object):
@@ -128,6 +131,7 @@ def make_request(uri, headers=None, data=None, method=None):
         uri = add_query(uri, data)
         data = None
 
+    log.debug('Request %r with %r method' % (uri, method))
     req = urllib2.Request(uri, headers=headers, data=data)
     req.get_method = lambda: method.upper()
     try:
@@ -452,7 +456,7 @@ class OAuthRemoteApp(object):
             resp, content = make_request(url, method=self.access_token_method)
         else:
             raise OAuthException(
-                'Unsupported access_token_method: %s' % \
+                'Unsupported access_token_method: ' %
                 self.access_token_method
             )
 
