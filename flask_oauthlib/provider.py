@@ -8,6 +8,9 @@
     :copyright: (c) 2013 by Hsiaoming Yang.
 """
 
+from flask import request
+from flask import _app_ctx_stack
+
 
 class OAuth(object):
     """Provide secure services using OAuth2.
@@ -57,6 +60,24 @@ class OAuth(object):
         app.extensions = getattr(app, 'extensions', {})
         app.extensions['oauth-provider'] = self
 
+    def get_app(self):
+        if self.app is not None:
+            return self.app
+        ctx = _app_ctx_stack.top
+        if ctx is not None:
+            return ctx.app
+        raise RuntimeError(
+            'application not registered on Oauth '
+            'instance and no application bound to current context'
+        )
+
+    def access_token_methods(self):
+        app = self.get_app()
+        methods = app.config.get('OAUTH_ACCESS_TOKEN_METHODS', ['POST'])
+        if isinstance(methods, (list, tuple)):
+            return methods
+        return [methods]
+
     def clientgetter(self, f):
         self._client_getter = f
 
@@ -64,7 +85,9 @@ class OAuth(object):
         pass
 
     def access_token_handler(self, func):
-        pass
+        if request.method not in self.access_token_methods():
+            # method invalid
+            pass
 
     def refresh_token_handler(self, func):
         pass
