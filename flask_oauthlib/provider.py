@@ -42,7 +42,7 @@ class OAuth(object):
     Protect the resource with scopes::
 
         @app.route('/api/user')
-        @oauth.protect(['email'])
+        @oauth.require_oauth(['email'])
         def user():
             return jsonify(g.user)
     """
@@ -69,5 +69,5 @@ class OAuth(object):
     def refresh_token_handler(self, func):
         pass
 
-    def protect(self, scope=None, methods=None):
+    def require_oauth(self, scope=None):
         pass
