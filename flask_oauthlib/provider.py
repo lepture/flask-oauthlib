@@ -29,9 +29,15 @@ class OAuth(object):
 
         @oauth.clientgetter
         def client(client_id):
-            client = get_client(client_id)
+            client = get_client_model(client_id)
             # Client is an object
             return client
+
+        @oauth.tokengetter
+        def bearer_token(token_id):
+            token = get_token_model(token_id)
+            # Token is an object, it should has `client_id`
+            return token
 
         @app.route('/oauth/authorize', methods=['GET', 'POST'])
         @app.authorize_handler
@@ -60,7 +66,6 @@ class OAuth(object):
     """
 
     def __init__(self, app=None):
-        self._client_getter = None
         if app:
             self.init_app(app)
 
@@ -93,10 +98,12 @@ class OAuth(object):
 
     @cached_property
     def server(self):
-        if not hasattr(self, '_client_getter'):
-            raise RuntimeError('application not bound to client getter')
-        validator = OAuthRequestValidator(self._client_getter)
-        return WebApplicationServer(validator)
+        if hasattr(self, '_clientgetter') and hasattr(self, '_tokengetter'):
+            validator = OAuthRequestValidator(
+                self._clientgetter, self._tokengetter
+            )
+            return WebApplicationServer(validator)
+        raise RuntimeError('application not bound to client getter')
 
     def access_token_methods(self):
         app = self.get_app()
@@ -106,7 +113,10 @@ class OAuth(object):
         return [methods]
 
     def clientgetter(self, f):
-        self._client_getter = f
+        self._clientgetter = f
+
+    def tokengetter(self, f):
+        self._tokengetter = f
 
     def authorize_handler(self, f):
         @wraps(f)
@@ -141,14 +151,28 @@ class OAuth(object):
 
 
 class OAuthRequestValidator(RequestValidator):
-    def __init__(self, client_getter):
-        self._client_getter = client_getter
+    def __init__(self, clientgetter, tokengetter):
+        self._clientgetter = clientgetter
+        self._tokengetter = tokengetter
+
+    def validate_bearer_token(self, token, scopes, request):
+        tok = self._tokengetter(token)
+        return set(tok.scopes).issuperset(set(scopes))
 
     def validate_client_id(self, client_id, request, *args, **kwargs):
-        client = self._client_getter(client_id)
+        client = self._clientgetter(client_id)
         if client:
             return True
         return False
+
+    def validate_grant_type(self, client_id, grant_type, client, request,
+                            *args, **kwargs):
+        if not hasattr(client, 'grant_types'):
+            return True
+        return grant_type in client.grant_types
+
+    def validate_code(self, client_id, code, client, request, *args, **kwargs):
+        pass
 
 
 def _extract_params():
