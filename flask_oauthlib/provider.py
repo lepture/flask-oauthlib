@@ -100,9 +100,13 @@ class OAuth(object):
 
     @cached_property
     def server(self):
-        if hasattr(self, '_clientgetter') and hasattr(self, '_tokengetter'):
+        if hasattr(self, '_clientgetter') and \
+           hasattr(self, '_tokengetter') and \
+           hasattr(self, '_grantgetter'):
             validator = OAuthRequestValidator(
-                self._clientgetter, self._tokengetter
+                clientgetter=self._clientgetter,
+                tokengetter=self._tokengetter,
+                grantgetter=self._grantgetter,
             )
             return WebApplicationServer(validator)
         raise RuntimeError('application not bound to client getter')
@@ -115,10 +119,46 @@ class OAuth(object):
         return [methods]
 
     def clientgetter(self, f):
+        """Register a function as the client getter.
+
+        The function accepts one parameter `client_id`, and it returns
+        a client object with at least these information:
+
+            - client_id: A random string
+            - client_secret: A random string
+            - client_type: A string represents if it is `confidential`
+            - redirect_uris: A list of redirect uris
+            - default_redirect_uri: One of the redirect uris
+            - default_scopes: Default scopes of the client
+        """
         self._clientgetter = f
 
     def tokengetter(self, f):
+        """Register a function as the token getter.
+
+        The function accepts an `access_token` or `refresh_token` parameters,
+        and it returns a token object with at least these information:
+
+            - scopes: A list of scopes
+            - expires: A `datetime.datetime` object
+            - user: The user object
+        """
         self._tokengetter = f
+
+    def grantgetter(self, f):
+        """Register a function as the grant getter.
+
+        The function accepts `client_id`, `code` and more::
+
+            @oauth.grantgetter
+            def grant(client_id, code):
+                return get_grant(client_id, code)
+
+        It returns a grant object with at least these information:
+
+            - delete: A function to delete itself
+        """
+        self._grantgetter = f
 
     def authorize_handler(self, f):
         @wraps(f)
@@ -173,9 +213,10 @@ class OAuthRequestValidator(RequestValidator):
         - expires
         - user
     """
-    def __init__(self, clientgetter, tokengetter):
+    def __init__(self, clientgetter, tokengetter, grantgetter):
         self._clientgetter = clientgetter
         self._tokengetter = tokengetter
+        self._grantgetter = grantgetter
 
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
@@ -220,8 +261,13 @@ class OAuthRequestValidator(RequestValidator):
 
     def invalidate_authorization_code(self, client_id, code, request,
                                       *args, **kwargs):
-        # TODO
-        pass
+        """Invalidate an authorization code after use.
+
+        We keep the temporary code in a grant, which has a `delete`
+        function to destroy itself.
+        """
+        grant = self._grantgetter(client_id=client_id, code=code)
+        grant.delete()
 
     def save_authorization_code(self, client_id, code, request,
                                 *args, **kwargs):
