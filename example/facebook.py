@@ -9,7 +9,7 @@ FACEBOOK_APP_SECRET = '621413ddea2bcc5b2e83d42fc40495de'
 app = Flask(__name__)
 app.debug = True
 app.secret_key = 'development'
-oauth = OAuth()
+oauth = OAuth(app)
 
 facebook = oauth.remote_app(
     'facebook',

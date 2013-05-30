@@ -5,7 +5,7 @@ from flask_oauthlib.client import OAuth
 app = Flask(__name__)
 app.debug = True
 app.secret_key = 'development'
-oauth = OAuth()
+oauth = OAuth(app)
 
 douban = oauth.remote_app(
     'douban',
