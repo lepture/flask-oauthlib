@@ -9,6 +9,7 @@
 """
 
 import logging
+import datetime
 from functools import wraps
 from flask import _app_ctx_stack
 from flask import request, url_for, redirect
@@ -161,24 +162,60 @@ class OAuthRequestValidator(RequestValidator):
 
         - client_id
         - client_secret
+        - client_type
         - redirect_uris
         - default_redirect_uri
         - default_scopes
+
+    The `token` is an object contains at least:
+
+        - scopes
+        - expires
+        - user
     """
     def __init__(self, clientgetter, tokengetter):
         self._clientgetter = clientgetter
         self._tokengetter = tokengetter
+
+    def authenticate_client(self, request, *args, **kwargs):
+        """Authenticate itself in other means.
+
+        Other means means is described in `Section 3.2.1`_.
+
+        .. _`Section 3.2.1`: http://tools.ietf.org/html/rfc6749#section-3.2.1
+        """
+        # TODO
+
+    def authenticate_client_id(self, client_id, request, *args, **kwargs):
+        """Authenticate a non-confidential client.
+
+        :param client_id: Client ID of the non-confidential client
+        :param request: The Request object passed by oauthlib
+        """
+        client = request.client or self._clientgetter(client_id)
+        if not client:
+            return False
+
+        # attach client on request for convenience
+        request.client = client
+
+        # authenticate non-confidential client_type only
+        # most of the clients are of public client_type
+        confidential = 'confidential'
+        if hasattr(client, 'confidential'):
+            confidential = client.confidential
+        return client.client_type != confidential
 
     def confirm_scopes(self, refresh_token, scopes, request, *args, **kwargs):
         tok = self._tokengetter(refresh_token=refresh_token)
         return set(tok.scopes) == set(scopes)
 
     def get_default_redirect_uri(self, client_id, request, *args, **kwargs):
-        client = self._clientgetter(client_id)
+        client = request.client or self._clientgetter(client_id)
         return client.default_redirect_uri
 
     def get_default_scopes(self, client_id, request, *args, **kwargs):
-        client = self._clientgetter(client_id)
+        client = request.client or self._clientgetter(client_id)
         return client.default_scopes
 
     def invalidate_authorization_code(self, client_id, code, request,
@@ -192,14 +229,39 @@ class OAuthRequestValidator(RequestValidator):
         pass
 
     def validate_bearer_token(self, token, scopes, request):
+        """Validate access token.
+
+        :param token: A string of random characters
+        :param scopes: A list of scopes
+        :param request: The Request object passed by oauthlib
+
+        The validation validates:
+
+            1) if the token is available
+            2) if the token has expired
+            3) if the scopes are available
+        """
         tok = self._tokengetter(access_token=token)
         if not tok:
             return False
-        return set(tok.scopes).issuperset(set(scopes))
+
+        # validate expires
+        if datetime.datetime.utcnow() > tok.expires:
+            return False
+
+        # validate scopes
+        if not set(tok.scopes).issuperset(set(scopes)):
+            return False
+
+        request.user = tok.user
+        request.scopes = scopes
+        return True
 
     def validate_client_id(self, client_id, request, *args, **kwargs):
-        client = self._clientgetter(client_id)
+        client = request.client or self._clientgetter(client_id)
         if client:
+            # attach client to request object
+            request.client = client
             return True
         return False
 
@@ -209,15 +271,14 @@ class OAuthRequestValidator(RequestValidator):
 
     def validate_grant_type(self, client_id, grant_type, client, request,
                             *args, **kwargs):
-        if not hasattr(client, 'grant_types'):
-            return True
-        return grant_type in client.grant_types
+        # TODO
+        pass
 
     def validate_redirect_uri(self, client_id, redirect_uri, request,
                               *args, **kwargs):
-        client = self._clientgetter(client_id)
-        # TODO
-        return redirect_uri in client.redirect_uris
+        request.client = request.client = self._clientgetter(client_id)
+        # TODO: redirect_uri = clean(redirect_uri)
+        return redirect_uri in request.client.redirect_uris
 
     def validate_refresh_token(self, refresh_token, client, request,
                                *args, **kwargs):
