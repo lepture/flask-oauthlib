@@ -230,12 +230,13 @@ class OAuthRemoteApp(object):
         self.authorize_url = authorize_url
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
-        self.tokengetter_func = None
         self.request_token_params = request_token_params or {}
         self.access_token_params = access_token_params or {}
         self.access_token_method = access_token_method
         self.content_type = content_type
         self.encoding = encoding
+
+        self._tokengetter= None
 
     def make_client(self, token=None):
         # request_token_url is for oauth1
@@ -371,7 +372,7 @@ class OAuthRemoteApp(object):
         """
         Register a function as token getter.
         """
-        self.tokengetter_func = f
+        self._tokengetter = f
         return f
 
     def expand_url(self, url):
@@ -404,8 +405,8 @@ class OAuthRemoteApp(object):
         return tup
 
     def get_request_token(self):
-        assert self.tokengetter_func is not None, 'missing tokengetter'
-        rv = self.tokengetter_func()
+        assert self._tokengetter is not None, 'missing tokengetter'
+        rv = self._tokengetter()
         if rv is None:
             raise OAuthException('No token available', type='token_missing')
         return rv
