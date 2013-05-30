@@ -21,11 +21,14 @@ but the API are always broken. When rewrite a oauth extension for flask,
 I do take them into consideration, Flask-OAuthlib does support those
 non-standard services.
 
+Flask-OAuthlib also provide the solution for creating an oauth service.
+It is now focusing on the oauth2 part (not finished yet), and will take
+the oauth1 into consideration.
 
 import this
 -----------
 
-Flask-OAuth was developed with a few :pep:`20` idioms in mind::
+Flask-OAuthlib was developed with a few :pep:`20` idioms in mind::
 
     >>> import this
 
