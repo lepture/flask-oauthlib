@@ -37,6 +37,7 @@ class OAuth(object):
     def __init__(self, app=None):
         self.remote_apps = {}
 
+        self.app = app
         if app:
             self.init_app(app)
 
@@ -61,11 +62,14 @@ class OAuth(object):
         Find more parameters from :class:`OAuthRemoteApp`.
         """
 
-        app = OAuthRemoteApp(self, name, **kwargs)
+        if self.app and self.app.testing:
+            kwargs['test_client'] = self.app.test_client()
+
+        remote = OAuthRemoteApp(self, name, **kwargs)
         if register:
             assert name not in self.remote_apps
-            self.remote_apps[name] = app
-        return app
+            self.remote_apps[name] = remote
+        return remote
 
     def __getattr__(self, key):
         try:
@@ -118,7 +122,8 @@ def parse_response(resp, content, strict=False, content_type=None):
     return url_decode(content, charset=charset).to_dict()
 
 
-def make_request(uri, headers=None, data=None, method=None):
+def make_request(uri, headers=None, data=None, method=None,
+                 test_client=None):
     if headers is None:
         headers = {}
 
@@ -132,6 +137,14 @@ def make_request(uri, headers=None, data=None, method=None):
         data = None
 
     log.debug('Request %r with %r method' % (uri, method))
+
+    if test_client:
+        # test client is a `werkzeug.test.Client`
+        resp = test_client.open(
+            uri, headers=headers, data=data, method=method
+        )
+        return resp, resp.data
+
     req = urllib2.Request(uri, headers=headers, data=data)
     req.get_method = lambda: method.upper()
     try:
@@ -219,6 +232,7 @@ class OAuthRemoteApp(object):
         access_token_params=None,
         access_token_method='GET',
         content_type=None,
+        test_client=None,
         encoding='utf-8',
     ):
 
@@ -234,9 +248,10 @@ class OAuthRemoteApp(object):
         self.access_token_params = access_token_params or {}
         self.access_token_method = access_token_method
         self.content_type = content_type
+        self.test_client = test_client
         self.encoding = encoding
 
-        self._tokengetter= None
+        self._tokengetter = None
 
     def make_client(self, token=None):
         # request_token_url is for oauth1
@@ -334,7 +349,8 @@ class OAuthRemoteApp(object):
             uri, headers, body = self.pre_request(uri, headers, body)
 
         resp, content = make_request(
-            uri, headers, data=body, method=method
+            uri, headers, data=body, method=method,
+            test_client=self.test_client
         )
         return OAuthResponse(resp, content, self.content_type)
 
@@ -388,7 +404,9 @@ class OAuthRemoteApp(object):
         uri, headers, _ = client.sign(
             self.expand_url(self.request_token_url)
         )
-        resp, content = make_request(uri, headers)
+        resp, content = make_request(
+            uri, headers, test_client=self.test_client
+        )
         if resp.code not in (200, 201):
             raise OAuthException(
                 'Failed to generate request token',
@@ -424,7 +442,9 @@ class OAuthRemoteApp(object):
             _encode(self.access_token_method)
         )
 
-        resp, content = make_request(uri, headers, data)
+        resp, content = make_request(
+            uri, headers, data, test_client=self.test_client
+        )
         data = parse_response(resp, content)
         if resp.code not in (200, 201):
             raise OAuthException(
@@ -448,13 +468,18 @@ class OAuthRemoteApp(object):
             resp, content = make_request(
                 self.expand_url(self.access_token_url),
                 data=body,
-                method=self.access_token_method
+                method=self.access_token_method,
+                test_client=self.test_client,
             )
         elif self.access_token_method == 'GET':
             url = client.prepare_request_uri(
                 self.expand_url(self.access_token_url), **remote_args
             )
-            resp, content = make_request(url, method=self.access_token_method)
+            resp, content = make_request(
+                url,
+                method=self.access_token_method,
+                test_client=self.test_client,
+            )
         else:
             raise OAuthException(
                 'Unsupported access_token_method: ' %
