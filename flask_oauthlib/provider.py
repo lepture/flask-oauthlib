@@ -12,11 +12,11 @@ import logging
 import datetime
 from functools import wraps
 from flask import _app_ctx_stack
-from flask import request, url_for, redirect
+from flask import request, url_for, redirect, make_response
 from werkzeug import cached_property
 from oauthlib.command import urlencoded
 from oauthlib.oauth2 import errors
-from oauthlib.oauth2 import RequestValidator, WebApplicationServer
+from oauthlib.oauth2 import RequestValidator, Server
 
 
 log = logging.getLogger('flask_oauthlib.provider')
@@ -49,14 +49,14 @@ class OAuth(object):
 
         @app.route('/oauth/access_token')
         @app.access_token_handler
-        def access_token(client):
-            # maybe you need a record
+        def access_token():
+            # maybe you need to add extra credentials
             return {}
 
         @app.route('/oauth/access_token')
         @app.refresh_token_handler
-        def refresh_token(client):
-            # maybe you need a record
+        def refresh_token():
+            # maybe you need to add extra credentials
             return {}
 
     Protect the resource with scopes::
@@ -108,15 +108,8 @@ class OAuth(object):
                 tokengetter=self._tokengetter,
                 grantgetter=self._grantgetter,
             )
-            return WebApplicationServer(validator)
-        raise RuntimeError('application not bound to client getter')
-
-    def access_token_methods(self):
-        app = self.get_app()
-        methods = app.config.get('OAUTH_ACCESS_TOKEN_METHODS', ['POST'])
-        if isinstance(methods, (list, tuple)):
-            return methods
-        return [methods]
+            return Server(validator)
+        raise RuntimeError('application not bound to required getters')
 
     def clientgetter(self, f):
         """Register a function as the client getter.
@@ -180,10 +173,34 @@ class OAuth(object):
                 return redirect(e.in_uri(self.error_uri))
         return decorated
 
-    def access_token_handler(self, func):
-        if request.method not in self.access_token_methods():
-            # method invalid
-            pass
+    def access_token_handler(self, f):
+        """Access token handler decorator.
+
+        The decorated function should return an dictionary or None as
+        the extra credentials for creating the token response.
+
+        You can control the access method with standard flask route mechanism.
+        If you only allow the `POST` method::
+
+            @app.route('/oauth/access_token', methods=['POST'])
+            @oauth.access_token_handler
+            def access_token():
+                return None
+        """
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            uri, http_method, body, headers = _extract_params()
+            credentials = f(*args, **kwargs) or {}
+            log.debug('Fetched extra credentials, %r.', credentials)
+            server = self.server
+            uri, headers, body, status = server.create_token_response(
+                uri, http_method, body, headers, credentials
+            )
+            response = make_response(body, status)
+            for k, v in headers.items():
+                response.headers[k] = v
+            return response
+        return decorated
 
     def refresh_token_handler(self, func):
         pass
