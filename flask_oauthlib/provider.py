@@ -296,6 +296,11 @@ class OAuth2RequestValidator(RequestValidator):
             confidential = client.confidential
         return client.client_type != confidential
 
+    def confirm_redirect_uri(self, client_id, code, redirect_uri, client,
+                             *args, **kwargs):
+        #TODO
+        return True
+
     def confirm_scopes(self, refresh_token, scopes, request, *args, **kwargs):
         tok = self._tokengetter(refresh_token=refresh_token)
         return set(tok.scopes) == set(scopes)
@@ -316,7 +321,8 @@ class OAuth2RequestValidator(RequestValidator):
         function to destroy itself.
         """
         grant = self._grantgetter(client_id=client_id, code=code)
-        grant.delete()
+        if grant:
+            grant.delete()
 
     def save_authorization_code(self, client_id, code, request,
                                 *args, **kwargs):
@@ -369,8 +375,9 @@ class OAuth2RequestValidator(RequestValidator):
         return False
 
     def validate_code(self, client_id, code, client, request, *args, **kwargs):
+        grant = self._grantgetter(client_id=client_id, code=code)
         # TODO
-        pass
+        return True
 
     def validate_grant_type(self, client_id, grant_type, client, request,
                             *args, **kwargs):

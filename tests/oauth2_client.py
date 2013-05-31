@@ -43,7 +43,7 @@ def create_server(app):
                 request.args['error_description']
             )
         session['dev_token'] = (resp['access_token'], '')
-        return session['dev_token']
+        return jsonify(resp)
 
     @dev.tokengetter
     def get_oauth_token():
