@@ -4,6 +4,11 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_oauthlib.provider import OAuth2Provider
 
+import logging
+log = logging.getLogger('oauthlib')
+log.addHandler(logging.StreamHandler())
+log.setLevel(logging.DEBUG)
+
 
 db = SQLAlchemy()
 
@@ -31,6 +36,10 @@ class Client(db.Model):
         if self._redirect_uris:
             return self._redirect_uris.split()
         return []
+
+    @property
+    def default_redirect_uri(self):
+        return self.redirect_uris[0]
 
     @property
     def default_scopes(self):
@@ -135,8 +144,9 @@ def create_server(app):
         return confirm == 'yes'
 
     @app.route('/access_token')
+    @oauth.access_token_handler
     def access_token():
-        return ''
+        return {}
 
     return app
 
