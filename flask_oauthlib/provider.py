@@ -199,7 +199,6 @@ class OAuth2Provider(object):
                         uri, http_method, body, headers
                     )
                     scopes, credentials = ret
-                    #TODO: seems no need for keep it in the session
                     session['oauth2_credentials'] = credentials
                     kwargs['scopes'] = scopes
                     kwargs.update(credentials)
@@ -209,6 +208,7 @@ class OAuth2Provider(object):
                     return redirect(e.in_uri(self.error_uri))
 
             if request.method == 'POST':
+                redirect_uri = request.values.get('redirect_uri', None)
                 if not f(*args, **kwargs):
                     # denied by user
                     e = oauth2.AccessDeniedError()
@@ -218,7 +218,7 @@ class OAuth2Provider(object):
                 scopes = scope.split()
                 credentials = dict(
                     client_id=request.values.get('client_id'),
-                    redirect_uri=request.values.get('redirect_uri'),
+                    redirect_uri=redirect_uri,
                     response_type=request.values.get('response_type', None),
                     state=request.values.get('state', None)
                 )
@@ -358,6 +358,7 @@ class OAuth2RequestValidator(RequestValidator):
         return grant.redirect_uri == redirect_uri
 
     def confirm_scopes(self, refresh_token, scopes, request, *args, **kwargs):
+        #TODO
         tok = self._tokengetter(refresh_token=refresh_token)
         return set(tok.scopes) == set(scopes)
 
