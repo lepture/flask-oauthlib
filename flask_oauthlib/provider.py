@@ -14,8 +14,7 @@ from functools import wraps
 from flask import _app_ctx_stack
 from flask import request, url_for, redirect, make_response, session
 from werkzeug import cached_property
-from oauthlib.common import urlencoded
-from oauthlib.oauth2 import errors
+from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
 
 
@@ -26,38 +25,8 @@ class OAuth2Provider(object):
     """Provide secure services using OAuth2.
 
     The server should provide an authorize handler, access token hander,
-    refresh token hander::
-
-        @oauth.clientgetter
-        def client(client_id):
-            client = get_client_model(client_id)
-            # Client is an object
-            return client
-
-        @oauth.tokengetter
-        def bearer_token(access_token=None, refresh_token=None):
-            # implemented get token by access token or refresh token
-            token = get_token_model(access_token, refresh_token)
-            # Token is an object, it should has `client_id`
-            return token
-
-        @app.route('/oauth/authorize', methods=['GET', 'POST'])
-        @app.authorize_handler
-        def authorize(client_id, response_type,
-                      redirect_uri, scopes, **kwargs):
-            return render_template('oauthorize.html')
-
-        @app.route('/oauth/access_token')
-        @app.access_token_handler
-        def access_token():
-            # maybe you need to add extra credentials
-            return {}
-
-        @app.route('/oauth/access_token')
-        @app.refresh_token_handler
-        def refresh_token():
-            # maybe you need to add extra credentials
-            return {}
+    refresh token hander. But before the handlers are implemented, the
+    server should provide the client getter, token getter and grant getter.
 
     Protect the resource with scopes::
 
@@ -96,7 +65,7 @@ class OAuth2Provider(object):
         error_endpoint = app.config.get('OAUTH_PROVIDER_ERROR_ENDPOINT')
         if error_endpoint:
             return url_for(error_endpoint)
-        return '/errors'
+        return '/oauth/errors'
 
     @cached_property
     def server(self):
@@ -127,6 +96,14 @@ class OAuth2Provider(object):
             - redirect_uris: A list of redirect uris
             - default_redirect_uri: One of the redirect uris
             - default_scopes: Default scopes of the client
+
+        Implement the client getter::
+
+            @oauth.clientgetter
+            def get_client(client_id):
+                client = get_client_model(client_id)
+                # Client is an object
+                return client
         """
         self._clientgetter = f
 
@@ -139,6 +116,16 @@ class OAuth2Provider(object):
             - scopes: A list of scopes
             - expires: A `datetime.datetime` object
             - user: The user object
+
+        Implement the token getter::
+
+            @oauth.tokengetter
+            def bearer_token(access_token=None, refresh_token=None):
+                if access_token:
+                    return get_token(access_token=access_token)
+                if refresh_token:
+                    return get_token(refresh_token=refresh_token)
+                return None
         """
         self._tokengetter = f
 
@@ -192,17 +179,18 @@ class OAuth2Provider(object):
                     kwargs['scopes'] = scopes
                     kwargs.update(credentials)
                     return f(*args, **kwargs)
-                except errors.FatalClientError as e:
+                except oauth2.FatalClientError as e:
                     log.debug('Fatal client error')
                     return redirect(e.in_uri(self.error_uri))
 
-            if required.method == 'POST':
+            if request.method == 'POST':
                 if not f(*args, **kwargs):
                     # denied by user
-                    e = errors.AccessDeniedError()
+                    e = oauth2.AccessDeniedError()
                     return redirect(e.in_uri(redirect_uri))
 
-                scopes = request.values.get('scopes')
+                scope = request.values.get('scope')
+                scopes = scope.split()
                 credentials = dict(
                     client_id=request.values.get('client_id'),
                     redirect_uri=request.values.get('redirect_uri'),
@@ -219,9 +207,9 @@ class OAuth2Provider(object):
                         uri, http_method, body, headers, scopes, credentials)
                     log.debug('Authorization successful.')
                     return redirect(ret[0])
-                except errors.FatalClientError as e:
+                except oauth2.FatalClientError as e:
                     return redirect(e.in_uri(self.error_uri))
-                except errors.OAuth2Error as e:
+                except oauth2.OAuth2Error as e:
                     return redirect(e.in_uri(redirect_uri))
 
         return decorated
@@ -399,17 +387,17 @@ class OAuth2RequestValidator(RequestValidator):
     def validate_refresh_token(self, refresh_token, client, request,
                                *args, **kwargs):
         # TODO
-        pass
+        return True
 
     def validate_response_type(self, client_id, response_type, client, request,
                                *args, **kwargs):
         # TODO
-        pass
+        return True
 
     def validate_scopes(self, client_id, scopes, client, request,
                         *args, **kwargs):
         # TODO
-        pass
+        return True
 
     def validate_user(self, username, password, client, request,
                       *args, **kwargs):
@@ -430,9 +418,5 @@ def _extract_params():
     if 'HTTP_AUTHORIZATION' in headers:
         headers['Authorization'] = headers['HTTP_AUTHORIZATION']
 
-    items = request.form.items()
-    if items:
-        body = urlencoded(items)
-    else:
-        body = None
+    body = request.form.to_dict()
     return uri, http_method, body, headers

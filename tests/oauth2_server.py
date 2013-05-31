@@ -131,7 +131,7 @@ def create_server(app):
             # render a page for user to confirm the authorization
             return render_template('confirm.html')
 
-        confirm = request.forms.get('confirm', 'no')
+        confirm = request.form.get('confirm', 'no')
         return confirm == 'yes'
 
     @app.route('/access_token')
