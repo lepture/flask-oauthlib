@@ -12,7 +12,7 @@ import logging
 import datetime
 from functools import wraps
 from flask import _app_ctx_stack
-from flask import request, url_for, redirect, make_response
+from flask import request, url_for, redirect, make_response, session
 from werkzeug import cached_property
 from oauthlib.command import urlencoded
 from oauthlib.oauth2 import errors
@@ -100,6 +100,10 @@ class OAuth(object):
 
     @cached_property
     def server(self):
+        """All in one endpoints.
+
+        You need to define all the getters before using the server.
+        """
         if hasattr(self, '_clientgetter') and \
            hasattr(self, '_tokengetter') and \
            hasattr(self, '_grantgetter'):
@@ -154,23 +158,73 @@ class OAuth(object):
         self._grantgetter = f
 
     def authorize_handler(self, f):
+        """Authorization handler decorator.
+
+        This decorator will sort the parameters and headers out, and
+        pre validate everything::
+
+            @app.route('/oauth/authorize', methods=['GET', 'POST'])
+            @oauth.authorize_handler
+            def authorize(*args, **kwargs):
+                if request.method == 'GET':
+                    # render a page for user to confirm the authorization
+                    return render_template('oauthorize.html')
+
+                confirm = request.forms.get('confirm', 'no')
+                if confirm != 'yes':
+                    return redirect('/oauth/denied')
+                return True
+        """
         @wraps(f)
         def decorated(*args, **kwargs):
             uri, http_method, body, headers = _extract_params()
-            redirect_uri = request.args.get('redirect_uri', None)
-            log.debug('Found redirect_uri %s.', redirect_uri)
-
             # raise if server not implemented
             server = self.server
-            try:
-                scopes, credentials = server.validate_authorization_request(
-                    uri, http_method, body, headers)
-                kwargs['scopes'] = scopes
-                kwargs.update(credentials)
-                return f(*args, **kwargs)
-            except errors.FatalClientError as e:
-                log.debug('Fatal client error')
-                return redirect(e.in_uri(self.error_uri))
+
+            if request.method == 'GET':
+                redirect_uri = request.args.get('redirect_uri', None)
+                log.debug('Found redirect_uri %s.', redirect_uri)
+                try:
+                    ret = server.validate_authorization_request(
+                        uri, http_method, body, headers
+                    )
+                    scopes, credentials = ret
+                    #TODO: seems no need for keep it in the session
+                    session['oauth2_credentials'] = credentials
+                    kwargs['scopes'] = scopes
+                    kwargs.update(credentials)
+                    return f(*args, **kwargs)
+                except errors.FatalClientError as e:
+                    log.debug('Fatal client error')
+                    return redirect(e.in_uri(self.error_uri))
+
+            if required.method == 'POST':
+                ret = f(*args, **kwargs)
+                if ret is not True:
+                    return ret
+
+                scopes = request.values.get('scopes')
+                credentials = dict(
+                    client_id=request.values.get('client_id'),
+                    redirect_uri=request.values.get('redirect_uri'),
+                    response_type=request.values.get('response_type', None),
+                    state=request.values.get('state', None)
+                )
+                log.debug('Fetched credentials from request %r.', credentials)
+                credentials.update(session.get('oauth2_credentials', {}))
+                log.debug('Fetched credentials from session %r.', credentials)
+                redirect_uri = credentials.get('redirect_uri')
+                log.debug('Found redirect_uri %s.', redirect_uri)
+                try:
+                    ret = server.create_authorization_response(
+                        uri, http_method, body, headers, scopes, credentials)
+                    log.debug('Authorization successful.')
+                    return redirect(ret[0])
+                except errors.FatalClientError as e:
+                    return redirect(e.in_uri(self.error_uri))
+                except errors.OAuth2Error as e:
+                    return redirect(e.in_uri(redirect_uri))
+
         return decorated
 
     def access_token_handler(self, f):
