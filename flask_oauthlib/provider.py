@@ -75,11 +75,15 @@ class OAuth2Provider(object):
 
         if hasattr(self, '_clientgetter') and \
            hasattr(self, '_tokengetter') and \
-           hasattr(self, '_grantgetter'):
+           hasattr(self, '_tokensetter') and \
+           hasattr(self, '_grantgetter') and \
+           hasattr(self, '_grantsetter'):
             validator = OAuth2RequestValidator(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
+                tokensetter=self._tokensetter,
                 grantgetter=self._grantgetter,
+                grantsetter=self._grantsetter,
             )
             return Server(validator)
         raise RuntimeError('application not bound to required getters')
@@ -134,6 +138,11 @@ class OAuth2Provider(object):
         """
         self._tokengetter = f
 
+    def tokensetter(self, f):
+        """Register a function to save the bearer token.
+        """
+        self._tokensetter = f
+
     def grantgetter(self, f):
         """Register a function as the grant getter.
 
@@ -148,6 +157,17 @@ class OAuth2Provider(object):
             - delete: A function to delete itself
         """
         self._grantgetter = f
+
+    def grantsetter(self, f):
+        """Register a function to save the grant code.
+
+        The function accepts `client_id`, `code`, `request` and more::
+
+            @oauth.grantsetter
+            def set_grant(client_id, code, request, *args, **kwargs):
+                save_grant(client_id, code, request.user, request.scopes)
+        """
+        self._grantsetter = f
 
     def authorize_handler(self, f):
         """Authorization handler decorator.
@@ -262,10 +282,13 @@ class OAuth2RequestValidator(RequestValidator):
     :param tokengetter: a function to get the token object
     :param grantgetter: a function to get the grant object
     """
-    def __init__(self, clientgetter, tokengetter, grantgetter):
+    def __init__(self, clientgetter, tokengetter, tokensetter,
+                 grantgetter, grantsetter):
         self._clientgetter = clientgetter
         self._tokengetter = tokengetter
+        self._tokensetter = tokensetter
         self._grantgetter = grantgetter
+        self._grantsetter = grantsetter
 
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
@@ -298,8 +321,12 @@ class OAuth2RequestValidator(RequestValidator):
 
     def confirm_redirect_uri(self, client_id, code, redirect_uri, client,
                              *args, **kwargs):
-        #TODO
-        return True
+        grant = self._grantgetter(client_id=client_id, code=code)
+        if not grant:
+            return False
+        if hasattr(grant, 'validate_redirect_uri'):
+            return grant.validate_redirect_uri(redirect_uri)
+        return grant.redirect_uri == redirect_uri
 
     def confirm_scopes(self, refresh_token, scopes, request, *args, **kwargs):
         tok = self._tokengetter(refresh_token=refresh_token)
@@ -329,13 +356,14 @@ class OAuth2RequestValidator(RequestValidator):
         """Persist the authorization code.
         """
         request.client = request.client or self._clientgetter(client_id)
+        self._grantsetter(client_id, code, request, *args, **kwargs)
         return request.client.default_redirect_uri
 
     def save_bearer_token(self, token, request, *args, **kwargs):
         """Persist the Bearer token.
         """
-        print request.client
-        pass
+        self._tokensetter(token, request, *args, **kwargs)
+        return request.client.default_redirect_uri
 
     def validate_bearer_token(self, token, scopes, request):
         """Validate access token.
@@ -375,8 +403,16 @@ class OAuth2RequestValidator(RequestValidator):
         return False
 
     def validate_code(self, client_id, code, client, request, *args, **kwargs):
+        """Ensure the grant code is valid."""
         grant = self._grantgetter(client_id=client_id, code=code)
-        # TODO
+        if not grant:
+            return False
+        if hasattr(grant, 'expires') and \
+           datetime.datetime.utcnow() > grant.expires:
+            return False
+        request.state = kwargs.get('state')
+        request.user = grant.user
+        request.scopes = grant.scopes
         return True
 
     def validate_grant_type(self, client_id, grant_type, client, request,

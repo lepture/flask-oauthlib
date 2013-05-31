@@ -1,4 +1,5 @@
 # coding: utf-8
+import datetime
 from flask import g, render_template, request, redirect, session
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
@@ -53,15 +54,25 @@ class Grant(db.Model):
     user_id = db.Column(
         db.Integer, db.ForeignKey('user.id', ondelete='CASCADE')
     )
-    client_id = db.Column(db.Unicode(40), nullable=False)
     user = relationship('User')
+
+    client_id = db.Column(db.Unicode(40), nullable=False)
     code = db.Column(db.Unicode(255), index=True, nullable=False)
+
+    redirect_uri = db.Column(db.Unicode(255))
+    scope = db.Column(db.UnicodeText)
     expires = db.Column(db.DateTime)
 
     def delete(self):
         db.session.delete(self)
         db.session.commit()
         return self
+
+    @property
+    def scopes(self):
+        if self.scope:
+            return self.scope.split()
+        return None
 
 
 class Token(db.Model):
@@ -71,10 +82,18 @@ class Token(db.Model):
         db.Integer, db.ForeignKey('user.id', ondelete='CASCADE')
     )
     user = relationship('User')
+    token_type = db.Column(db.Unicode(40))
     access_token = db.Column(db.Unicode(255))
     refresh_token = db.Column(db.Unicode(255))
     expires = db.Column(db.DateTime)
     scope = db.Column(db.UnicodeText)
+
+    def __init__(self, **kwargs):
+        expires_in = kwargs.get('expires_in')
+        self.expires = datetime.datetime.utcnow() + \
+                datetime.timedelta(seconds=expires_in)
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     @property
     def scopes(self):
@@ -122,6 +141,28 @@ def create_server(app):
         if refresh_token:
             return Token.query.filter_by(refresh_token=refresh_token).first()
         return None
+
+    @oauth.grantsetter
+    def set_grant(client_id, code, request, *args, **kwargs): 
+        expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
+        grant = Grant(
+            client_id=client_id,
+            code=code['code'],
+            redirect_uri=request.redirect_uri,
+            scope=' '.join(request.scopes),
+            user_id=g.user.id,
+            expires=expires,
+        )
+        db.session.add(grant)
+        db.session.commit()
+
+    @oauth.tokensetter
+    def set_token(token, request, *args, **kwargs):
+        tok = Token(**token)
+        tok.user_id = request.user.id
+        tok.client_id = request.client.client_id
+        db.session.add(tok)
+        db.session.commit()
 
     @app.before_request
     def load_current_user():

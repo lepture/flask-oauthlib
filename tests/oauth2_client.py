@@ -20,8 +20,6 @@ def create_server(app):
 
     @app.route('/')
     def index():
-        if 'dev_token' in session:
-            return session['dev_token']
         return redirect(url_for('login'))
 
 
