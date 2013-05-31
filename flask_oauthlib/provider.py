@@ -12,7 +12,9 @@ import logging
 import datetime
 from functools import wraps
 from flask import _app_ctx_stack
-from flask import request, url_for, redirect, make_response, session
+from flask import request, url_for
+from flask import redirect, make_response, abort
+from flask import session
 from werkzeug import cached_property
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
@@ -271,8 +273,21 @@ class OAuth2Provider(object):
     def refresh_token_handler(self, func):
         pass
 
-    def require_oauth(self, scope=None):
-        pass
+    def require_oauth(self, scopes=None):
+        """Protect resource with specified scopes."""
+        def wrapper(f):
+            @wraps(f)
+            def decorated(*args, **kwargs):
+                uri, http_method, body, headers = _extract_params()
+                server = self.server
+                valid, _ = server.verify_request(
+                    uri, http_method, body, headers, scopes
+                )
+                if not valid:
+                    return abort(403)
+                return f(*args, **kwargs)
+            return decorated
+        return wrapper
 
 
 class OAuth2RequestValidator(RequestValidator):
