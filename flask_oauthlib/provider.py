@@ -14,7 +14,7 @@ from functools import wraps
 from flask import _app_ctx_stack
 from flask import request, url_for, redirect, make_response, session
 from werkzeug import cached_property
-from oauthlib.command import urlencoded
+from oauthlib.common import urlencoded
 from oauthlib.oauth2 import errors
 from oauthlib.oauth2 import RequestValidator, Server
 
@@ -170,10 +170,8 @@ class OAuth2Provider(object):
                     # render a page for user to confirm the authorization
                     return render_template('oauthorize.html')
 
-                confirm = request.forms.get('confirm', 'no')
-                if confirm != 'yes':
-                    return redirect('/oauth/denied')
-                return True
+                confirm = request.form.get('confirm', 'no')
+                return confirm == 'yes'
         """
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -199,9 +197,10 @@ class OAuth2Provider(object):
                     return redirect(e.in_uri(self.error_uri))
 
             if required.method == 'POST':
-                ret = f(*args, **kwargs)
-                if ret is not True:
-                    return ret
+                if not f(*args, **kwargs):
+                    # denied by user
+                    e = errors.AccessDeniedError()
+                    return redirect(e.in_uri(redirect_uri))
 
                 scopes = request.values.get('scopes')
                 credentials = dict(
@@ -430,5 +429,10 @@ def _extract_params():
         del headers['wsgi.errors']
     if 'HTTP_AUTHORIZATION' in headers:
         headers['Authorization'] = headers['HTTP_AUTHORIZATION']
-    body = urlencoded(request.form.items())
+
+    items = request.form.items()
+    if items:
+        body = urlencoded(items)
+    else:
+        body = None
     return uri, http_method, body, headers
