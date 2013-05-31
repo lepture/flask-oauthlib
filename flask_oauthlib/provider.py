@@ -69,10 +69,10 @@ class OAuth2Provider(object):
 
     @cached_property
     def server(self):
-        """All in one endpoints.
+        """All in one endpoints."""
+        if hasattr(self, '_validator'):
+            return Server(self._validator)
 
-        You need to define all the getters before using the server.
-        """
         if hasattr(self, '_clientgetter') and \
            hasattr(self, '_tokengetter') and \
            hasattr(self, '_grantgetter'):
@@ -96,6 +96,11 @@ class OAuth2Provider(object):
             - redirect_uris: A list of redirect uris
             - default_redirect_uri: One of the redirect uris
             - default_scopes: Default scopes of the client
+
+        The client may contain more information, which is suggested:
+
+            - allowed_grant_types: A list of grant types
+            - allowed_response_types: A list of response types
 
         Implement the client getter::
 
@@ -255,21 +260,7 @@ class OAuth2RequestValidator(RequestValidator):
 
     :param clientgetter: a function to get the client object
     :param tokengetter: a function to get the token object
-
-    The `client` is an object contains at least:
-
-        - client_id
-        - client_secret
-        - client_type
-        - redirect_uris
-        - default_redirect_uri
-        - default_scopes
-
-    The `token` is an object contains at least:
-
-        - scopes
-        - expires
-        - user
+    :param grantgetter: a function to get the grant object
     """
     def __init__(self, clientgetter, tokengetter, grantgetter):
         self._clientgetter = clientgetter
@@ -310,12 +301,12 @@ class OAuth2RequestValidator(RequestValidator):
         return set(tok.scopes) == set(scopes)
 
     def get_default_redirect_uri(self, client_id, request, *args, **kwargs):
-        client = request.client or self._clientgetter(client_id)
-        return client.default_redirect_uri
+        request.client = request.client or self._clientgetter(client_id)
+        return request.client.default_redirect_uri
 
     def get_default_scopes(self, client_id, request, *args, **kwargs):
-        client = request.client or self._clientgetter(client_id)
-        return client.default_scopes
+        request.client = request.client or self._clientgetter(client_id)
+        return request.client.default_scopes
 
     def invalidate_authorization_code(self, client_id, code, request,
                                       *args, **kwargs):
@@ -329,7 +320,15 @@ class OAuth2RequestValidator(RequestValidator):
 
     def save_authorization_code(self, client_id, code, request,
                                 *args, **kwargs):
-        # TODO
+        """Persist the authorization code.
+        """
+        request.client = request.client or self._clientgetter(client_id)
+        return request.client.default_redirect_uri
+
+    def save_bearer_token(self, token, request, *args, **kwargs):
+        """Persist the Bearer token.
+        """
+        print request.client
         pass
 
     def validate_bearer_token(self, token, scopes, request):
@@ -375,8 +374,23 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_grant_type(self, client_id, grant_type, client, request,
                             *args, **kwargs):
-        # TODO
-        pass
+        """Ensure the client is authorized to use the grant type requested.
+
+        It will allow any of the four grant types (`authorization_code`,
+        `password`, `client_credentials`, `refresh_token`) by default.
+        Implemented `allowed_grant_types` for client object to authorize
+        the request.
+
+        It is suggested that `allowed_grant_types` should contain at least
+        `authorization_code` and `refresh_token`.
+        """
+        if grant_type not in ('authorization_code', 'password',
+                              'client_credentials', 'refresh_token'):
+            return False
+
+        if hasattr(client, 'allowed_grant_types'):
+            return grant_type in client.allowed_grant_types
+        return True
 
     def validate_redirect_uri(self, client_id, redirect_uri, request,
                               *args, **kwargs):
@@ -391,7 +405,17 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_response_type(self, client_id, response_type, client, request,
                                *args, **kwargs):
-        # TODO
+        """Ensure client is authorized to use the response type requested.
+
+        It will allow any of the two (`code`, `token`) response types by
+        default. Implemented `allowed_response_types` for client object
+        to authorize the request.
+        """
+        if response_type not in ('code', 'token'):
+            return False
+
+        if hasattr(client, 'allowed_response_types'):
+            return response_type in client.allowed_response_types
         return True
 
     def validate_scopes(self, client_id, scopes, client, request,
