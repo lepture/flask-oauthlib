@@ -20,6 +20,9 @@ def create_server(app):
 
     @app.route('/')
     def index():
+        if 'dev_token' in session:
+            ret = dev.get('/email')
+            return jsonify(ret.data)
         return redirect(url_for('login'))
 
 
@@ -41,6 +44,11 @@ def create_server(app):
             )
         session['dev_token'] = (resp['access_token'], '')
         return jsonify(resp)
+
+    @app.route('/address')
+    def address():
+        ret = dev.get('/address')
+        return ret.raw_data
 
     @dev.tokengetter
     def get_oauth_token():

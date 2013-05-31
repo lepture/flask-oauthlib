@@ -1,6 +1,6 @@
 # coding: utf-8
 import datetime
-from flask import g, render_template, request, redirect, session
+from flask import g, render_template, request, redirect, session, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_oauthlib.provider import OAuth2Provider
@@ -188,6 +188,16 @@ def create_server(app):
     @oauth.access_token_handler
     def access_token():
         return {}
+
+    @app.route('/email')
+    @oauth.require_oauth(['email'])
+    def email():
+        return jsonify(email='me@example.com')
+
+    @app.route('/address')
+    @oauth.require_oauth(['address'])
+    def address():
+        return jsonify(address='earth')
 
     return app
 
