@@ -2,7 +2,7 @@ from flask import Flask, redirect, url_for, session, request, jsonify
 from flask_oauthlib.client import OAuth
 
 
-def create_server(app):
+def create_client(app):
     oauth = OAuth(app)
 
     dev = oauth.remote_app(
@@ -17,14 +17,12 @@ def create_server(app):
         authorize_url='http://127.0.0.1:5000/authorize'
     )
 
-
     @app.route('/')
     def index():
         if 'dev_token' in session:
             ret = dev.get('/email')
             return jsonify(ret.data)
         return redirect(url_for('login'))
-
 
     @app.route('/login')
     def login():
@@ -62,5 +60,5 @@ if __name__ == '__main__':
     app = Flask(__name__)
     app.debug = True
     app.secret_key = 'development'
-    app = create_server(app)
+    app = create_client(app)
     app.run(host='localhost', port=8000)

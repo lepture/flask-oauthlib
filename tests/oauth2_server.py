@@ -1,6 +1,6 @@
 # coding: utf-8
 import datetime
-from flask import g, render_template, request, redirect, session, jsonify
+from flask import g, render_template, request, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_oauthlib.provider import OAuth2Provider
@@ -143,7 +143,7 @@ def create_server(app):
         return None
 
     @oauth.grantsetter
-    def set_grant(client_id, code, request, *args, **kwargs): 
+    def set_grant(client_id, code, request, *args, **kwargs):
         expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
         grant = Grant(
             client_id=client_id,
