@@ -18,7 +18,7 @@ setup(
     author=author,
     author_email=author_email,
     url=info.REPOSITORY,
-    packages=["flask_oauthlib"],
+    packages=["flask_oauthlib", "flask_oauthlib.provider"],
     description="OAuthlib for Flask",
     zip_safe=False,
     include_package_data=True,

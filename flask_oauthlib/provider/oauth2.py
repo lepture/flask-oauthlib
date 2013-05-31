@@ -1,7 +1,7 @@
 # coding: utf-8
 """
-    flask_oauthlib.provider
-    ~~~~~~~~~~~~~~~~~~~~~~~
+    flask_oauthlib.provider.oauth2
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Implemnts OAuth2 provider support for Flask.
 
@@ -19,8 +19,9 @@ from werkzeug import cached_property
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
 
+__all__ = ('OAuth2Provider', 'OAuth2RequestValidator')
 
-log = logging.getLogger('flask_oauthlib.provider')
+log = logging.getLogger('flask_oauthlib')
 
 
 class OAuth2Provider(object):

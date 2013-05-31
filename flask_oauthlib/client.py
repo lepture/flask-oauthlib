@@ -19,9 +19,9 @@ from flask import request, redirect, json, session
 from werkzeug import url_quote, url_decode, url_encode, parse_options_header
 
 
-__all__ = ['OAuth', 'OAuthRemoteApp', 'OAuthResponse', 'OAuthException']
+__all__ = ('OAuth', 'OAuthRemoteApp', 'OAuthResponse', 'OAuthException')
 
-log = logging.getLogger('flask_oauthlib.client')
+log = logging.getLogger('flask_oauthlib')
 
 
 class OAuth(object):
