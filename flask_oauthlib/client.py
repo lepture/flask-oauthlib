@@ -494,6 +494,10 @@ class OAuthRemoteApp(object):
             )
         return data
 
+    def handle_unknown_response(self):
+        """Handles a unknown authorization response."""
+        return None
+
     def authorized_handler(self, f):
         @wraps(f)
         def decorated(*args, **kwargs):

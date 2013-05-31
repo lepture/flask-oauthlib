@@ -36,9 +36,8 @@ def create_server(app):
     @dev.authorized_handler
     def authorized(resp):
         if resp is None:
-            return 'Access denied: reason=%s error=%s' % (
-                request.args['error_reason'],
-                request.args['error_description']
+            return 'Access denied: error=%s' % (
+                request.args['error']
             )
         session['dev_token'] = (resp['access_token'], '')
         return jsonify(resp)
