@@ -278,9 +278,11 @@ class OAuth2Provider(object):
 class OAuth2RequestValidator(RequestValidator):
     """Subclass of Request Validator.
 
-    :param clientgetter: a function to get the client object
-    :param tokengetter: a function to get the token object
-    :param grantgetter: a function to get the grant object
+    :param clientgetter: a function to get client object
+    :param tokengetter: a function to get bearer token
+    :param tokensetter: a function to save bearer token
+    :param grantgetter: a function to get grant token
+    :param grantsetter: a function to save grant token
     """
     def __init__(self, clientgetter, tokengetter, tokensetter,
                  grantgetter, grantsetter):
@@ -321,6 +323,13 @@ class OAuth2RequestValidator(RequestValidator):
 
     def confirm_redirect_uri(self, client_id, code, redirect_uri, client,
                              *args, **kwargs):
+        """Ensure client is authorized to redirect to the redirect_uri.
+
+        This method is used in the authorization code grant flow. It will
+        compare redirect_uri and the one in grant token strictly, you can
+        add a `validate_redirect_uri` function on grant for a customized
+        validation.
+        """
         grant = self._grantgetter(client_id=client_id, code=code)
         if not grant:
             return False
@@ -333,10 +342,12 @@ class OAuth2RequestValidator(RequestValidator):
         return set(tok.scopes) == set(scopes)
 
     def get_default_redirect_uri(self, client_id, request, *args, **kwargs):
+        """Default redirect_uri for the given client."""
         request.client = request.client or self._clientgetter(client_id)
         return request.client.default_redirect_uri
 
     def get_default_scopes(self, client_id, request, *args, **kwargs):
+        """Default scopes for the given client."""
         request.client = request.client or self._clientgetter(client_id)
         return request.client.default_scopes
 
@@ -353,15 +364,13 @@ class OAuth2RequestValidator(RequestValidator):
 
     def save_authorization_code(self, client_id, code, request,
                                 *args, **kwargs):
-        """Persist the authorization code.
-        """
+        """Persist the authorization code."""
         request.client = request.client or self._clientgetter(client_id)
         self._grantsetter(client_id, code, request, *args, **kwargs)
         return request.client.default_redirect_uri
 
     def save_bearer_token(self, token, request, *args, **kwargs):
-        """Persist the Bearer token.
-        """
+        """Persist the Bearer token."""
         self._tokensetter(token, request, *args, **kwargs)
         return request.client.default_redirect_uri
 
@@ -395,6 +404,7 @@ class OAuth2RequestValidator(RequestValidator):
         return True
 
     def validate_client_id(self, client_id, request, *args, **kwargs):
+        """Ensure client_id belong to a valid and active client."""
         client = request.client or self._clientgetter(client_id)
         if client:
             # attach client to request object
@@ -437,9 +447,18 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_redirect_uri(self, client_id, redirect_uri, request,
                               *args, **kwargs):
+        """Ensure client is authorized to redirect to the redirect_uri.
+
+        This method is used in the authorization code grant flow and also
+        in implicit grant flow. It will detect if redirect_uri in client's
+        redirect_uris strictly, you can add a `validate_redirect_uri`
+        function on grant for a customized validation.
+        """
         request.client = request.client = self._clientgetter(client_id)
-        # TODO: redirect_uri = clean(redirect_uri)
-        return redirect_uri in request.client.redirect_uris
+        client = request.client
+        if hasattr(client, 'validate_redirect_uri'):
+            return client.validate_redirect_uri(redirect_uri)
+        return redirect_uri in client.redirect_uris
 
     def validate_refresh_token(self, refresh_token, client, request,
                                *args, **kwargs):
