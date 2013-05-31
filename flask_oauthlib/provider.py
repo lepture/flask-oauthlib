@@ -299,7 +299,27 @@ class OAuth2RequestValidator(RequestValidator):
 
         .. _`Section 3.2.1`: http://tools.ietf.org/html/rfc6749#section-3.2.1
         """
-        # TODO
+        auth = request.headers.get('HTTP_AUTHORIZATION', None)
+        if auth:
+            try:
+                _, base64 = auth.split(' ')
+                client_id, client_secret = base64.decode('base64').split(':')
+            except:
+                return False
+        else:
+            client_id = request.client_id
+            client_secret = request.client_secret
+
+        client = self._clientgetter(client_id)
+        if not client:
+            return False
+        request.client = client
+
+        confidential = 'confidential'
+        if hasattr(client, 'confidential'):
+            confidential = client.confidential
+        return (client.client_type == confidential and
+                client.client_secret == client_secret)
 
     def authenticate_client_id(self, client_id, request, *args, **kwargs):
         """Authenticate a non-confidential client.
@@ -482,7 +502,14 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_scopes(self, client_id, scopes, client, request,
                         *args, **kwargs):
-        # TODO
+        """Ensure the client is authorized access to requested scopes."""
+        if not client:
+            client = request.client or self._clientgetter(client_id)
+            request.client = client
+        if set(client.default_scopes).issuperset(set(scopes)):
+            return True
+        if hasattr(client, 'validate_scopes'):
+            return client.validate_scopes(scopes)
         return True
 
     def validate_user(self, username, password, client, request,
