@@ -22,7 +22,7 @@ from oauthlib.oauth2 import RequestValidator, Server
 log = logging.getLogger('flask_oauthlib.provider')
 
 
-class OAuth(object):
+class OAuth2Provider(object):
     """Provide secure services using OAuth2.
 
     The server should provide an authorize handler, access token hander,
@@ -107,7 +107,7 @@ class OAuth(object):
         if hasattr(self, '_clientgetter') and \
            hasattr(self, '_tokengetter') and \
            hasattr(self, '_grantgetter'):
-            validator = OAuthRequestValidator(
+            validator = OAuth2RequestValidator(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
                 grantgetter=self._grantgetter,
@@ -263,7 +263,7 @@ class OAuth(object):
         pass
 
 
-class OAuthRequestValidator(RequestValidator):
+class OAuth2RequestValidator(RequestValidator):
     """Subclass of Request Validator.
 
     :param clientgetter: a function to get the client object
