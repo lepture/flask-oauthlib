@@ -325,7 +325,8 @@ class OAuth2RequestValidator(RequestValidator):
             try:
                 _, base64 = auth.split(' ')
                 client_id, client_secret = base64.decode('base64').split(':')
-            except:
+            except Exception as e:
+                log.debug('Authenticate client failed with exception: %r', e)
                 return False
         else:
             client_id = request.client_id
@@ -333,14 +334,23 @@ class OAuth2RequestValidator(RequestValidator):
 
         client = self._clientgetter(client_id)
         if not client:
+            log.debug('Authenticate client failed, client not found.')
             return False
+
         request.client = client
+        if client.client_secret != client_secret:
+            log.debug('Authenticate client failed, secret not match.')
+            return False
 
         confidential = 'confidential'
         if hasattr(client, 'confidential'):
             confidential = client.confidential
-        return (client.client_type == confidential and
-                client.client_secret == client_secret)
+
+        if client.client_type != confidential:
+            log.debug('Authenticate client failed, not confidential.')
+            return False
+        log.debug('Authenticate client success.')
+        return True
 
     def authenticate_client_id(self, client_id, request, *args, **kwargs):
         """Authenticate a non-confidential client.
@@ -348,8 +358,10 @@ class OAuth2RequestValidator(RequestValidator):
         :param client_id: Client ID of the non-confidential client
         :param request: The Request object passed by oauthlib
         """
+        log.debug('Authenticate client %r.', client_id)
         client = request.client or self._clientgetter(client_id)
         if not client:
+            log.debug('Authenticate failed, client not found.')
             return False
 
         # attach client on request for convenience
@@ -360,7 +372,11 @@ class OAuth2RequestValidator(RequestValidator):
         confidential = 'confidential'
         if hasattr(client, 'confidential'):
             confidential = client.confidential
-        return client.client_type != confidential
+
+        if client.client_type == confidential:
+            log.debug('Authenticate client failed, confidential client.')
+            return False
+        return True
 
     def confirm_redirect_uri(self, client_id, code, redirect_uri, client,
                              *args, **kwargs):
@@ -371,8 +387,11 @@ class OAuth2RequestValidator(RequestValidator):
         add a `validate_redirect_uri` function on grant for a customized
         validation.
         """
+        log.debug('Confirm redirect uri for client %r and code %r.',
+                  client_id, code)
         grant = self._grantgetter(client_id=client_id, code=code)
         if not grant:
+            log.debug('Grant not found.')
             return False
         if hasattr(grant, 'validate_redirect_uri'):
             return grant.validate_redirect_uri(redirect_uri)
@@ -407,12 +426,17 @@ class OAuth2RequestValidator(RequestValidator):
     def save_authorization_code(self, client_id, code, request,
                                 *args, **kwargs):
         """Persist the authorization code."""
+        log.debug(
+            'Persist authorization code %r for client %r',
+            code, client_id
+        )
         request.client = request.client or self._clientgetter(client_id)
         self._grantsetter(client_id, code, request, *args, **kwargs)
         return request.client.default_redirect_uri
 
     def save_bearer_token(self, token, request, *args, **kwargs):
         """Persist the Bearer token."""
+        log.debug('Save bearer token %r', token)
         self._tokensetter(token, request, *args, **kwargs)
         return request.client.default_redirect_uri
 
@@ -429,16 +453,20 @@ class OAuth2RequestValidator(RequestValidator):
             2) if the token has expired
             3) if the scopes are available
         """
+        log.debug('Validate bearer token %r', token)
         tok = self._tokengetter(access_token=token)
         if not tok:
+            log.debug('Bearer token not found.')
             return False
 
         # validate expires
         if datetime.datetime.utcnow() > tok.expires:
+            log.debug('Bearer token is expired.')
             return False
 
         # validate scopes
         if not set(tok.scopes).issuperset(set(scopes)):
+            log.debug('Bearer token scope not valid.')
             return False
 
         request.user = tok.user
@@ -447,6 +475,7 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_client_id(self, client_id, request, *args, **kwargs):
         """Ensure client_id belong to a valid and active client."""
+        log.debug('Validate client %r', client_id)
         client = request.client or self._clientgetter(client_id)
         if client:
             # attach client to request object
@@ -456,11 +485,16 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_code(self, client_id, code, client, request, *args, **kwargs):
         """Ensure the grant code is valid."""
+        log.debug(
+            'Validate code for client %r and code %r', client_id, code
+        )
         grant = self._grantgetter(client_id=client_id, code=code)
         if not grant:
+            log.debug('Grant not found.')
             return False
         if hasattr(grant, 'expires') and \
            datetime.datetime.utcnow() > grant.expires:
+            log.debug('Grant is expired.')
             return False
         request.state = kwargs.get('state')
         request.user = grant.user
