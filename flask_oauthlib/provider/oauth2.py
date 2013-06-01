@@ -73,8 +73,10 @@ class OAuth2Provider(object):
     @cached_property
     def server(self):
         """All in one endpoints."""
+        app = self.get_app()
+        expires_in = app.config.get('OAUTH_PROVIDER_TOKEN_EXPIRES_IN')
         if hasattr(self, '_validator'):
-            return Server(self._validator)
+            return Server(self._validator, token_expires_in=expires_in)
 
         if hasattr(self, '_clientgetter') and \
            hasattr(self, '_tokengetter') and \
@@ -88,7 +90,7 @@ class OAuth2Provider(object):
                 grantgetter=self._grantgetter,
                 grantsetter=self._grantsetter,
             )
-            return Server(validator)
+            return Server(validator, token_expires_in=expires_in)
         raise RuntimeError('application not bound to required getters')
 
     def clientgetter(self, f):
@@ -225,7 +227,7 @@ class OAuth2Provider(object):
         scopes = scope.split()
         credentials = dict(
             client_id=request.values.get('client_id'),
-            redirect_uri = request.values.get('redirect_uri', None),
+            redirect_uri=request.values.get('redirect_uri', None),
             response_type=request.values.get('response_type', None),
             state=request.values.get('state', None)
         )
