@@ -216,31 +216,36 @@ class OAuth2Provider(object):
                     # denied by user
                     e = oauth2.AccessDeniedError()
                     return redirect(e.in_uri(redirect_uri))
-
-                scope = request.values.get('scope')
-                scopes = scope.split()
-                credentials = dict(
-                    client_id=request.values.get('client_id'),
-                    redirect_uri=redirect_uri,
-                    response_type=request.values.get('response_type', None),
-                    state=request.values.get('state', None)
-                )
-                log.debug('Fetched credentials from request %r.', credentials)
-                credentials.update(session.get('oauth2_credentials', {}))
-                log.debug('Fetched credentials from session %r.', credentials)
-                redirect_uri = credentials.get('redirect_uri')
-                log.debug('Found redirect_uri %s.', redirect_uri)
-                try:
-                    ret = server.create_authorization_response(
-                        uri, http_method, body, headers, scopes, credentials)
-                    log.debug('Authorization successful.')
-                    return redirect(ret[0])
-                except oauth2.FatalClientError as e:
-                    return redirect(e.in_uri(self.error_uri))
-                except oauth2.OAuth2Error as e:
-                    return redirect(e.in_uri(redirect_uri))
-
+                return self.confirm_authorization_request()
         return decorated
+
+    def confirm_authorization_request(self):
+        """When consumer confirm the authrozation."""
+        scope = request.values.get('scope') or ''
+        scopes = scope.split()
+        credentials = dict(
+            client_id=request.values.get('client_id'),
+            redirect_uri = request.values.get('redirect_uri', None),
+            response_type=request.values.get('response_type', None),
+            state=request.values.get('state', None)
+        )
+        log.debug('Fetched credentials from request %r.', credentials)
+        credentials.update(session.get('oauth2_credentials', {}))
+        log.debug('Fetched credentials from session %r.', credentials)
+        redirect_uri = credentials.get('redirect_uri')
+        log.debug('Found redirect_uri %s.', redirect_uri)
+
+        server = self.server
+        uri, http_method, body, headers = _extract_params()
+        try:
+            ret = server.create_authorization_response(
+                uri, http_method, body, headers, scopes, credentials)
+            log.debug('Authorization successful.')
+            return redirect(ret[0])
+        except oauth2.FatalClientError as e:
+            return redirect(e.in_uri(self.error_uri))
+        except oauth2.OAuth2Error as e:
+            return redirect(e.in_uri(redirect_uri))
 
     def access_token_handler(self, f):
         """Access token handler decorator.
