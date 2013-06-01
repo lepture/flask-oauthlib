@@ -10,17 +10,17 @@ def create_client(app):
         consumer_key='dev',
         consumer_secret='dev',
         request_token_params={'scope': 'email'},
-        base_url='http://127.0.0.1:5000/',
+        base_url='http://127.0.0.1:5000/api/',
         request_token_url=None,
         access_token_method='GET',
-        access_token_url='http://127.0.0.1:5000/access_token',
-        authorize_url='http://127.0.0.1:5000/authorize'
+        access_token_url='http://127.0.0.1:5000/oauth/access_token',
+        authorize_url='http://127.0.0.1:5000/oauth/authorize'
     )
 
     @app.route('/')
     def index():
         if 'dev_token' in session:
-            ret = dev.get('/email')
+            ret = dev.get('email')
             return jsonify(ret.data)
         return redirect(url_for('login'))
 
@@ -45,7 +45,7 @@ def create_client(app):
 
     @app.route('/address')
     def address():
-        ret = dev.get('/address')
+        ret = dev.get('address')
         return ret.raw_data
 
     @dev.tokengetter

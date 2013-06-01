@@ -169,11 +169,11 @@ def create_server(app):
         user = User.query.get(1)
         g.user = user
 
-    @app.route('/')
+    @app.route('/home')
     def home():
         return render_template('home.html')
 
-    @app.route('/authorize', methods=['GET', 'POST'])
+    @app.route('/oauth/authorize', methods=['GET', 'POST'])
     @oauth.authorize_handler
     def authorize(*args, **kwargs):
         # NOTICE: for real project, you need to require login
@@ -184,17 +184,17 @@ def create_server(app):
         confirm = request.form.get('confirm', 'no')
         return confirm == 'yes'
 
-    @app.route('/access_token')
+    @app.route('/oauth/access_token')
     @oauth.access_token_handler
     def access_token():
         return {}
 
-    @app.route('/email')
+    @app.route('/api/email')
     @oauth.require_oauth(['email'])
     def email():
         return jsonify(email='me@example.com')
 
-    @app.route('/address')
+    @app.route('/api/address')
     @oauth.require_oauth(['address'])
     def address():
         return jsonify(address='earth')
