@@ -286,12 +286,12 @@ class OAuth2Provider(object):
             def decorated(*args, **kwargs):
                 uri, http_method, body, headers = _extract_params()
                 server = self.server
-                valid, _ = server.verify_request(
+                valid, req = server.verify_request(
                     uri, http_method, body, headers, scopes
                 )
                 if not valid:
                     return abort(403)
-                return f(*args, **kwargs)
+                return f(*((req,) + args), **kwargs)
             return decorated
         return wrapper
 
