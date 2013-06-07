@@ -4,7 +4,7 @@ python:
     - "2.7"
 
 script:
-    - nosetests -s
+    - DEBUG=1 nosetests -s
 
 after_success:
     - pip install coveralls
