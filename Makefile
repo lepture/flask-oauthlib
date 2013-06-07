@@ -4,11 +4,11 @@ lint:
 	@flake8 flask-oauthlib tests
 
 test:
-	@nosetests -s
+	@DEBUG=1 nosetests -s
 
 coverage:
 	@rm -f .coverage
-	@nosetests --with-coverage --cover-package=flask-oauthlib --cover-html
+	@DEBUG=1 nosetests --with-coverage --cover-package=flask_oauthlib --cover-html
 
 clean: clean-build clean-pyc clean-docs
 
