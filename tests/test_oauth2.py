@@ -2,6 +2,7 @@
 
 import os
 import tempfile
+from urlparse import urlparse 
 from flask import Flask
 from .oauth2_server import create_server
 from .oauth2_client import create_client
@@ -67,6 +68,15 @@ class TestAuth(BaseSuite):
 
     def test_get_access_token(self):
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
-        url = rv.location.replace('http://localhost:8000', '')
-        rv = self.client.get(url)
-        assert "access_token" in rv.data
+        rv = self.client.get(clean_url(rv.location))
+        assert 'access_token' in rv.data
+
+    def test_full_flow(self):
+        self.test_get_access_token()
+        rv = self.client.get('/')
+        assert 'username' in rv.data
+
+
+def clean_url(location):
+    ret = urlparse(location)
+    return '%s?%s' % (ret.path, ret.query)
