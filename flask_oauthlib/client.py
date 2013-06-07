@@ -466,6 +466,7 @@ class OAuthRemoteApp(object):
             'client_secret': self.consumer_secret,
             'redirect_uri': session.get('%s_oauthredir' % self.name)
         }
+        log.debug('Prepare oauth2 remote args %r', remote_args)
         remote_args.update(self.access_token_params)
         if self.access_token_method == 'POST':
             body = client.prepare_request_body(**remote_args)

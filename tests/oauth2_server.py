@@ -5,11 +5,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_oauthlib.provider import OAuth2Provider
 
-import logging
-log = logging.getLogger('flask_oauthlib')
-log.addHandler(logging.StreamHandler())
-log.setLevel(logging.DEBUG)
-
 
 db = SQLAlchemy()
 

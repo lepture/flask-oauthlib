@@ -68,6 +68,5 @@ class TestAuth(BaseSuite):
     def test_get_access_token(self):
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         url = rv.location.replace('http://localhost:8000', '')
-        print url
         rv = self.client.get(url)
-        print rv.data
+        assert "access_token" in rv.data
