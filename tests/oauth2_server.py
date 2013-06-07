@@ -152,12 +152,19 @@ def create_server(app):
         db.session.commit()
 
     @oauth.tokensetter
-    def set_token(token, request, *args, **kwargs):
+    def set_token(access_token, token_type, scopes, client, user, 
+            expires_in, refresh_token):
         # In real project, a token is unique bound to user and client.
         # Which means, you don't need to create a token every time.
-        tok = Token(**token)
-        tok.user_id = request.user.id
-        tok.client_id = request.client.client_id
+        tok = Token(
+            access_token=access_token,
+            token_type=token_type,
+            expires_in=expires_in, 
+            refresh_token=refresh_token,
+            scope=' '.join(scopes)
+        )
+        tok.user_id = user.id
+        tok.client_id = client.client_id
         db.session.add(tok)
         db.session.commit()
 

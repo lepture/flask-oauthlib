@@ -150,6 +150,7 @@ class OAuth2Provider(object):
         The function accepts the folllowing parameters:
 
             - access_token: A string token
+            - token_type: A string describing the type of token provided
             - scopes: A list of scopes for the token 
             - client: The client object 
             - user: The user object 
@@ -468,7 +469,8 @@ class OAuth2RequestValidator(RequestValidator):
         log.debug('Save bearer token %r', token)
         self._tokensetter(
                 access_token = token['access_token'],
-                scopes = request.scopes
+                token_type = token['token_type'],
+                scopes = request.scopes,
                 client = request.client,
                 user = request.user,
                 expires_in = token['expires_in'],
