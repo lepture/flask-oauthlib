@@ -146,6 +146,25 @@ class OAuth2Provider(object):
 
     def tokensetter(self, f):
         """Register a function to save the bearer token.
+
+        The function accepts the folllowing parameters:
+
+            - access_token: A string token
+            - scopes: A list of scopes for the token 
+            - client: The client object 
+            - user: The user object 
+            - expires_in: Number of seconds until token should expire
+            - refresh_token: Either a string token or None
+        
+        Implement the token setter::
+        
+            @oauth.tokensetter
+            def set_token(access_token, scopes, client, user, 
+                        expires_in, refresh_token):
+                expires_at = datetime.now() + timedelta(seconds=expires_in)
+                save_token(access_token, scopes, client, user, 
+                        expires_at, refresh_token)
+
         """
         self._tokensetter = f
 
@@ -447,7 +466,14 @@ class OAuth2RequestValidator(RequestValidator):
     def save_bearer_token(self, token, request, *args, **kwargs):
         """Persist the Bearer token."""
         log.debug('Save bearer token %r', token)
-        self._tokensetter(token, request, *args, **kwargs)
+        self._tokensetter(
+                access_token = token['access_token'],
+                scopes = request.scopes
+                client = request.client,
+                user = request.user,
+                expires_in = token['expires_in'],
+                refresh_token = token.get('refresh_token', None)
+        )
         return request.client.default_redirect_uri
 
     def validate_bearer_token(self, token, scopes, request):
