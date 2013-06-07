@@ -31,6 +31,12 @@ class BaseSuite(object):
         os.unlink(self.db_file)
 
 
+authorize_url = (
+    '/oauth/authorize?response_type=code&client_id=dev'
+    '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized&scope=email'
+)
+
+
 class TestAuth(BaseSuite):
     def test_login(self):
         rv = self.client.get('/login')
@@ -44,20 +50,24 @@ class TestAuth(BaseSuite):
         #print rv.data
 
     def test_oauth_authorize_valid_url(self):
-        url = ('/oauth/authorize?response_type=code&client_id=dev'
-               '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized'
-               '&scope=email')
-        rv = self.client.get(url)
+        rv = self.client.get(authorize_url)
         # valid
         assert '</form>' in rv.data
 
-        rv = self.client.post(url, data=dict(
+        rv = self.client.post(authorize_url, data=dict(
             confirm='no'
         ))
         assert 'access_denied' in rv.location
 
-        rv = self.client.post(url, data=dict(
+        rv = self.client.post(authorize_url, data=dict(
             confirm='yes'
         ))
         # success
         assert 'code=' in rv.location
+
+    def test_get_access_token(self):
+        rv = self.client.post(authorize_url, data={'confirm': 'yes'})
+        url = rv.location.replace('http://localhost:8000', '')
+        print url
+        rv = self.client.get(url)
+        print rv.data

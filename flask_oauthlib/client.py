@@ -14,7 +14,7 @@ import oauthlib.oauth1
 import oauthlib.oauth2
 from functools import wraps
 from oauthlib.common import to_unicode
-from urlparse import urljoin
+from urlparse import urljoin, urlparse
 from flask import request, redirect, json, session
 from werkzeug import url_quote, url_decode, url_encode, parse_options_header
 
@@ -140,9 +140,13 @@ def make_request(uri, headers=None, data=None, method=None,
 
     if test_client:
         # test client is a `werkzeug.test.Client`
+        parsed = urlparse(uri)
+        uri = '%s?%s' % (parsed.path, parsed.query)
         resp = test_client.open(
             uri, headers=headers, data=data, method=method
         )
+        # for compatible
+        resp.code = resp.status_code
         return resp, resp.data
 
     req = urllib2.Request(uri, headers=headers, data=data)
