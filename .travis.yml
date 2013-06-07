@@ -1,0 +1,15 @@
+language: python
+
+python:
+    - "2.7"
+
+script:
+    - nosetests -s
+
+after_success:
+    - pip install coveralls
+    - coverage run --source=flask_oauthlib setup.py -q nosetests
+    - coveralls
+
+notifications:
+    email: false
