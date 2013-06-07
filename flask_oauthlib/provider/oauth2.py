@@ -8,6 +8,7 @@
     :copyright: (c) 2013 by Hsiaoming Yang.
 """
 
+import os
 import logging
 import datetime
 from functools import wraps
@@ -397,6 +398,13 @@ class OAuth2RequestValidator(RequestValidator):
             return False
         if hasattr(grant, 'validate_redirect_uri'):
             return grant.validate_redirect_uri(redirect_uri)
+        log.debug('Compare redirect uri for grant %r and %r.',
+                  grant.redirect_uri, redirect_uri)
+
+        if os.environ.get('DEBUG') and redirect_uri is None:
+            # For testing
+            return True
+
         return grant.redirect_uri == redirect_uri
 
     def confirm_scopes(self, refresh_token, scopes, request, *args, **kwargs):

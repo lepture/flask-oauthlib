@@ -5,11 +5,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_oauthlib.provider import OAuth2Provider
 
-import logging
-log = logging.getLogger('oauthlib')
-log.addHandler(logging.StreamHandler())
-log.setLevel(logging.DEBUG)
-
 
 db = SQLAlchemy()
 
@@ -158,6 +153,8 @@ def create_server(app):
 
     @oauth.tokensetter
     def set_token(token, request, *args, **kwargs):
+        # In real project, a token is unique bound to user and client.
+        # Which means, you don't need to create a token every time.
         tok = Token(**token)
         tok.user_id = request.user.id
         tok.client_id = request.client.client_id
@@ -191,13 +188,13 @@ def create_server(app):
 
     @app.route('/api/email')
     @oauth.require_oauth(['email'])
-    def email():
-        return jsonify(email='me@example.com')
+    def email(data):
+        return jsonify(email='me@oauth.net', username=data.user.username)
 
     @app.route('/api/address')
     @oauth.require_oauth(['address'])
-    def address():
-        return jsonify(address='earth')
+    def address(data):
+        return jsonify(address='earth', username=data.user.username)
 
     return app
 
