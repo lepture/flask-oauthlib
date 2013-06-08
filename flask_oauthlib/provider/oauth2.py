@@ -19,6 +19,7 @@ from flask import session
 from werkzeug import cached_property
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
+from oauthlib.common import to_unicode
 
 __all__ = ('OAuth2Provider', 'OAuth2RequestValidator')
 
@@ -84,10 +85,16 @@ class OAuth2Provider(object):
            hasattr(self, '_tokensetter') and \
            hasattr(self, '_grantgetter') and \
            hasattr(self, '_grantsetter'):
+
+            usergetter = None
+            if hasattr(self, '_usergetter'):
+                usergetter = self._usergetter
+
             validator = OAuth2RequestValidator(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
                 grantgetter=self._grantgetter,
+                usergetter=usergetter,
                 tokensetter=self._tokensetter,
                 grantsetter=self._grantsetter,
             )
@@ -143,6 +150,19 @@ class OAuth2Provider(object):
                 return None
         """
         self._tokengetter = f
+
+    def usergetter(self, f):
+        """Register a function as the user getter.
+
+        This decorator is only required for password credential
+        authorization::
+
+            @oauth.usergetter
+            def get_user(username=username, password=password,
+                         *args, **kwargs):
+                return get_user_by_username(username, password)
+        """
+        self._usergetter = f
 
     def tokensetter(self, f):
         """Register a function to save the bearer token.
@@ -309,9 +329,10 @@ class OAuth2RequestValidator(RequestValidator):
     :param grantsetter: a function to save grant token
     """
     def __init__(self, clientgetter, tokengetter, grantgetter,
-                 tokensetter=None, grantsetter=None):
+                 usergetter=None, tokensetter=None, grantsetter=None):
         self._clientgetter = clientgetter
         self._tokengetter = tokengetter
+        self._usergetter = usergetter
         self._tokensetter = tokensetter
         self._grantgetter = grantgetter
         self._grantsetter = grantsetter
@@ -329,6 +350,8 @@ class OAuth2RequestValidator(RequestValidator):
             try:
                 _, base64 = auth.split(' ')
                 client_id, client_secret = base64.decode('base64').split(':')
+                client_id = to_unicode(client_id, 'utf-8')
+                client_secret = to_unicode(client_secret, 'utf-8')
             except Exception as e:
                 log.debug('Authenticate client failed with exception: %r', e)
                 return False
@@ -531,6 +554,10 @@ class OAuth2RequestValidator(RequestValidator):
         It is suggested that `allowed_grant_types` should contain at least
         `authorization_code` and `refresh_token`.
         """
+        if self._usergetter is None and grant_type == 'password':
+            log.debug('Password credential authorization is disabled.')
+            return False
+
         if grant_type not in ('authorization_code', 'password',
                               'client_credentials', 'refresh_token'):
             return False
@@ -588,8 +615,22 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_user(self, username, password, client, request,
                       *args, **kwargs):
-        # TODO
-        pass
+        """Ensure the username and password is valid.
+
+        Attach user object on request for later using.
+        """
+        log.debug('Validating username %r and password %r',
+                  username, password)
+        if self._usergetter is not None:
+            user = self._usergetter(
+                username, password, client, request, *args, **kwargs
+            )
+            if user:
+                request.user = user
+                return True
+            return False
+        log.debug('Password credential authorization is disabled.')
+        return False
 
 
 def _extract_params():
