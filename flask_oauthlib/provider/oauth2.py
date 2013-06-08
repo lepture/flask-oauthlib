@@ -87,8 +87,8 @@ class OAuth2Provider(object):
             validator = OAuth2RequestValidator(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
-                tokensetter=self._tokensetter,
                 grantgetter=self._grantgetter,
+                tokensetter=self._tokensetter,
                 grantsetter=self._grantsetter,
             )
             return Server(validator, token_expires_in=expires_in)
@@ -210,7 +210,7 @@ class OAuth2Provider(object):
                     kwargs.update(credentials)
                     return f(*args, **kwargs)
                 except oauth2.FatalClientError as e:
-                    log.debug('Fatal client error')
+                    log.debug('Fatal client error %r', e)
                     return redirect(e.in_uri(self.error_uri))
 
             if request.method == 'POST':
@@ -308,8 +308,8 @@ class OAuth2RequestValidator(RequestValidator):
     :param grantgetter: a function to get grant token
     :param grantsetter: a function to save grant token
     """
-    def __init__(self, clientgetter, tokengetter, tokensetter,
-                 grantgetter, grantsetter):
+    def __init__(self, clientgetter, tokengetter, grantgetter,
+                 tokensetter=None, grantsetter=None):
         self._clientgetter = clientgetter
         self._tokengetter = tokengetter
         self._tokensetter = tokensetter
@@ -323,7 +323,8 @@ class OAuth2RequestValidator(RequestValidator):
 
         .. _`Section 3.2.1`: http://tools.ietf.org/html/rfc6749#section-3.2.1
         """
-        auth = request.headers.get('HTTP_AUTHORIZATION', None)
+        auth = request.headers.get('Http-Authorization', None)
+        log.debug('Authenticate client %r', auth)
         if auth:
             try:
                 _, base64 = auth.split(' ')
@@ -409,18 +410,24 @@ class OAuth2RequestValidator(RequestValidator):
 
     def confirm_scopes(self, refresh_token, scopes, request, *args, **kwargs):
         #TODO
+        log.debug('Confirm scopes %r for refresh token %r',
+                  scopes, refresh_token)
         tok = self._tokengetter(refresh_token=refresh_token)
         return set(tok.scopes) == set(scopes)
 
     def get_default_redirect_uri(self, client_id, request, *args, **kwargs):
         """Default redirect_uri for the given client."""
         request.client = request.client or self._clientgetter(client_id)
-        return request.client.default_redirect_uri
+        redirect_uri = request.client.default_redirect_uri
+        log.debug('Found default redirect uri %r', redirect_uri)
+        return redirect_uri
 
     def get_default_scopes(self, client_id, request, *args, **kwargs):
         """Default scopes for the given client."""
         request.client = request.client or self._clientgetter(client_id)
-        return request.client.default_scopes
+        scopes = request.client.default_scopes
+        log.debug('Found default scopes %r', scopes)
+        return scopes
 
     def invalidate_authorization_code(self, client_id, code, request,
                                       *args, **kwargs):
@@ -429,6 +436,7 @@ class OAuth2RequestValidator(RequestValidator):
         We keep the temporary code in a grant, which has a `delete`
         function to destroy itself.
         """
+        log.debug('Destroy grant token for client %r, %r', client_id, code)
         grant = self._grantgetter(client_id=client_id, code=code)
         if grant:
             grant.delete()
@@ -594,8 +602,8 @@ def _extract_params():
         del headers['wsgi.input']
     if 'wsgi.errors' in headers:
         del headers['wsgi.errors']
-    if 'HTTP_AUTHORIZATION' in headers:
-        headers['Authorization'] = headers['HTTP_AUTHORIZATION']
+    if 'Http-Authorization' in headers:
+        headers['Authorization'] = headers['Http-Authorization']
 
     body = request.form.to_dict()
     return uri, http_method, body, headers
