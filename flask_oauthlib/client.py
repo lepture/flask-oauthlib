@@ -84,7 +84,7 @@ class OAuth(object):
 _etree = None
 
 
-def get_etree():  # progm: no cover
+def get_etree():  # pragma: no cover
     global _etree
     if _etree is not None:
         return _etree
