@@ -22,3 +22,15 @@ Client Reference
 
 .. autoclass:: OAuthException
    :members:
+
+
+Provider Reference
+------------------
+
+.. module:: flask_oauthlib.provider
+
+.. autoclass:: OAuth2Provider
+   :members:
+
+.. autoclass:: OAuth2RequestValidator
+   :members:
