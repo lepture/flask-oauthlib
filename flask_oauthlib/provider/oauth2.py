@@ -180,6 +180,8 @@ class OAuth2Provider(object):
 
         It returns a grant object with at least these information:
 
+            - user: The user for the grant
+            - scopes: A list of scopes provided by the grant
             - delete: A function to delete itself
         """
         self._grantgetter = f
@@ -187,11 +189,20 @@ class OAuth2Provider(object):
     def grantsetter(self, f):
         """Register a function to save the grant code.
 
-        The function accepts `client_id`, `code`, `request` and more::
+        The function accepts the following arguments:
+
+            - code: A string authorization code
+            - redirect_uri: A string representing the redirect uri
+            - user: The user object
+            - client: The client object
+            - scopes: A list of scopes for the code
+            - state: A string provided to prevent CSS
+            
+        Here is an exmample implementation of the setter::
 
             @oauth.grantsetter
-            def set_grant(client_id, code, request, *args, **kwargs):
-                save_grant(client_id, code, request.user, request.scopes)
+            def set_grant(code, redirect_uri, user, client, scopes, state):
+                save_grant(code, redirect_uri, user, client, scopes, state)
         """
         self._grantsetter = f
 
@@ -461,7 +472,15 @@ class OAuth2RequestValidator(RequestValidator):
             code, client_id
         )
         request.client = request.client or self._clientgetter(client_id)
-        self._grantsetter(client_id, code, request, *args, **kwargs)
+        request.user = request.user or self._usergetter()
+        self._grantsetter(
+            code=code['code'], 
+            redirect_uri=request.redirect_uri, 
+            user=request.user,
+            client=request.client,
+            scopes=request.scopes,
+            state=request.state
+        )
         return request.client.default_redirect_uri
 
     def save_bearer_token(self, token, request, *args, **kwargs):
@@ -534,7 +553,7 @@ class OAuth2RequestValidator(RequestValidator):
            datetime.datetime.utcnow() > grant.expires:
             log.debug('Grant is expired.')
             return False
-        request.state = kwargs.get('state')
+        request.state = grant.state
         request.user = grant.user
         request.scopes = grant.scopes
         return True
