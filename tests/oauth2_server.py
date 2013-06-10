@@ -35,6 +35,10 @@ class Client(db.Model):
     default_scope = db.Column(db.UnicodeText)
 
     @property
+    def user(self):
+        return User.query.get(1)
+
+    @property
     def redirect_uris(self):
         if self._redirect_uris:
             return self._redirect_uris.split()

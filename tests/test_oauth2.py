@@ -3,7 +3,7 @@
 import os
 import tempfile
 import unittest
-from urlparse import urlparse 
+from urlparse import urlparse
 from flask import Flask
 from .oauth2_server import create_server, db
 from .oauth2_client import create_client
@@ -20,6 +20,7 @@ class BaseSuite(unittest.TestCase):
         config = {
             'SQLALCHEMY_DATABASE_URI': 'sqlite:///%s' % self.db_file
         }
+        app.config.update(config)
 
         app = create_server(app)
         app = create_client(app)
@@ -40,6 +41,7 @@ authorize_url = (
     '/oauth/authorize?response_type=code&client_id=dev'
     '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized&scope=email'
 )
+
 
 class TestWebAuth(BaseSuite):
     def test_login(self):
@@ -81,6 +83,7 @@ class TestWebAuth(BaseSuite):
 
         rv = self.client.get('/')
         assert 'username' in rv.data
+
 
 class TestPasswordAuth(BaseSuite):
     def test_get_access_token(self):
