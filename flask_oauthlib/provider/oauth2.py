@@ -564,6 +564,15 @@ class OAuth2RequestValidator(RequestValidator):
 
         if hasattr(client, 'allowed_grant_types'):
             return grant_type in client.allowed_grant_types
+
+        if grant_type == 'client_credentials':
+            # TODO: other means
+            if hasattr(client, 'user'):
+                request.user = client.user
+                return True
+            log.debug('Client should has a user property')
+            return False
+
         return True
 
     def validate_redirect_uri(self, client_id, redirect_uri, request,
