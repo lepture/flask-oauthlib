@@ -96,6 +96,17 @@ class TestPasswordAuth(BaseSuite):
         assert 'access_token' in rv.data
 
 
+class TestCredentialAuth(BaseSuite):
+    def test_get_access_token(self):
+        auth_code = 'confidential:confidential'.encode('base64').strip()
+        url = ('/oauth/access_token?grant_type=client_credentials'
+               '&scope=email+address&username=admin&password=admin')
+        rv = self.client.get(url, headers={
+            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+        }, data={'confirm': 'yes'})
+        assert 'access_token' in rv.data
+
+
 def clean_url(location):
     ret = urlparse(location)
     return '%s?%s' % (ret.path, ret.query)
