@@ -3,6 +3,7 @@
 import os
 import tempfile
 import unittest
+import json
 from urlparse import urlparse
 from flask import Flask
 from .oauth2_server import create_server, db
@@ -94,6 +95,31 @@ class TestPasswordAuth(BaseSuite):
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
         assert 'access_token' in rv.data
+
+
+class TestRefreshToken(BaseSuite):
+
+    def test_refresh_token(self):
+        auth_code = 'confidential:confidential'.encode('base64').strip()
+        url = ('/oauth/access_token?grant_type=password'
+               '&scope=email+address&username=admin&password=admin')
+        rv = self.client.get(url, headers={
+            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+        }, data={'confirm': 'yes'})
+        assert 'access_token' in rv.data
+
+        data = json.loads(rv.data)
+
+        args = (data.get('scope').replace(' ', '+'),
+                data.get('refresh_token'))
+        auth_code_r = 'confidential:confidential'.encode('base64').strip()
+        url_r = ('/oauth/refresh_token?grant_type=refresh_token'
+                 '&scope={}&refresh_token={}&username=admin')
+        url_r = url_r.format(*args)
+        rv_r = self.client.get(url_r, headers={
+            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code_r,
+        }, data={'confirm': 'yes'})
+        assert 'access_token' in rv_r.data
 
 
 class TestCredentialAuth(BaseSuite):

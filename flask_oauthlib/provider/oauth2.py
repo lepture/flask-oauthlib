@@ -299,8 +299,34 @@ class OAuth2Provider(object):
             return response
         return decorated
 
-    def refresh_token_handler(self, func):
-        pass
+    def refresh_token_handler(self, f):
+        """Refresh token handler
+
+        The decorated function should return an dictionary or None as
+        the extra credentials for creating the token response.
+
+        You can control the access method with standard flask route mechanism.
+        If you only allow the `POST` method::
+
+            @app.route('/oauth/refresh_token')
+            @oauth.refresh_token_handler
+            def refresh_token():
+                return None
+        """
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            uri, http_method, body, headers = _extract_params()
+            credentials = f(*args, **kwargs) or {}
+            log.debug('Fetched extra credentials, %r.', credentials)
+            server = self.server
+            uri, headers, body, status = server.create_token_response(
+                uri, http_method, body, headers, credentials
+            )
+            response = make_response(body, status)
+            for k, v in headers.items():
+                response.headers[k] = v
+            return response
+        return decorated
 
     def require_oauth(self, scopes=None):
         """Protect resource with specified scopes."""
@@ -432,7 +458,13 @@ class OAuth2RequestValidator(RequestValidator):
         return grant.redirect_uri == redirect_uri
 
     def confirm_scopes(self, refresh_token, scopes, request, *args, **kwargs):
-        #TODO
+        """Ensures the requested scope matches the scope originally granted
+        by the resource owner. If the scope is omitted it is treated as equal
+        to the scope originally granted by the resource owner
+        """
+        if not scopes:
+            log.debug('Scope omitted for refresh token %r', refresh_token)
+            return True
         log.debug('Confirm scopes %r for refresh token %r',
                   scopes, refresh_token)
         tok = self._tokengetter(refresh_token=refresh_token)
@@ -592,8 +624,21 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_refresh_token(self, refresh_token, client, request,
                                *args, **kwargs):
-        # TODO
-        return True
+        """Ensure the token is valid and belongs to the client
+
+        This method is used by the authorization code grant indirectly by
+        issuing refresh tokens, resource owner password credentials grant
+        (also indirectly) and the refresh token grant.
+        """
+
+        token = self._tokengetter(refresh_token=refresh_token)
+
+        if token and token.client == client:
+            # Make sure the request object contains user and client_id
+            request.client_id = token.client.client_id
+            request.user = token.user
+            return True
+        return False
 
     def validate_response_type(self, client_id, response_type, client, request,
                                *args, **kwargs):
