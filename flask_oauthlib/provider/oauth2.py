@@ -95,7 +95,7 @@ class OAuth2Provider(object):
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
                 grantgetter=self._grantgetter,
-                usergetter=usergetter,
+                usergetter=self._usergetter,
                 usernamegetter=usernamegetter,
                 tokensetter=self._tokensetter,
                 grantsetter=self._grantsetter,
