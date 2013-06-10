@@ -219,7 +219,7 @@ def create_server(app):
 
     @app.route('/api/address')
     @oauth.require_oauth(['address'])
-    def address(data):
+    def address():
         return jsonify(address='earth', username=oauth.user.username)
 
     return app

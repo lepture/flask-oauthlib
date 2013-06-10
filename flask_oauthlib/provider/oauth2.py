@@ -153,6 +153,10 @@ class OAuth2Provider(object):
             - expires: A `datetime.datetime` object
             - user: The user object
 
+        Optionally, the token objection may contain the following information:
+            
+            - client: The client object associated with this token
+
         Implement the token getter::
 
             @oauth.tokengetter
@@ -328,7 +332,12 @@ class OAuth2Provider(object):
                 )
                 if not valid:
                     return abort(403)
-                return f(*((req,) + args), **kwargs)
+                self._set_ctx('user', req.user)
+                self._set_ctx('scopes', req.scopes)
+                self._set_ctx('token_scopes', req.token_scopes)
+                if req.client is not None:
+                    self._set_ctx('client', req.client)
+                return f(*args, **kwargs)
             return decorated
         return wrapper
 
@@ -526,6 +535,9 @@ class OAuth2RequestValidator(RequestValidator):
 
         request.user = tok.user
         request.scopes = scopes
+        request.token_scopes = tok.scopes
+        if hasattr(tok, client):
+            request.client = tok.client
         return True
 
     def validate_client_id(self, client_id, request, *args, **kwargs):
