@@ -45,6 +45,20 @@ class OAuth2Provider(object):
         if app:
             self.init_app(app)
 
+    def __getattr__(self, name):
+        ctx = _app_ctx_stack.top
+        if ctx is not None:
+            try:
+                getattr(ctx, 'oauth_' + name)
+            except AttributeError:
+                return None
+        return None
+    
+    def _set_ctx(self, name, value):
+        ctx = _app_ctx_stack.top
+        if ctx is not None:
+            setattr(ctx, 'oauth_' + name, value)
+
     def init_app(self, app):
         self.app = app
         app.extensions = getattr(app, 'extensions', {})
