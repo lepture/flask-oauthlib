@@ -19,6 +19,7 @@ from flask import session
 from werkzeug import cached_property
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
+from oauthlib.common import to_unicode
 
 __all__ = ('OAuth2Provider', 'OAuth2RequestValidator')
 
@@ -84,11 +85,17 @@ class OAuth2Provider(object):
            hasattr(self, '_tokensetter') and \
            hasattr(self, '_grantgetter') and \
            hasattr(self, '_grantsetter'):
+
+            usergetter = None
+            if hasattr(self, '_usergetter'):
+                usergetter = self._usergetter
+
             validator = OAuth2RequestValidator(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
-                tokensetter=self._tokensetter,
                 grantgetter=self._grantgetter,
+                usergetter=usergetter,
+                tokensetter=self._tokensetter,
                 grantsetter=self._grantsetter,
             )
             return Server(validator, token_expires_in=expires_in)
@@ -143,6 +150,19 @@ class OAuth2Provider(object):
                 return None
         """
         self._tokengetter = f
+
+    def usergetter(self, f):
+        """Register a function as the user getter.
+
+        This decorator is only required for password credential
+        authorization::
+
+            @oauth.usergetter
+            def get_user(username=username, password=password,
+                         *args, **kwargs):
+                return get_user_by_username(username, password)
+        """
+        self._usergetter = f
 
     def tokensetter(self, f):
         """Register a function to save the bearer token.
@@ -241,7 +261,7 @@ class OAuth2Provider(object):
                     kwargs.update(credentials)
                     return f(*args, **kwargs)
                 except oauth2.FatalClientError as e:
-                    log.debug('Fatal client error')
+                    log.debug('Fatal client error %r', e)
                     return redirect(e.in_uri(self.error_uri))
 
             if request.method == 'POST':
@@ -339,10 +359,11 @@ class OAuth2RequestValidator(RequestValidator):
     :param grantgetter: a function to get grant token
     :param grantsetter: a function to save grant token
     """
-    def __init__(self, clientgetter, tokengetter, tokensetter,
-                 grantgetter, grantsetter):
+    def __init__(self, clientgetter, tokengetter, grantgetter,
+                 usergetter=None, tokensetter=None, grantsetter=None):
         self._clientgetter = clientgetter
         self._tokengetter = tokengetter
+        self._usergetter = usergetter
         self._tokensetter = tokensetter
         self._grantgetter = grantgetter
         self._grantsetter = grantsetter
@@ -354,11 +375,14 @@ class OAuth2RequestValidator(RequestValidator):
 
         .. _`Section 3.2.1`: http://tools.ietf.org/html/rfc6749#section-3.2.1
         """
-        auth = request.headers.get('HTTP_AUTHORIZATION', None)
+        auth = request.headers.get('Http-Authorization', None)
+        log.debug('Authenticate client %r', auth)
         if auth:
             try:
                 _, base64 = auth.split(' ')
                 client_id, client_secret = base64.decode('base64').split(':')
+                client_id = to_unicode(client_id, 'utf-8')
+                client_secret = to_unicode(client_secret, 'utf-8')
             except Exception as e:
                 log.debug('Authenticate client failed with exception: %r', e)
                 return False
@@ -440,18 +464,24 @@ class OAuth2RequestValidator(RequestValidator):
 
     def confirm_scopes(self, refresh_token, scopes, request, *args, **kwargs):
         #TODO
+        log.debug('Confirm scopes %r for refresh token %r',
+                  scopes, refresh_token)
         tok = self._tokengetter(refresh_token=refresh_token)
         return set(tok.scopes) == set(scopes)
 
     def get_default_redirect_uri(self, client_id, request, *args, **kwargs):
         """Default redirect_uri for the given client."""
         request.client = request.client or self._clientgetter(client_id)
-        return request.client.default_redirect_uri
+        redirect_uri = request.client.default_redirect_uri
+        log.debug('Found default redirect uri %r', redirect_uri)
+        return redirect_uri
 
     def get_default_scopes(self, client_id, request, *args, **kwargs):
         """Default scopes for the given client."""
         request.client = request.client or self._clientgetter(client_id)
-        return request.client.default_scopes
+        scopes = request.client.default_scopes
+        log.debug('Found default scopes %r', scopes)
+        return scopes
 
     def invalidate_authorization_code(self, client_id, code, request,
                                       *args, **kwargs):
@@ -460,6 +490,7 @@ class OAuth2RequestValidator(RequestValidator):
         We keep the temporary code in a grant, which has a `delete`
         function to destroy itself.
         """
+        log.debug('Destroy grant token for client %r, %r', client_id, code)
         grant = self._grantgetter(client_id=client_id, code=code)
         if grant:
             grant.delete()
@@ -570,12 +601,25 @@ class OAuth2RequestValidator(RequestValidator):
         It is suggested that `allowed_grant_types` should contain at least
         `authorization_code` and `refresh_token`.
         """
+        if self._usergetter is None and grant_type == 'password':
+            log.debug('Password credential authorization is disabled.')
+            return False
+
         if grant_type not in ('authorization_code', 'password',
                               'client_credentials', 'refresh_token'):
             return False
 
         if hasattr(client, 'allowed_grant_types'):
             return grant_type in client.allowed_grant_types
+
+        if grant_type == 'client_credentials':
+            # TODO: other means
+            if hasattr(client, 'user'):
+                request.user = client.user
+                return True
+            log.debug('Client should has a user property')
+            return False
+
         return True
 
     def validate_redirect_uri(self, client_id, redirect_uri, request,
@@ -627,8 +671,22 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_user(self, username, password, client, request,
                       *args, **kwargs):
-        # TODO
-        pass
+        """Ensure the username and password is valid.
+
+        Attach user object on request for later using.
+        """
+        log.debug('Validating username %r and password %r',
+                  username, password)
+        if self._usergetter is not None:
+            user = self._usergetter(
+                username, password, client, request, *args, **kwargs
+            )
+            if user:
+                request.user = user
+                return True
+            return False
+        log.debug('Password credential authorization is disabled.')
+        return False
 
 
 def _extract_params():
@@ -641,8 +699,8 @@ def _extract_params():
         del headers['wsgi.input']
     if 'wsgi.errors' in headers:
         del headers['wsgi.errors']
-    if 'HTTP_AUTHORIZATION' in headers:
-        headers['Authorization'] = headers['HTTP_AUTHORIZATION']
+    if 'Http-Authorization' in headers:
+        headers['Authorization'] = headers['Http-Authorization']
 
     body = request.form.to_dict()
     return uri, http_method, body, headers

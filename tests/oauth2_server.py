@@ -9,6 +9,13 @@ from flask_oauthlib.provider import OAuth2Provider
 db = SQLAlchemy()
 
 
+def enable_log(name='flask_oauthlib'):
+    import logging
+    logger = logging.getLogger(name)
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.DEBUG)
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.Unicode(40), unique=True, index=True,
@@ -26,6 +33,10 @@ class Client(db.Model):
     client_type = db.Column(db.Unicode(20), default=u'public')
     _redirect_uris = db.Column(db.UnicodeText)
     default_scope = db.Column(db.UnicodeText)
+
+    @property
+    def user(self):
+        return User.query.get(1)
 
     @property
     def redirect_uris(self):
@@ -103,17 +114,26 @@ def prepare_app(app):
     db.app = app
     db.create_all()
 
-    client = Client(
+    client1 = Client(
         name=u'dev', client_id=u'dev', client_secret=u'dev',
         _redirect_uris=u'http://localhost:8000/authorized'
     )
+
+    client2 = Client(
+        name=u'confidential', client_id=u'confidential',
+        client_secret=u'confidential', client_type=u'confidential',
+        _redirect_uris=u'http://localhost:8000/authorized'
+    )
+
     user = User(username=u'admin')
+
     try:
+        db.session.add(client1)
+        db.session.add(client2)
         db.session.add(user)
-        db.session.add(client)
         db.session.commit()
     except:
-        pass
+        db.session.rollback()
     return app
 
 
@@ -171,8 +191,10 @@ def create_server(app):
         db.session.commit()
 
     @oauth.usergetter
-    def get_user():
-        return g.user
+    def get_user(username, password, *args, **kwargs):
+        # This is optional, if you don't need password credential
+        # there is no need to implement this method
+        return User.query.get(1)
 
     @app.before_request
     def load_current_user():

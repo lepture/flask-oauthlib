@@ -8,7 +8,7 @@ script:
 
 after_success:
     - pip install coveralls
-    - coverage run --source=flask_oauthlib setup.py -q nosetests
+    - DEBUG=1 coverage run --source=flask_oauthlib setup.py -q nosetests
     - coveralls
 
 notifications:
