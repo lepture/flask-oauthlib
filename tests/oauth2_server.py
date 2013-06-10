@@ -190,10 +190,16 @@ def create_server(app):
         db.session.add(tok)
         db.session.commit()
 
-    @oauth.usergetter
+    @oauth.usernamegetter
     def get_user(username, password, *args, **kwargs):
         # This is optional, if you don't need password credential
         # there is no need to implement this method
+        return User.query.get(1)
+
+    @oauth.usergetter
+    def get_active_user():
+        # This is used to retrieve the user object on the currently
+        # logged in user.
         return User.query.get(1)
 
     @app.before_request

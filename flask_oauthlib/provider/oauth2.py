@@ -84,17 +84,19 @@ class OAuth2Provider(object):
            hasattr(self, '_tokengetter') and \
            hasattr(self, '_tokensetter') and \
            hasattr(self, '_grantgetter') and \
-           hasattr(self, '_grantsetter'):
+           hasattr(self, '_grantsetter') and \
+           hasattr(self, '_usergetter'):
 
-            usergetter = None
-            if hasattr(self, '_usergetter'):
-                usergetter = self._usergetter
+            usernamegetter = None
+            if hasattr(self, '_usernamegetter'):
+                usernamegetter = self._usernamegetter
 
             validator = OAuth2RequestValidator(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
                 grantgetter=self._grantgetter,
                 usergetter=usergetter,
+                usernamegetter=usernamegetter,
                 tokensetter=self._tokensetter,
                 grantsetter=self._grantsetter,
             )
@@ -151,16 +153,28 @@ class OAuth2Provider(object):
         """
         self._tokengetter = f
 
-    def usergetter(self, f):
-        """Register a function as the user getter.
+    def usernamegetter(self, f):
+        """Register a function as the username getter.
 
         This decorator is only required for password credential
         authorization::
 
-            @oauth.usergetter
-            def get_user(username=username, password=password,
+            @oauth.usernamegetter
+            def get_user(username=None, password=None,
                          *args, **kwargs):
                 return get_user_by_username(username, password)
+        """
+        self._usernamegetter = f
+
+    def usergetter(self, f):
+        """Register a function as the user getter.
+
+        The function is used to retrieve the currently logged
+        in user::
+
+            @oauth.usergetter
+            def get_user():
+                return current_user
         """
         self._usergetter = f
 
@@ -360,10 +374,12 @@ class OAuth2RequestValidator(RequestValidator):
     :param grantsetter: a function to save grant token
     """
     def __init__(self, clientgetter, tokengetter, grantgetter,
-                 usergetter=None, tokensetter=None, grantsetter=None):
+                 usergetter=None, usernamegetter=None, tokensetter=None, 
+                 grantsetter=None):
         self._clientgetter = clientgetter
         self._tokengetter = tokengetter
         self._usergetter = usergetter
+        self._usernamegetter = usernamegetter
         self._tokensetter = tokensetter
         self._grantgetter = grantgetter
         self._grantsetter = grantsetter
@@ -601,7 +617,7 @@ class OAuth2RequestValidator(RequestValidator):
         It is suggested that `allowed_grant_types` should contain at least
         `authorization_code` and `refresh_token`.
         """
-        if self._usergetter is None and grant_type == 'password':
+        if self._usernamegetter is None and grant_type == 'password':
             log.debug('Password credential authorization is disabled.')
             return False
 
@@ -677,8 +693,8 @@ class OAuth2RequestValidator(RequestValidator):
         """
         log.debug('Validating username %r and password %r',
                   username, password)
-        if self._usergetter is not None:
-            user = self._usergetter(
+        if self._usernamegetter is not None:
+            user = self._usernamegetter(
                 username, password, client, request, *args, **kwargs
             )
             if user:
