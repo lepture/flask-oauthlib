@@ -185,19 +185,19 @@ class OAuth2Provider(object):
 
             - access_token: A string token
             - token_type: A string describing the type of token provided
-            - scopes: A list of scopes for the token 
-            - client: The client object 
-            - user: The user object 
+            - scopes: A list of scopes for the token
+            - client: The client object
+            - user: The user object
             - expires_in: Number of seconds until token should expire
             - refresh_token: Either a string token or None
-        
+
         Implement the token setter::
-        
+
             @oauth.tokensetter
-            def set_token(access_token, scopes, client, user, 
+            def set_token(access_token, scopes, client, user,
                         expires_in, refresh_token):
                 expires_at = datetime.now() + timedelta(seconds=expires_in)
-                save_token(access_token, scopes, client, user, 
+                save_token(access_token, scopes, client, user,
                         expires_at, refresh_token)
 
         """
@@ -231,7 +231,7 @@ class OAuth2Provider(object):
             - client: The client object
             - scopes: A list of scopes for the code
             - state: A string provided to prevent CSS
-            
+
         Here is an exmample implementation of the setter::
 
             @oauth.grantsetter
@@ -374,7 +374,7 @@ class OAuth2RequestValidator(RequestValidator):
     :param grantsetter: a function to save grant token
     """
     def __init__(self, clientgetter, tokengetter, grantgetter,
-                 usergetter=None, usernamegetter=None, tokensetter=None, 
+                 usergetter=None, usernamegetter=None, tokensetter=None,
                  grantsetter=None):
         self._clientgetter = clientgetter
         self._tokengetter = tokengetter
@@ -521,8 +521,8 @@ class OAuth2RequestValidator(RequestValidator):
         request.client = request.client or self._clientgetter(client_id)
         request.user = request.user or self._usergetter()
         self._grantsetter(
-            code=code['code'], 
-            redirect_uri=request.redirect_uri, 
+            code=code['code'],
+            redirect_uri=request.redirect_uri,
             user=request.user,
             client=request.client,
             scopes=request.scopes,
@@ -534,13 +534,13 @@ class OAuth2RequestValidator(RequestValidator):
         """Persist the Bearer token."""
         log.debug('Save bearer token %r', token)
         self._tokensetter(
-                access_token = token['access_token'],
-                token_type = token['token_type'],
-                scopes = request.scopes,
-                client = request.client,
-                user = request.user,
-                expires_in = token['expires_in'],
-                refresh_token = token.get('refresh_token', None)
+            access_token=token['access_token'],
+            token_type=token['token_type'],
+            scopes=request.scopes,
+            client=request.client,
+            user=request.user,
+            expires_in=token['expires_in'],
+            refresh_token=token.get('refresh_token', None)
         )
         return request.client.default_redirect_uri
 
