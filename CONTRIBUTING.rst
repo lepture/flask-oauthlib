@@ -47,6 +47,7 @@ Something you should know about git.
 * don't add any code on the master branch, create a new one
 * don't add too many code in one pull request
 * all featured branches should be based on the master branch
+* don't merge any code yourself
 
 Take an example, if you want to add feature A and feature B, you should have two
 branches::
@@ -63,3 +64,10 @@ Now code on feature-A branch, and when you finish feature A::
 All branches must be based on the master branch. If your feature-B needs feature-A,
 you should send feature-A first, and wait for its merging. We may reject feature-A,
 and you should stop feature-B.
+
+Keep your master branch the same with upstream::
+
+    $ git remote add upstream git@github.com:lepture/flask-oauthlib.git
+    $ git pull upstream master
+
+**And don't change any code on master branch.**
