@@ -53,7 +53,7 @@ class OAuth2Provider(object):
             except AttributeError:
                 return None
         return None
-    
+
     def _set_ctx(self, name, value):
         ctx = _app_ctx_stack.top
         if ctx is not None:
@@ -154,7 +154,7 @@ class OAuth2Provider(object):
             - user: The user object
 
         Optionally, the token objection may contain the following information:
-            
+
             - client: The client object associated with this token
 
         Implement the token getter::
@@ -536,7 +536,7 @@ class OAuth2RequestValidator(RequestValidator):
         request.user = tok.user
         request.scopes = scopes
         request.token_scopes = tok.scopes
-        if hasattr(tok, client):
+        if hasattr(tok, 'client'):
             request.client = tok.client
         return True
 
