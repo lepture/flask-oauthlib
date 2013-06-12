@@ -69,6 +69,7 @@ class Grant(db.Model):
     code = db.Column(db.Unicode(255), index=True, nullable=False)
 
     redirect_uri = db.Column(db.Unicode(255))
+    state = db.Column(db.Unicode(255))
     scope = db.Column(db.UnicodeText)
     expires = db.Column(db.DateTime)
 
@@ -165,33 +166,47 @@ def create_server(app):
         return None
 
     @oauth.grantsetter
-    def set_grant(client_id, code, request, *args, **kwargs):
+    def set_grant(code, redirect_uri, user, client, scopes, state):
         expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
         grant = Grant(
-            client_id=client_id,
-            code=code['code'],
-            redirect_uri=request.redirect_uri,
-            scope=' '.join(request.scopes),
-            user_id=g.user.id,
+            client_id=client.client_id,
+            code=code,
+            redirect_uri=redirect_uri,
+            scope=' '.join(scopes),
+            user_id=user.id,
             expires=expires,
+            state=state,
         )
         db.session.add(grant)
         db.session.commit()
 
     @oauth.tokensetter
-    def set_token(token, request, *args, **kwargs):
+    def set_token(access_token, token_type, scopes, client, user, 
+            expires_in, refresh_token):
         # In real project, a token is unique bound to user and client.
         # Which means, you don't need to create a token every time.
-        tok = Token(**token)
-        tok.user_id = request.user.id
-        tok.client_id = request.client.client_id
+        tok = Token(
+            access_token=access_token,
+            token_type=token_type,
+            expires_in=expires_in, 
+            refresh_token=refresh_token,
+            scope=' '.join(scopes)
+        )
+        tok.user_id = user.id
+        tok.client_id = client.client_id
         db.session.add(tok)
         db.session.commit()
 
-    @oauth.usergetter
+    @oauth.usernamegetter
     def get_user(username, password, *args, **kwargs):
         # This is optional, if you don't need password credential
         # there is no need to implement this method
+        return User.query.get(1)
+
+    @oauth.usergetter
+    def get_active_user():
+        # This is used to retrieve the user object on the currently
+        # logged in user.
         return User.query.get(1)
 
     @app.before_request
