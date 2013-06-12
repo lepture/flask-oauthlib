@@ -23,11 +23,10 @@ class User(db.Model):
 
 
 class Client(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    #id = db.Column(db.Integer, primary_key=True)
     # human readable name
     name = db.Column(db.Unicode(40))
-    client_id = db.Column(db.Unicode(40), unique=True, index=True,
-                          nullable=False)
+    client_id = db.Column(db.Unicode(40), primary_key=True)
     client_secret = db.Column(db.Unicode(55), unique=True, index=True,
                               nullable=False)
     client_type = db.Column(db.Unicode(20), default=u'public')
@@ -62,7 +61,11 @@ class Grant(db.Model):
     )
     user = relationship('User')
 
-    client_id = db.Column(db.Unicode(40), nullable=False)
+    client_id = db.Column(
+        db.Unicode(40), db.ForeignKey('client.client_id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    client = relationship('Client')
     code = db.Column(db.Unicode(255), index=True, nullable=False)
 
     redirect_uri = db.Column(db.Unicode(255))
@@ -83,11 +86,15 @@ class Grant(db.Model):
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(db.Unicode(40), nullable=False)
+    client_id = db.Column(
+        db.Unicode(40), db.ForeignKey('client.client_id', ondelete='CASCADE'),
+        nullable=False,
+    )
     user_id = db.Column(
         db.Integer, db.ForeignKey('user.id', ondelete='CASCADE')
     )
     user = relationship('User')
+    client = relationship('Client')
     token_type = db.Column(db.Unicode(40))
     access_token = db.Column(db.Unicode(255))
     refresh_token = db.Column(db.Unicode(255))
@@ -210,6 +217,11 @@ def create_server(app):
     @app.route('/oauth/access_token')
     @oauth.access_token_handler
     def access_token():
+        return {}
+
+    @app.route('/oauth/refresh_token')
+    @oauth.refresh_token_handler
+    def refresh_token():
         return {}
 
     @app.route('/api/email')
