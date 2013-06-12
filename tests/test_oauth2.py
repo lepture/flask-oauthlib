@@ -98,28 +98,26 @@ class TestPasswordAuth(BaseSuite):
 
 
 class TestRefreshToken(BaseSuite):
-
-    def test_refresh_token(self):
+    def test_refresh_token_in_password_grant(self):
         auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/access_token?grant_type=password'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
-        }, data={'confirm': 'yes'})
+        })
         assert 'access_token' in rv.data
-
         data = json.loads(rv.data)
 
         args = (data.get('scope').replace(' ', '+'),
                 data.get('refresh_token'))
-        auth_code_r = 'confidential:confidential'.encode('base64').strip()
-        url_r = ('/oauth/refresh_token?grant_type=refresh_token'
-                 '&scope={}&refresh_token={}&username=admin')
-        url_r = url_r.format(*args)
-        rv_r = self.client.get(url_r, headers={
-            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code_r,
-        }, data={'confirm': 'yes'})
-        assert 'access_token' in rv_r.data
+        auth_code = 'confidential:confidential'.encode('base64').strip()
+        url = ('/oauth/refresh_token?grant_type=refresh_token'
+               '&scope={}&refresh_token={}&username=admin')
+        url = url.format(*args)
+        rv = self.client.get(url, headers={
+            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+        })
+        assert 'access_token' in rv.data
 
 
 class TestCredentialAuth(BaseSuite):
