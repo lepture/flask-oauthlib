@@ -45,6 +45,20 @@ class OAuth2Provider(object):
         if app:
             self.init_app(app)
 
+    def __getattr__(self, name):
+        ctx = _app_ctx_stack.top
+        if ctx is not None:
+            try:
+                getattr(ctx, 'oauth_' + name)
+            except AttributeError:
+                return None
+        return None
+
+    def _set_ctx(self, name, value):
+        ctx = _app_ctx_stack.top
+        if ctx is not None:
+            setattr(ctx, 'oauth_' + name, value)
+
     def init_app(self, app):
         self.app = app
         app.extensions = getattr(app, 'extensions', {})
@@ -138,6 +152,10 @@ class OAuth2Provider(object):
             - scopes: A list of scopes
             - expires: A `datetime.datetime` object
             - user: The user object
+
+        Optionally, the token objection may contain the following information:
+
+            - client: The client object associated with this token
 
         Implement the token getter::
 
@@ -340,7 +358,12 @@ class OAuth2Provider(object):
                 )
                 if not valid:
                     return abort(403)
-                return f(*((req,) + args), **kwargs)
+                self._set_ctx('user', req.user)
+                self._set_ctx('scopes', req.scopes)
+                self._set_ctx('token_scopes', req.token_scopes)
+                if req.client is not None:
+                    self._set_ctx('client', req.client)
+                return f(*args, **kwargs)
             return decorated
         return wrapper
 
@@ -544,6 +567,9 @@ class OAuth2RequestValidator(RequestValidator):
 
         request.user = tok.user
         request.scopes = scopes
+        request.token_scopes = tok.scopes
+        if hasattr(tok, 'client'):
+            request.client = tok.client
         return True
 
     def validate_client_id(self, client_id, request, *args, **kwargs):
