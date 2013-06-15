@@ -286,8 +286,8 @@ class OAuth2Provider(object):
         except oauth2.OAuth2Error as e:
             return redirect(e.in_uri(redirect_uri))
 
-    def access_token_handler(self, f):
-        """Access token handler decorator.
+    def token_handler(self, f):
+        """Access/refresh token handler decorator.
 
         The decorated function should return an dictionary or None as
         the extra credentials for creating the token response.
@@ -295,38 +295,9 @@ class OAuth2Provider(object):
         You can control the access method with standard flask route mechanism.
         If you only allow the `POST` method::
 
-            @app.route('/oauth/access_token', methods=['POST'])
-            @oauth.access_token_handler
+            @app.route('/oauth/token', methods=['POST'])
+            @oauth.token_handler
             def access_token():
-                return None
-        """
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            server = self.server
-            uri, http_method, body, headers = _extract_params()
-            credentials = f(*args, **kwargs) or {}
-            log.debug('Fetched extra credentials, %r.', credentials)
-            uri, headers, body, status = server.create_token_response(
-                uri, http_method, body, headers, credentials
-            )
-            response = make_response(body, status)
-            for k, v in headers.items():
-                response.headers[k] = v
-            return response
-        return decorated
-
-    def refresh_token_handler(self, f):
-        """Refresh token handler
-
-        The decorated function should return an dictionary or None as
-        the extra credentials for creating the token response.
-
-        You can control the access method with standard flask route mechanism.
-        If you only allow the `POST` method::
-
-            @app.route('/oauth/refresh_token')
-            @oauth.refresh_token_handler
-            def refresh_token():
                 return None
         """
         @wraps(f)
