@@ -6,7 +6,7 @@ import unittest
 import json
 from urlparse import urlparse
 from flask import Flask
-from .oauth2_server import create_server, db
+from .oauth2_server import create_server, db, enable_log
 from .oauth2_client import create_client
 
 
@@ -42,7 +42,6 @@ authorize_url = (
     '/oauth/authorize?response_type=code&client_id=dev'
     '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized&scope=email'
 )
-
 
 class TestWebAuth(BaseSuite):
     def test_login(self):
@@ -89,18 +88,17 @@ class TestWebAuth(BaseSuite):
 class TestPasswordAuth(BaseSuite):
     def test_get_access_token(self):
         auth_code = 'confidential:confidential'.encode('base64').strip()
-        url = ('/oauth/access_token?grant_type=password'
+        url = ('/oauth/token?grant_type=password'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
         assert 'access_token' in rv.data
 
-
 class TestRefreshToken(BaseSuite):
     def test_refresh_token_in_password_grant(self):
         auth_code = 'confidential:confidential'.encode('base64').strip()
-        url = ('/oauth/access_token?grant_type=password'
+        url = ('/oauth/token?grant_type=password'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
@@ -111,7 +109,7 @@ class TestRefreshToken(BaseSuite):
         args = (data.get('scope').replace(' ', '+'),
                 data.get('refresh_token'))
         auth_code = 'confidential:confidential'.encode('base64').strip()
-        url = ('/oauth/refresh_token?grant_type=refresh_token'
+        url = ('/oauth/token?grant_type=refresh_token'
                '&scope={}&refresh_token={}&username=admin')
         url = url.format(*args)
         rv = self.client.get(url, headers={
@@ -123,7 +121,7 @@ class TestRefreshToken(BaseSuite):
 class TestCredentialAuth(BaseSuite):
     def test_get_access_token(self):
         auth_code = 'confidential:confidential'.encode('base64').strip()
-        url = ('/oauth/access_token?grant_type=client_credentials'
+        url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,

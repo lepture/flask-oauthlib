@@ -214,14 +214,9 @@ def create_server(app):
         confirm = request.form.get('confirm', 'no')
         return confirm == 'yes'
 
-    @app.route('/oauth/access_token')
-    @oauth.access_token_handler
+    @app.route('/oauth/token')
+    @oauth.token_handler
     def access_token():
-        return {}
-
-    @app.route('/oauth/refresh_token')
-    @oauth.refresh_token_handler
-    def refresh_token():
         return {}
 
     @app.route('/api/email')
