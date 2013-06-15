@@ -52,9 +52,6 @@ class TestWebAuth(BaseSuite):
         rv = self.client.get('/oauth/authorize')
         assert 'invalid_client_id' in rv.location
 
-        #rv = self.client.get('/oauth/authorize?client_id=dev')
-        #print rv.data
-
     def test_oauth_authorize_valid_url(self):
         rv = self.client.get(authorize_url)
         # valid
@@ -70,6 +67,14 @@ class TestWebAuth(BaseSuite):
         ))
         # success
         assert 'code=' in rv.location
+        assert 'state' not in rv.location
+
+        # test state
+        rv = self.client.post(authorize_url + '&state=foo', data=dict(
+            confirm='yes'
+        ))
+        assert 'code=' in rv.location
+        assert 'state' in rv.location
 
     def test_get_access_token(self):
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
@@ -88,12 +93,14 @@ class TestWebAuth(BaseSuite):
 class TestPasswordAuth(BaseSuite):
     def test_get_access_token(self):
         auth_code = 'confidential:confidential'.encode('base64').strip()
-        url = ('/oauth/token?grant_type=password'
+        url = ('/oauth/token?grant_type=password&state=foo'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
         assert 'access_token' in rv.data
+        assert 'state' in rv.data
+
 
 class TestRefreshToken(BaseSuite):
     def test_refresh_token_in_password_grant(self):

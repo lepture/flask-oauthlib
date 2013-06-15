@@ -15,7 +15,6 @@ from functools import wraps
 from flask import _app_ctx_stack
 from flask import request, url_for
 from flask import redirect, make_response, abort
-from flask import session
 from werkzeug import cached_property
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
@@ -241,7 +240,6 @@ class OAuth2Provider(object):
                         uri, http_method, body, headers
                     )
                     scopes, credentials = ret
-                    session['oauth2_credentials'] = credentials
                     kwargs['scopes'] = scopes
                     kwargs.update(credentials)
                     return f(*args, **kwargs)
@@ -270,8 +268,6 @@ class OAuth2Provider(object):
             state=request.values.get('state', None)
         )
         log.debug('Fetched credentials from request %r.', credentials)
-        credentials.update(session.get('oauth2_credentials', {}))
-        log.debug('Fetched credentials from session %r.', credentials)
         redirect_uri = credentials.get('redirect_uri')
         log.debug('Found redirect_uri %s.', redirect_uri)
 
