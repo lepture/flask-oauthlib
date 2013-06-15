@@ -657,10 +657,6 @@ class OAuth2RequestValidator(RequestValidator):
     def validate_scopes(self, client_id, scopes, client, request,
                         *args, **kwargs):
         """Ensure the client is authorized access to requested scopes."""
-        if not client:
-            client = request.client or self._clientgetter(client_id)
-            request.client = client
-            self.attrs['client'] = client
         if set(client.default_scopes).issuperset(set(scopes)):
             return True
         if hasattr(client, 'validate_scopes'):
