@@ -59,6 +59,12 @@ class OAuth2Provider(object):
         app.extensions = getattr(app, 'extensions', {})
         app.extensions['oauth-provider'] = self
 
+        @app.teardown_request
+        def clear_attrs(exc=None):
+            if hasattr(self, '_validator') and \
+               hasattr(self._validator, 'attrs'):
+                self._validator.attrs = {}
+
     def get_app(self):
         if self.app is not None:
             return self.app
@@ -223,9 +229,9 @@ class OAuth2Provider(object):
         """
         @wraps(f)
         def decorated(*args, **kwargs):
-            uri, http_method, body, headers = _extract_params()
             # raise if server not implemented
             server = self.server
+            uri, http_method, body, headers = _extract_params()
 
             if request.method == 'GET':
                 redirect_uri = request.args.get('redirect_uri', None)
@@ -254,6 +260,7 @@ class OAuth2Provider(object):
 
     def confirm_authorization_request(self):
         """When consumer confirm the authrozation."""
+        server = self.server
         scope = request.values.get('scope') or ''
         scopes = scope.split()
         credentials = dict(
@@ -268,7 +275,6 @@ class OAuth2Provider(object):
         redirect_uri = credentials.get('redirect_uri')
         log.debug('Found redirect_uri %s.', redirect_uri)
 
-        server = self.server
         uri, http_method, body, headers = _extract_params()
         try:
             ret = server.create_authorization_response(
@@ -296,10 +302,10 @@ class OAuth2Provider(object):
         """
         @wraps(f)
         def decorated(*args, **kwargs):
+            server = self.server
             uri, http_method, body, headers = _extract_params()
             credentials = f(*args, **kwargs) or {}
             log.debug('Fetched extra credentials, %r.', credentials)
-            server = self.server
             uri, headers, body, status = server.create_token_response(
                 uri, http_method, body, headers, credentials
             )
@@ -325,10 +331,10 @@ class OAuth2Provider(object):
         """
         @wraps(f)
         def decorated(*args, **kwargs):
+            server = self.server
             uri, http_method, body, headers = _extract_params()
             credentials = f(*args, **kwargs) or {}
             log.debug('Fetched extra credentials, %r.', credentials)
-            server = self.server
             uri, headers, body, status = server.create_token_response(
                 uri, http_method, body, headers, credentials
             )
@@ -343,8 +349,8 @@ class OAuth2Provider(object):
         def wrapper(f):
             @wraps(f)
             def decorated(*args, **kwargs):
-                uri, http_method, body, headers = _extract_params()
                 server = self.server
+                uri, http_method, body, headers = _extract_params()
                 valid, _ = server.verify_request(
                     uri, http_method, body, headers, scopes
                 )
