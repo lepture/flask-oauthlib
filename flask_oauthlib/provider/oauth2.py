@@ -88,7 +88,7 @@ class OAuth2Provider(object):
         """
         self.app = app
         app.extensions = getattr(app, 'extensions', {})
-        app.extensions['oauth-provider'] = self
+        app.extensions['oauthlib.provider.oauth2'] = self
 
         @app.teardown_request
         def clear_attrs(exc=None):

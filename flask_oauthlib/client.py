@@ -51,7 +51,7 @@ class OAuth(object):
         """
         self.app = app
         app.extensions = getattr(app, 'extensions', {})
-        app.extensions['oauth-client'] = self
+        app.extensions['oauthlib.client'] = self
 
     def remote_app(self, name, register=True, **kwargs):
         """Registers a new remote application.
