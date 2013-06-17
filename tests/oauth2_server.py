@@ -1,5 +1,5 @@
 # coding: utf-8
-import datetime
+from datetime import datetime, timedelta
 from flask import g, render_template, request, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
@@ -103,8 +103,7 @@ class Token(db.Model):
 
     def __init__(self, **kwargs):
         expires_in = kwargs.get('expires_in')
-        self.expires = datetime.datetime.utcnow() + \
-                datetime.timedelta(seconds=expires_in)
+        self.expires = datetime.utcnow() + timedelta(seconds=expires_in)
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -166,7 +165,7 @@ def create_server(app):
 
     @oauth.grantsetter
     def set_grant(client_id, code, request, *args, **kwargs):
-        expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
+        expires = datetime.utcnow() + timedelta(seconds=100)
         grant = Grant(
             client_id=client_id,
             code=code['code'],
