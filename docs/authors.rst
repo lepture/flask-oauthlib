@@ -8,7 +8,7 @@ Contributors
 
 People who send patches and suggestions:
 
-  .. include:: ../AUTHORS
+.. include:: ../AUTHORS
 
 Find more contributors on Github_.
 
