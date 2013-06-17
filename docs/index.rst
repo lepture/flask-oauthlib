@@ -36,6 +36,7 @@ instructions for getting the most out of Flask-OAuthlib
    intro
    install
    client
+   provider
 
 
 API Documentation
