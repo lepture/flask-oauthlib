@@ -28,11 +28,39 @@ log = logging.getLogger('flask_oauthlib')
 class OAuth2Provider(object):
     """Provide secure services using OAuth2.
 
-    The server should provide an authorize handler, access token hander,
-    refresh token hander. But before the handlers are implemented, the
-    server should provide the client getter, token getter and grant getter.
+    The server should provide an authorize handler and a token hander,
+    But before the handlers are implemented, the server should provide
+    some getters for the validation.
 
-    Protect the resource with scopes::
+    Like many other Flask extensions, there are two usage modes. One is
+    binding the Flask app instance::
+
+        app = Flask(__name__)
+        oauth = OAuth2Provider(app)
+
+    The second possibility is to bind the Flask app later::
+
+        oauth = OAuth2Provider()
+
+        def create_app():
+            app = Flask(__name__)
+            oauth.init_app(app)
+            return app
+
+    Configure :meth:`tokengetter` and :meth:`tokensetter` to get and
+    set tokens. Configure :meth:`grantgetter` and :meth:`grantsetter`
+    to get and set grant tokens. Configure :meth:`clientgetter` to
+    get the client.
+
+    Configure :meth:`usergetter` if you need password credential
+    authorization.
+
+    With everything ready, implement the authorization workflow:
+
+        * :meth:`authorize_handler` for consumer to confirm the grant
+        * :meth:`token_handler` for client to exchange access token
+
+    And now you can protect the resource with scopes::
 
         @app.route('/api/user')
         @oauth.require_oauth(['email'])
@@ -54,6 +82,10 @@ class OAuth2Provider(object):
                 raise AttributeError('No such attribute: %r' % key)
 
     def init_app(self, app):
+        """
+        This callback can be used to initialize an application for the
+        oauth provider instance.
+        """
         self.app = app
         app.extensions = getattr(app, 'extensions', {})
         app.extensions['oauth-provider'] = self
@@ -77,6 +109,17 @@ class OAuth2Provider(object):
 
     @cached_property
     def error_uri(self):
+        """The error page URI.
+
+        When something turns error, it will redirect to this error page.
+        You can configure the error page URI with Flask config::
+
+            OAUTH_PROVIDER_ERROR_URI = '/error'
+
+        You can also define the error page by a named endpoint::
+
+            OAUTH_PROVIDER_ERROR_ENDPOINT = 'oauth.error'
+        """
         app = self.get_app()
         error_uri = app.config.get('OAUTH_PROVIDER_ERROR_URI')
         if error_uri:
@@ -88,7 +131,23 @@ class OAuth2Provider(object):
 
     @cached_property
     def server(self):
-        """All in one endpoints."""
+        """
+        All in one endpoints. This property is created by automaticly
+        if you have implemented all the getters and setters.
+
+        However, if you are not satisfied with the getter and setter,
+        you can create a validator with :class:`OAuth2RequestValidator`::
+
+            class MyValidator(OAuth2RequestValidator):
+                def validate_client_id(self, client_id):
+                    # do something
+
+                # ...
+
+        And assign the validator for the provider::
+
+            oauth._validator = MyValidator()
+        """
         app = self.get_app()
         expires_in = app.config.get('OAUTH_PROVIDER_TOKEN_EXPIRES_IN')
         if hasattr(self, '_validator'):
@@ -150,11 +209,15 @@ class OAuth2Provider(object):
         The function accepts an `access_token` or `refresh_token` parameters,
         and it returns a token object with at least these information:
 
+            - access_token: A string token
+            - refresh_token: A string token
+            - client_id: ID of the client
             - scopes: A list of scopes
             - expires: A `datetime.datetime` object
             - user: The user object
 
-        Implement the token getter::
+        The implementation of tokengetter should accepts two parameters,
+        one is access_token the other is refresh_token::
 
             @oauth.tokengetter
             def bearer_token(access_token=None, refresh_token=None):
@@ -181,6 +244,25 @@ class OAuth2Provider(object):
 
     def tokensetter(self, f):
         """Register a function to save the bearer token.
+
+        The setter accepts two parameters at least, one is token,
+        the other is request::
+
+            @oauth.tokensetter
+            def set_token(token, request, *args, **kwargs):
+                save_token(token, request.client, request.user)
+
+        The parameter token is a dict, that looks like::
+
+            {
+                u'access_token': u'6JwgO77PApxsFCU8Quz0pnL9s23016',
+                u'token_type': u'Bearer',
+                u'expires_in': 3600,
+                u'scope': u'email address'
+            }
+
+        The request is an object, that contains an user object and a
+        client object.
         """
         self._tokensetter = f
 
@@ -593,7 +675,6 @@ class OAuth2RequestValidator(RequestValidator):
             return grant_type in client.allowed_grant_types
 
         if grant_type == 'client_credentials':
-            # TODO: other means
             if hasattr(client, 'user'):
                 request.user = client.user
                 self.attrs['user'] = client.user
@@ -630,12 +711,12 @@ class OAuth2RequestValidator(RequestValidator):
 
         token = self._tokengetter(refresh_token=refresh_token)
 
-        if token and token.client == client:
+        if token and token.client_id == client.client_id:
             # Make sure the request object contains user and client_id
-            request.client_id = token.client.client_id
+            request.client_id = token.client_id
             request.user = token.user
             self.attrs['user'] = token.user
-            self.attrs['client'] = token.client
+            self.attrs['client'] = client
             return True
         return False
 
