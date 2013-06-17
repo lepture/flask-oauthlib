@@ -81,12 +81,6 @@ class OAuth2Provider(object):
         app.extensions = getattr(app, 'extensions', {})
         app.extensions['oauthlib.provider.oauth2'] = self
 
-        @app.teardown_request
-        def clear_attrs(exc=None):
-            if hasattr(self, '_validator') and \
-               hasattr(self._validator, 'attrs'):
-                self._validator.attrs = {}
-
     def get_app(self):
         if self.app is not None:
             return self.app
@@ -419,8 +413,6 @@ class OAuth2RequestValidator(RequestValidator):
         self._grantgetter = grantgetter
         self._grantsetter = grantsetter
 
-        self.attrs = {}
-
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
 
@@ -449,7 +441,6 @@ class OAuth2RequestValidator(RequestValidator):
             return False
 
         request.client = client
-        self.attrs['client'] = client
         if client.client_secret != client_secret:
             log.debug('Authenticate client failed, secret not match.')
             return False
@@ -478,7 +469,6 @@ class OAuth2RequestValidator(RequestValidator):
 
         # attach client on request for convenience
         request.client = client
-        self.attrs['client'] = client
 
         # authenticate non-confidential client_type only
         # most of the clients are of public client_type
@@ -533,7 +523,6 @@ class OAuth2RequestValidator(RequestValidator):
     def get_default_redirect_uri(self, client_id, request, *args, **kwargs):
         """Default redirect_uri for the given client."""
         request.client = request.client or self._clientgetter(client_id)
-        self.attrs['client'] = request.client
         redirect_uri = request.client.default_redirect_uri
         log.debug('Found default redirect uri %r', redirect_uri)
         return redirect_uri
@@ -541,7 +530,6 @@ class OAuth2RequestValidator(RequestValidator):
     def get_default_scopes(self, client_id, request, *args, **kwargs):
         """Default scopes for the given client."""
         request.client = request.client or self._clientgetter(client_id)
-        self.attrs['client'] = request.client
         scopes = request.client.default_scopes
         log.debug('Found default scopes %r', scopes)
         return scopes
@@ -566,7 +554,6 @@ class OAuth2RequestValidator(RequestValidator):
             code, client_id
         )
         request.client = request.client or self._clientgetter(client_id)
-        self.attrs['client'] = request.client
         self._grantsetter(client_id, code, request, *args, **kwargs)
         return request.client.default_redirect_uri
 
@@ -607,8 +594,6 @@ class OAuth2RequestValidator(RequestValidator):
 
         request.user = tok.user
         request.scopes = scopes
-        self.attrs['user'] = tok.user
-        self.attrs['scopes'] = scopes
         return True
 
     def validate_client_id(self, client_id, request, *args, **kwargs):
@@ -618,7 +603,6 @@ class OAuth2RequestValidator(RequestValidator):
         if client:
             # attach client to request object
             request.client = client
-            self.attrs['client'] = client
             return True
         return False
 
@@ -638,8 +622,6 @@ class OAuth2RequestValidator(RequestValidator):
         request.state = kwargs.get('state')
         request.user = grant.user
         request.scopes = grant.scopes
-        self.attrs['user'] = grant.user
-        self.attrs['scopes'] = grant.scopes
         return True
 
     def validate_grant_type(self, client_id, grant_type, client, request,
@@ -668,7 +650,6 @@ class OAuth2RequestValidator(RequestValidator):
         if grant_type == 'client_credentials':
             if hasattr(client, 'user'):
                 request.user = client.user
-                self.attrs['user'] = client.user
                 return True
             log.debug('Client should has a user property')
             return False
@@ -686,7 +667,6 @@ class OAuth2RequestValidator(RequestValidator):
         """
         request.client = request.client = self._clientgetter(client_id)
         client = request.client
-        self.attrs['client'] = client
         if hasattr(client, 'validate_redirect_uri'):
             return client.validate_redirect_uri(redirect_uri)
         return redirect_uri in client.redirect_uris
@@ -706,8 +686,6 @@ class OAuth2RequestValidator(RequestValidator):
             # Make sure the request object contains user and client_id
             request.client_id = token.client_id
             request.user = token.user
-            self.attrs['user'] = token.user
-            self.attrs['client'] = client
             return True
         return False
 
@@ -749,7 +727,6 @@ class OAuth2RequestValidator(RequestValidator):
             )
             if user:
                 request.user = user
-                self.attrs['user'] = user
                 return True
             return False
         log.debug('Password credential authorization is disabled.')
