@@ -72,15 +72,6 @@ class OAuth2Provider(object):
         if app:
             self.init_app(app)
 
-    def __getattr__(self, key):
-        try:
-            return object.__getattribute__(self, key)
-        except AttributeError:
-            try:
-                return self._validator.attrs.get(key)
-            except:
-                raise AttributeError('No such attribute: %r' % key)
-
     def init_app(self, app):
         """
         This callback can be used to initialize an application for the
@@ -400,12 +391,12 @@ class OAuth2Provider(object):
             def decorated(*args, **kwargs):
                 server = self.server
                 uri, http_method, body, headers = _extract_params()
-                valid, _ = server.verify_request(
+                valid, req = server.verify_request(
                     uri, http_method, body, headers, scopes
                 )
                 if not valid:
                     return abort(403)
-                return f(*args, **kwargs)
+                return f(*((req,) + args), **kwargs)
             return decorated
         return wrapper
 

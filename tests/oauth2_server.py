@@ -220,12 +220,12 @@ def create_server(app):
 
     @app.route('/api/email')
     @oauth.require_oauth(['email'])
-    def email_api():
+    def email_api(oauth):
         return jsonify(email='me@oauth.net', username=oauth.user.username)
 
     @app.route('/api/address')
     @oauth.require_oauth(['address'])
-    def address_api():
+    def address_api(oauth):
         return jsonify(address='earth', username=oauth.user.username)
 
     return app
