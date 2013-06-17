@@ -203,6 +203,19 @@ class OAuth2Provider(object):
         """
         self._clientgetter = f
 
+    def usergetter(self, f):
+        """Register a function as the user getter.
+
+        This decorator is only required for password credential
+        authorization::
+
+            @oauth.usergetter
+            def get_user(username=username, password=password,
+                         *args, **kwargs):
+                return get_user_by_username(username, password)
+        """
+        self._usergetter = f
+
     def tokengetter(self, f):
         """Register a function as the token getter.
 
@@ -228,19 +241,6 @@ class OAuth2Provider(object):
                 return None
         """
         self._tokengetter = f
-
-    def usergetter(self, f):
-        """Register a function as the user getter.
-
-        This decorator is only required for password credential
-        authorization::
-
-            @oauth.usergetter
-            def get_user(username=username, password=password,
-                         *args, **kwargs):
-                return get_user_by_username(username, password)
-        """
-        self._usergetter = f
 
     def tokensetter(self, f):
         """Register a function to save the bearer token.
