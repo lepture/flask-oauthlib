@@ -70,7 +70,7 @@ An example of the data model in SQLAlchemy (SQLAlchemy is not required)::
 
         # creator of the client, not required
         user_id = db.Column(db.ForeignKey('user.id'))
-        # required if you need to support password credential
+        # required if you need to support client credential
         user = relationship('User')
 
         client_id = db.Column(db.Unicode(40), primary_key=True)
@@ -175,8 +175,6 @@ A bearer token requires at least these information:
 
 An example of the data model in SQLAlchemy::
 
-    from datetime import datetime, timedelta
-
     class Token(db.Model):
         id = db.Column(db.Integer, primary_key=True)
         client_id = db.Column(
@@ -212,11 +210,11 @@ The oauth provider has some built-in defaults, you can change them with Flask
 config:
 
 ================================== ==========================================
-`OAUTH_PROVIDER_ERROR_URI`         The error page when there is an error,
+`OAUTH2_PROVIDER_ERROR_URI`        The error page when there is an error,
                                    default value is ``'/oauth/errors'``.
-`OAUTH_PROVIDER_ERROR_ENDPOINT`    You can also configure the error page uri
+`OAUTH2_PROVIDER_ERROR_ENDPOINT`   You can also configure the error page uri
                                    with an endpoint name.
-`OAUTH_PROVIDER_TOKEN_EXPIRES_IN`  Default Bearer token expires time, default
+`OAUTH2_PROVIDER_TOKEN_EXPIRES_IN` Default Bearer token expires time, default
                                    is ``3600``.
 ================================== ==========================================
 
@@ -295,6 +293,8 @@ and accessing resource flow. Implemented with decorators::
         elif refresh_token:
             return Token.query.filter_by(refresh_token=refresh_token).first()
 
+    from datetime import datetime, timedelta
+
     @oauth.tokensetter
     def save_token(token, request, *args, **kwargs):
         toks = Token.query.filter_by(client_id=request.client.client_id,
@@ -302,7 +302,11 @@ and accessing resource flow. Implemented with decorators::
         # make sure that every client has only one token connected to a user
         db.session.delete(toks)
 
+        expires_in = token.pop('expires_in')
+        expires = datetime.utcnow() + timedelta(seconds=expires_in)
+
         tok = Token(**token)
+        tok.expires = expires
         tok.client_id = request.client.client_id
         tok.user_id = request.user.id
         db.session.add(tok)

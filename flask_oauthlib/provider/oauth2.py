@@ -99,17 +99,17 @@ class OAuth2Provider(object):
         When something turns error, it will redirect to this error page.
         You can configure the error page URI with Flask config::
 
-            OAUTH_PROVIDER_ERROR_URI = '/error'
+            OAUTH2_PROVIDER_ERROR_URI = '/error'
 
         You can also define the error page by a named endpoint::
 
-            OAUTH_PROVIDER_ERROR_ENDPOINT = 'oauth.error'
+            OAUTH2_PROVIDER_ERROR_ENDPOINT = 'oauth.error'
         """
         app = self.get_app()
-        error_uri = app.config.get('OAUTH_PROVIDER_ERROR_URI')
+        error_uri = app.config.get('OAUTH2_PROVIDER_ERROR_URI')
         if error_uri:
             return error_uri
-        error_endpoint = app.config.get('OAUTH_PROVIDER_ERROR_ENDPOINT')
+        error_endpoint = app.config.get('OAUTH2_PROVIDER_ERROR_ENDPOINT')
         if error_endpoint:
             return url_for(error_endpoint)
         return '/oauth/errors'
@@ -133,7 +133,7 @@ class OAuth2Provider(object):
             oauth._validator = MyValidator()
         """
         app = self.get_app()
-        expires_in = app.config.get('OAUTH_PROVIDER_TOKEN_EXPIRES_IN')
+        expires_in = app.config.get('OAUTH2_PROVIDER_TOKEN_EXPIRES_IN')
         if hasattr(self, '_validator'):
             return Server(self._validator, token_expires_in=expires_in)
 
