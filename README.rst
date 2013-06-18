@@ -7,13 +7,27 @@ Flask-OAuthlib
         :target: https://coveralls.io/r/lepture/flask-oauthlib
 
 Flask-OAuthlib is an extension to Flask that allows you to interact with
-remote OAuth enabled applications. It is a replacement for Flask-OAuth.
+remote OAuth enabled applications. On the client site, it is a replacement
+for Flask-OAuth. But it does more than that, it also helps you to create
+oauth providers.
+
+Flask-OAuthlib relies on oauthlib_.
+
+.. _oauthlib: https://github.com/idan/oauthlib
 
 Features
 --------
 
-* The client part is compatible with Flask-OAuth
-* Compatible with non-standard but OAuth-Like services like weibo
+- Support for OAuth 1.0a, OAuth2 client
+- Friendly API (same with Flask-OAuth)
+- Direct integration with Flask
+- Basic support for remote method invocation of RESTful APIs
+- Support OAuth2 provider with Bearer token
+
+And request more features at `github issues`_.
+
+.. _`github issues`: https://github.com/lepture/flask-oauthlib/issues
+
 
 Installation
 ------------
@@ -29,12 +43,12 @@ If you don't have pip installed, try with easy_install::
 .. _pip: http://www.pip-installer.org/
 
 
-Usage
------
+Additional Notes
+----------------
 
-You can find some examples in this repo. This includes:
+We keep a documentation at `flask-oauthlib@readthedocs`_.
 
-1. OAuth1 with twitter
-2. OAuth2 with facebook
-3. Non-standard OAuth-like service weibo
-4. Another Chinese Social service douban
+.. _`flask-oauthlib@readthedocs`: https://flask-oauthlib.readthedocs.org
+
+If you are only interested in client part, you can find some examples
+in the ``example`` directory.

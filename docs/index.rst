@@ -16,11 +16,11 @@ which is pretty and simple.
 Features
 --------
 
-- Support for OAuth 1.0a, OAuth2
+- Support for OAuth 1.0a, OAuth2 client
 - Friendly API (same with Flask-OAuth)
 - Direct integration with Flask
 - Basic support for remote method invocation of RESTful APIs
-- Client part finished
+- Support OAuth2 provider with Bearer token
 
 
 User's Guide
