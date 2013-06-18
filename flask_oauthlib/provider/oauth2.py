@@ -126,8 +126,7 @@ class OAuth2Provider(object):
             class MyValidator(OAuth2RequestValidator):
                 def validate_client_id(self, client_id):
                     # do something
-
-                # ...
+                    return True
 
         And assign the validator for the provider::
 
