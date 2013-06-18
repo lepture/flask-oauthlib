@@ -414,6 +414,21 @@ The authorization flow is finished, everything should be working now.
     and only available in password credential.
 
 
+subclass way
+````````````
+
+If you are not satisfied with the decorator way of getters and setters, you can
+implements them in the subclass way::
+
+    class MyProvider(OAuth2Provider):
+        def _clientgetter(self, client_id):
+            return Client.query.filter_by(client_id=client_id).first()
+
+        #: more getters and setters
+
+Every getter and setter is started with ``_``.
+
+
 Protect Resource
 ~~~~~~~~~~~~~~~~
 
