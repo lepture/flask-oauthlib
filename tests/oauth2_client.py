@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, session, request, jsonify
+from flask import Flask, redirect, url_for, session, request, jsonify, abort
 from flask_oauthlib.client import OAuth
 
 
@@ -45,7 +45,9 @@ def create_client(app):
 
     @app.route('/address')
     def address():
-        ret = dev.get('address')
+        ret = dev.get('address/hangzhou')
+        if ret.status not in (200, 201):
+            return abort(ret.status)
         return ret.raw_data
 
     @dev.tokengetter

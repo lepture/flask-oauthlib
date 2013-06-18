@@ -89,6 +89,9 @@ class TestWebAuth(BaseSuite):
         rv = self.client.get('/')
         assert 'username' in rv.data
 
+        rv = self.client.get('/address')
+        assert rv.status_code == 403
+
 
 class TestPasswordAuth(BaseSuite):
     def test_get_access_token(self):
