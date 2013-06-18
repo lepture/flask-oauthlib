@@ -229,7 +229,7 @@ to exchange/refresh access token.
 Before the implementing of authorize and token handler, we need to set up some
 getters and setter to communicate with the database.
 
-client getter
+Client getter
 `````````````
 
 A client getter is required. It tells which client is sending the requests,
@@ -240,7 +240,7 @@ creating the getter with decorator::
         return Client.query.filter_by(client_id=client_id).first()
 
 
-grant getter and setter
+Grant getter and setter
 ```````````````````````
 
 Grant getter and setter are required. They are used in the authorization flow,
@@ -280,7 +280,7 @@ information:
 - state: state parameter
 - response_type: response_type paramter
 
-token getter and setter
+Token getter and setter
 ```````````````````````
 
 Token getter and setters are required. They are used in the authorization flow
@@ -330,7 +330,7 @@ dict, which contains::
 The ``request`` is an object like the one in grant setter.
 
 
-user getter
+User getter
 ```````````
 
 User getter is optional. It is only required if you need password credential
@@ -343,7 +343,7 @@ authorization::
             return user
         return None
 
-authorize handler
+Authorize handler
 `````````````````
 
 Authorize handler is a decorator for the authorize endpoint. It is suggested
@@ -378,7 +378,7 @@ There is a ``@require_login`` decorator in the sample code, you should
 implement it yourself.
 
 
-token handler
+Token handler
 `````````````
 
 Token handler is a decorator for exchange/refresh access token. You don't need
@@ -414,7 +414,7 @@ The authorization flow is finished, everything should be working now.
     and only available in password credential.
 
 
-subclass way
+Subclass way
 ````````````
 
 If you are not satisfied with the decorator way of getters and setters, you can
