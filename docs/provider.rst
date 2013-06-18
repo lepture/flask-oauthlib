@@ -371,11 +371,11 @@ kwargs are:
 - redirect_uri: redirect_uri parameter
 - response_type: response_type parameter
 
-The POST request need to return a bool value that tells whether the user grant
+The POST request needs to return a bool value that tells whether user grantted
 the access or not.
 
-There is a `@require_login` decorator in the sample code, you should implement
-it yourself.
+There is a ``@require_login`` decorator in the sample code, you should
+implement it yourself.
 
 
 token handler
@@ -405,6 +405,13 @@ exchange tokens::
         return None
 
 The authorization flow is finished, everything should be working now.
+
+
+.. admonition:: Note:
+
+    This token endpoint is for access token and refresh token both. But please
+    remember that refresh token is only available for confidential client,
+    and only available in password credential.
 
 
 Protect Resource
