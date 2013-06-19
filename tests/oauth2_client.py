@@ -52,6 +52,12 @@ def create_client(app):
             return abort(ret.status)
         return ret.raw_data
 
+    @app.route('/method/<name>')
+    def method(name):
+        func = getattr(dev, name)
+        ret = func('method')
+        return ret.raw_data
+
     @dev.tokengetter
     def get_oauth_token():
         return session.get('dev_token')

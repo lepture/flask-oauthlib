@@ -228,6 +228,11 @@ def create_server(app):
     def address_api(oauth, city):
         return jsonify(address=city, username=oauth.user.username)
 
+    @app.route('/api/method', methods=['GET', 'POST', 'PUT', 'DELETE'])
+    @oauth.require_oauth()
+    def method_api(oauth):
+        return jsonify(method=request.method)
+
     return app
 
 

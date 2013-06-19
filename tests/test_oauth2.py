@@ -92,6 +92,15 @@ class TestWebAuth(BaseSuite):
         rv = self.client.get('/address')
         assert rv.status_code == 403
 
+        rv = self.client.get('/method/post')
+        assert 'POST' in rv.data
+
+        rv = self.client.get('/method/put')
+        assert 'PUT' in rv.data
+
+        rv = self.client.get('/method/delete')
+        assert 'DELETE' in rv.data
+
     def test_invalid_client_id(self):
         authorize_url = (
             '/oauth/authorize?response_type=code&client_id=confidential'
