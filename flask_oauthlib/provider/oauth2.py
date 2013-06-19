@@ -12,7 +12,6 @@ import os
 import logging
 import datetime
 from functools import wraps
-from flask import _app_ctx_stack
 from flask import request, url_for
 from flask import redirect, make_response, abort
 from werkzeug import cached_property
