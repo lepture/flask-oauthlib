@@ -1,6 +1,7 @@
 *.pyc
 *.pyo
 *.egg-info
+*.swp
 __pycache__
 build
 develop-eggs

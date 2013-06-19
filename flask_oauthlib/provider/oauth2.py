@@ -432,11 +432,11 @@ class OAuth2RequestValidator(RequestValidator):
             log.debug('Authenticate client failed, secret not match.')
             return False
 
-        confidential = 'confidential'
-        if hasattr(client, 'confidential'):
-            confidential = client.confidential
+        client_type = 'confidential'
+        if hasattr(client, 'client_type'):
+            client_type = client.client_type
 
-        if client.client_type != confidential:
+        if client.client_type != client_type:
             log.debug('Authenticate client failed, not confidential.')
             return False
         log.debug('Authenticate client success.')
@@ -459,11 +459,11 @@ class OAuth2RequestValidator(RequestValidator):
 
         # authenticate non-confidential client_type only
         # most of the clients are of public client_type
-        confidential = 'confidential'
-        if hasattr(client, 'confidential'):
-            confidential = client.confidential
+        client_type = 'confidential'
+        if hasattr(client, 'client_type'):
+            client_type = client.client_type
 
-        if client.client_type == confidential:
+        if client.client_type == client_type:
             log.debug('Authenticate client failed, confidential client.')
             return False
         return True
