@@ -507,9 +507,15 @@ class OAuthRemoteApp(object):
         @wraps(f)
         def decorated(*args, **kwargs):
             if 'oauth_verifier' in request.args:
-                data = self.handle_oauth1_response()
+                try:
+                    data = self.handle_oauth1_response()
+                except OAuthException as e:
+                    data = e
             elif 'code' in request.args:
-                data = self.handle_oauth2_response()
+                try:
+                    data = self.handle_oauth2_response()
+                except OAuthException as e:
+                    data = e
             else:
                 data = self.handle_unknown_response()
 

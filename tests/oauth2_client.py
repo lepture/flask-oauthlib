@@ -40,8 +40,10 @@ def create_client(app):
             return 'Access denied: error=%s' % (
                 request.args['error']
             )
-        session['dev_token'] = (resp['access_token'], '')
-        return jsonify(resp)
+        if 'access_token' in resp:
+            session['dev_token'] = (resp['access_token'], '')
+            return jsonify(resp)
+        return str(resp)
 
     @app.route('/address')
     def address():

@@ -92,6 +92,26 @@ class TestWebAuth(BaseSuite):
         rv = self.client.get('/address')
         assert rv.status_code == 403
 
+    def test_invalid_client_id(self):
+        authorize_url = (
+            '/oauth/authorize?response_type=code&client_id=confidential'
+            '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized'
+            '&scope=email'
+        )
+        rv = self.client.post(authorize_url, data={'confirm': 'yes'})
+        rv = self.client.get(clean_url(rv.location))
+        assert 'Invalid' in rv.data
+
+    def test_invalid_response_type(self):
+        authorize_url = (
+            '/oauth/authorize?response_type=invalid&client_id=dev'
+            '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized'
+            '&scope=email'
+        )
+        rv = self.client.post(authorize_url, data={'confirm': 'yes'})
+        rv = self.client.get(clean_url(rv.location))
+        assert 'error' in rv.data
+
 
 class TestPasswordAuth(BaseSuite):
     def test_get_access_token(self):
@@ -137,6 +157,32 @@ class TestCredentialAuth(BaseSuite):
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
         assert 'access_token' in rv.data
+
+    def test_invalid_auth_header(self):
+        url = ('/oauth/token?grant_type=client_credentials'
+               '&scope=email+address&username=admin&password=admin')
+        rv = self.client.get(url, headers={
+            'HTTP_AUTHORIZATION': 'Basic foobar'
+        }, data={'confirm': 'yes'})
+        assert 'invalid_client' in rv.data
+
+    def test_no_client(self):
+        auth_code = 'none:confidential'.encode('base64').strip()
+        url = ('/oauth/token?grant_type=client_credentials'
+               '&scope=email+address&username=admin&password=admin')
+        rv = self.client.get(url, headers={
+            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+        }, data={'confirm': 'yes'})
+        assert 'invalid_client' in rv.data
+
+    def test_wrong_secret_client(self):
+        auth_code = 'confidential:wrong'.encode('base64').strip()
+        url = ('/oauth/token?grant_type=client_credentials'
+               '&scope=email+address&username=admin&password=admin')
+        rv = self.client.get(url, headers={
+            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+        }, data={'confirm': 'yes'})
+        assert 'invalid_client' in rv.data
 
 
 def clean_url(location):
