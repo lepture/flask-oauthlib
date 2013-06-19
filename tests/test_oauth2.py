@@ -149,8 +149,8 @@ class TestRefreshToken(BaseSuite):
                 data.get('refresh_token'))
         auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/token?grant_type=refresh_token'
-               '&scope={}&refresh_token={}&username=admin')
-        url = url.format(*args)
+               '&scope=%s&refresh_token=%s&username=admin')
+        url = url % args
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         })
