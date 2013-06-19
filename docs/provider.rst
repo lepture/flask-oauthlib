@@ -58,6 +58,7 @@ But it could be better, if you implemented:
 
 - allowed_grant_types: A list of grant types
 - allowed_response_types: A list of response types
+- validate_scopes: A function to validate scopes
 
 An example of the data model in SQLAlchemy (SQLAlchemy is not required)::
 
