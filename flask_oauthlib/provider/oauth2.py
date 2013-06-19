@@ -81,17 +81,6 @@ class OAuth2Provider(object):
         app.extensions = getattr(app, 'extensions', {})
         app.extensions['oauthlib.provider.oauth2'] = self
 
-    def get_app(self):
-        if self.app is not None:
-            return self.app
-        ctx = _app_ctx_stack.top
-        if ctx is not None:
-            return ctx.app
-        raise RuntimeError(
-            'application not registered on Oauth '
-            'instance and no application bound to current context'
-        )
-
     @cached_property
     def error_uri(self):
         """The error page URI.
@@ -105,11 +94,10 @@ class OAuth2Provider(object):
 
             OAUTH2_PROVIDER_ERROR_ENDPOINT = 'oauth.error'
         """
-        app = self.get_app()
-        error_uri = app.config.get('OAUTH2_PROVIDER_ERROR_URI')
+        error_uri = self.app.config.get('OAUTH2_PROVIDER_ERROR_URI')
         if error_uri:
             return error_uri
-        error_endpoint = app.config.get('OAUTH2_PROVIDER_ERROR_ENDPOINT')
+        error_endpoint = self.app.config.get('OAUTH2_PROVIDER_ERROR_ENDPOINT')
         if error_endpoint:
             return url_for(error_endpoint)
         return '/oauth/errors'
@@ -132,8 +120,7 @@ class OAuth2Provider(object):
 
             oauth._validator = MyValidator()
         """
-        app = self.get_app()
-        expires_in = app.config.get('OAUTH2_PROVIDER_TOKEN_EXPIRES_IN')
+        expires_in = self.app.config.get('OAUTH2_PROVIDER_TOKEN_EXPIRES_IN')
         if hasattr(self, '_validator'):
             return Server(self._validator, token_expires_in=expires_in)
 
