@@ -22,8 +22,8 @@ I do take them into consideration, Flask-OAuthlib does support those
 non-standard services.
 
 Flask-OAuthlib also provide the solution for creating an oauth service.
-It is now focusing on the oauth2 part (not finished yet), and will take
-the oauth1 into consideration.
+It is now focusing on the oauth2 part, and will take the oauth1 into
+consideration.
 
 import this
 -----------

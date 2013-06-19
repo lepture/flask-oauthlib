@@ -63,7 +63,7 @@ class OAuth2Provider(object):
     And now you can protect the resource with scopes::
 
         @app.route('/api/user')
-        @oauth.require_oauth(['email'])
+        @oauth.require_oauth('email', 'username')
         def user():
             return jsonify(g.user)
     """
@@ -105,7 +105,7 @@ class OAuth2Provider(object):
     @cached_property
     def server(self):
         """
-        All in one endpoints. This property is created by automaticly
+        All in one endpoints. This property is created automaticly
         if you have implemented all the getters and setters.
 
         However, if you are not satisfied with the getter and setter,
@@ -163,6 +163,7 @@ class OAuth2Provider(object):
 
             - allowed_grant_types: A list of grant types
             - allowed_response_types: A list of response types
+            - validate_scopes: A function to validate scopes
 
         Implement the client getter::
 
