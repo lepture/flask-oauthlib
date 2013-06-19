@@ -8,7 +8,7 @@ Here you can see the full list of changes between each Flask-OAuthlib release.
 Version 0.2.0
 -------------
 
-Release date to be decided.
+Release on June 19, 2013.
 
 - OAuth2 Provider available. Documentation at :ref:`provider`. :)
 - Make client part testable.
