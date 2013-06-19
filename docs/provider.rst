@@ -466,7 +466,7 @@ You may find the name confused, since Flask has a ``request`` model, you can
 rename it to other names, for exmaple::
 
     @app.route('/api/me')
-    @oauth.require_oauth(['email'])
+    @oauth.require_oauth('email', 'username')
     def me(data):
         user = data.user
         return jsonify(email=user.email, username=user.username)

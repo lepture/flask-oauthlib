@@ -377,7 +377,7 @@ class OAuth2Provider(object):
             return response
         return decorated
 
-    def require_oauth(self, scopes=None):
+    def require_oauth(self, *scopes):
         """Protect resource with specified scopes."""
         def wrapper(f):
             @wraps(f)
