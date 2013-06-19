@@ -436,13 +436,13 @@ Protect Resource
 Protect the resource of a user with ``require_oauth`` decorator now::
 
     @app.route('/api/me')
-    @oauth.require_oauth(['email'])
+    @oauth.require_oauth('email')
     def me(request):
         user = request.user
         return jsonify(email=user.email, username=user.username)
 
     @app.route('/api/user/<username>')
-    @oauth.require_oauth(['email'])
+    @oauth.require_oauth('email')
     def user(request, username):
         user = User.query.filter_by(username=username).first()
         return jsonify(email=user.email, username=user.username)
