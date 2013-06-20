@@ -11,6 +11,9 @@
 import logging
 from werkzeug import cached_property
 from oauthlib.oauth1 import Server
+from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
+from oauthlib.common import to_unicode
+SIGNATURE_METHODS = (SIGNATURE_HMAC, SIGNATURE_RSA)
 
 __all__ = ('OAuth1Provider', 'OAuth1Server')
 
@@ -77,5 +80,114 @@ class OAuth1Provider(object):
 
 
 class OAuth1Server(Server):
-    def __init__(self, clientgetter):
+    def __init__(self, clientgetter, tokengetter, requestgetter,
+                 config=None):
         self._clientgetter = clientgetter
+
+        # access token getter
+        self._tokengetter = tokengetter
+
+        # request token getter
+        self._requestgetter = requestgetter
+
+        if not config:
+            config = {}
+        self._config = config
+
+    @cached_property
+    def allowed_signature_methods(self):
+        return self._config.get(
+            'OAUTH1_PROVIDER_SIGNATURE_METHODS',
+            SIGNATURE_METHODS,
+        )
+
+    @property
+    def realms(self):
+        return self._config.get('OAUTH1_PROVIDER_REALMS', [])
+
+    @property
+    def enforce_ssl(self):
+        return self._config.get('OAUTH1_PROVIDER_ENFORCE_SSL', True)
+
+    def get_client_secret(self, client_key):
+        client = self._clientgetter(client_key=client_key)
+        if client:
+            return client.client_secret
+        return ''
+
+    @property
+    def dummy_client(self):
+        return to_unicode('dummy_client')
+
+    @property
+    def dummy_resource_owner(self):
+        return to_unicode('dummy_resource_owner')
+
+    def get_request_token_secret(self, client_key, request_token):
+        tok = self._requestgetter(
+            client_key=client_key,
+            token=request_token
+        )
+        if tok:
+            return tok.secret
+        return ''
+
+    def get_access_token_secret(self, client_key, access_token):
+        tok = self._tokengetter(
+            client_key=client_key,
+            token=access_token,
+        )
+        if tok:
+            return tok.secret
+        return ''
+
+    def validate_client_key(self, client_key):
+        client = self._clientgetter(client_key=client_key)
+        if client:
+            return True
+        return False
+
+    def validate_request_token(self, client_key, request_token):
+        tok = self._requestgetter(
+            client_key=client_key,
+            token=request_token
+        )
+        if tok:
+            return True
+        return False
+
+    def validate_access_token(self, client_key, access_token):
+        tok = self._tokengetter(
+            client_key=client_key,
+            token=access_token,
+        )
+        if tok:
+            return True
+        return False
+
+    def validate_timestamp_and_nonce(
+        self, client_key, timestamp, nonce,
+        request_token=None, access_token=None):
+        # TODO
+        pass
+
+    def validate_redirect_uri(self, client_key, redirect_uri):
+        client = self._clientgetter(client_key=client_key)
+        if not client:
+            return False
+        if not client.redirect_uris and redirect_uri is None:
+            return True
+        return redirect_uri in client.redirect_uris
+
+    def validate_requested_realm(self, client_key, realm):
+        # TODO
+        pass
+
+    def validate_realm(self, client_key, access_token, uri=None,
+                       required_realm=None):
+        # TODO
+        pass
+
+    def validate_verifier(self, client_key, request_token, verifier):
+        # TODO
+        pass
