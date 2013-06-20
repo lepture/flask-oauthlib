@@ -13,6 +13,7 @@ from werkzeug import cached_property
 from oauthlib.oauth1 import Server
 from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
 from oauthlib.common import to_unicode
+from flask import request
 SIGNATURE_METHODS = (SIGNATURE_HMAC, SIGNATURE_RSA)
 
 __all__ = ('OAuth1Provider', 'OAuth1Server')
@@ -65,9 +66,41 @@ class OAuth1Provider(object):
         All in one endpoints. This property is created automaticly
         if you have implemented all the getters and setters.
         """
+        if hasattr(self, '_server'):
+            return self._server
+
+        if hasattr(self, '_clientgetter') and \
+           hasattr(self, '_tokengetter') and \
+           hasattr(self, '_requestgetter'):
+            server = OAuth1Server(
+                clientgetter=self._clientgetter,
+                tokengetter=self._tokengetter,
+                requestgetter=self._requestgetter,
+            )
+            return server
+        raise RuntimeError('application not bound to required getters')
 
     def authorize_handler(self, f):
         """Authorization handler decorator."""
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            if request.method == 'GET':
+                return f(*args, **kwargs)
+            if request.method == 'POST':
+                if not f(*args, **kwargs):
+                    # denied by user
+                    # TODO: add paramters on uri
+                    return redirect(self.error_uri)
+                return self.confirm_authorization_request()
+        return decorated
+
+    def confirm_authorization_request(self):
+        """When consumer confirm the authrozation."""
+        server = self.server
+        token = request.values.get('oauth_token')
+        ret = server.create_authorization_response(token)
+        log.debug('Authorization successful.')
+        return redirect(ret[0])
 
     def request_token_handler(self, f):
         """Request token decorator."""
@@ -189,5 +222,9 @@ class OAuth1Server(Server):
         pass
 
     def validate_verifier(self, client_key, request_token, verifier):
+        # TODO
+        pass
+
+    def create_authorization_response(self, request_token):
         # TODO
         pass
