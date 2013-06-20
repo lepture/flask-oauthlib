@@ -21,6 +21,9 @@ class User(db.Model):
     username = db.Column(db.Unicode(40), unique=True, index=True,
                          nullable=False)
 
+    def check_password(self, password):
+        return True
+
 
 class Client(db.Model):
     #id = db.Column(db.Integer, primary_key=True)
@@ -102,7 +105,7 @@ class Token(db.Model):
     scope = db.Column(db.UnicodeText)
 
     def __init__(self, **kwargs):
-        expires_in = kwargs.get('expires_in')
+        expires_in = kwargs.pop('expires_in')
         self.expires = datetime.utcnow() + timedelta(seconds=expires_in)
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -143,6 +146,81 @@ def prepare_app(app):
 
 
 def create_server(app):
+    app = prepare_app(app)
+
+    oauth = OAuth2Provider(app)
+
+    from flask_oauthlib.contrib.handlers import (
+        SQLAlchemyBinding,
+        GrantCacheBinding
+    )
+
+    def current_user():
+        return g.user
+
+    def get_session():
+        return db.session
+
+    SQLAlchemyBinding(oauth, get_session, user=User, token=Token,
+                      client=Client, grant=Grant, current_user=current_user)
+
+    # SQLAlchemyBinding(oauth, get_session, user=User,
+    #                   token=Token, client=Client)
+
+    # GrantCacheBinding(app, oauth, current_user, config={'OAUTH2_CACHE_TYPE': 'simple'})
+
+    '''
+     app=app, config={
+        'OAUTH2_CACHE_TYPE': 'redis',
+        'OAUTH2_CACHE_REDIS_DB': 1
+    },
+
+    '''
+
+    @app.before_request
+    def load_current_user():
+        user = User.query.get(1)
+        g.user = user
+
+    @app.route('/home')
+    def home():
+        return render_template('home.html')
+
+    @app.route('/oauth/authorize', methods=['GET', 'POST'])
+    @oauth.authorize_handler
+    def authorize(*args, **kwargs):
+        # NOTICE: for real project, you need to require login
+        if request.method == 'GET':
+            # render a page for user to confirm the authorization
+            return render_template('confirm.html')
+
+        confirm = request.form.get('confirm', 'no')
+        return confirm == 'yes'
+
+    @app.route('/oauth/token')
+    @oauth.token_handler
+    def access_token():
+        return {}
+
+    @app.route('/api/email')
+    @oauth.require_oauth('email')
+    def email_api(oauth):
+        return jsonify(email='me@oauth.net', username=oauth.user.username)
+
+    @app.route('/api/address/<city>')
+    @oauth.require_oauth('address')
+    def address_api(oauth, city):
+        return jsonify(address=city, username=oauth.user.username)
+
+    @app.route('/api/method', methods=['GET', 'POST', 'PUT', 'DELETE'])
+    @oauth.require_oauth()
+    def method_api(oauth):
+        return jsonify(method=request.method)
+
+    return app
+
+
+def _create_server(app):
     app = prepare_app(app)
 
     oauth = OAuth2Provider(app)

@@ -43,6 +43,7 @@ authorize_url = (
     '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized&scope=email'
 )
 
+
 class TestWebAuth(BaseSuite):
     def test_login(self):
         rv = self.client.get('/login')

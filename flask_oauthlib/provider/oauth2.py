@@ -597,6 +597,7 @@ class OAuth2RequestValidator(RequestValidator):
            datetime.datetime.utcnow() > grant.expires:
             log.debug('Grant is expired.')
             return False
+
         request.state = kwargs.get('state')
         request.user = grant.user
         request.scopes = grant.scopes
