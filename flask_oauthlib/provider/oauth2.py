@@ -485,10 +485,25 @@ class OAuth2RequestValidator(RequestValidator):
 
         return grant.redirect_uri == redirect_uri
 
+    def get_original_scopes(self, refresh_token, request, *args, **kwargs):
+        """Get the list of scopes associated with the refresh token.
+
+        This method is used in the refresh token grant flow.  We return
+        the scope of the token to be refreshed so it can be applied to the
+        new access token.
+        """
+        log.debug('Obtaining scope of refreshed token.')
+        tok = self._tokengetter(refresh_token=refresh_token)
+        return tok.scopes
+
     def confirm_scopes(self, refresh_token, scopes, request, *args, **kwargs):
         """Ensures the requested scope matches the scope originally granted
         by the resource owner. If the scope is omitted it is treated as equal
-        to the scope originally granted by the resource owner
+        to the scope originally granted by the resource owner.
+
+        DEPRECATION NOTE: This method will cease to be used in oauthlib>0.4.2,
+        future versions of ``oauthlib`` use the validator method
+        ``get_original_scopes`` to determine the scope of the refreshed token.
         """
         if not scopes:
             log.debug('Scope omitted for refresh token %r', refresh_token)
