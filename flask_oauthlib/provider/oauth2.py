@@ -9,7 +9,6 @@
 """
 
 import os
-import logging
 import datetime
 from functools import wraps
 from flask import request, url_for
@@ -18,10 +17,9 @@ from werkzeug import cached_property
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
 from oauthlib.common import to_unicode
+from .._utils import _extract_params, log
 
 __all__ = ('OAuth2Provider', 'OAuth2RequestValidator')
-
-log = logging.getLogger('flask_oauthlib')
 
 
 class OAuth2Provider(object):
@@ -709,20 +707,3 @@ class OAuth2RequestValidator(RequestValidator):
             return False
         log.debug('Password credential authorization is disabled.')
         return False
-
-
-def _extract_params():
-    """Extract request params."""
-    log.debug('Extracting parameters from request.')
-    uri = request.url
-    http_method = request.method
-    headers = dict(request.headers)
-    if 'wsgi.input' in headers:
-        del headers['wsgi.input']
-    if 'wsgi.errors' in headers:
-        del headers['wsgi.errors']
-    if 'Http-Authorization' in headers:
-        headers['Authorization'] = headers['Http-Authorization']
-
-    body = request.form.to_dict()
-    return uri, http_method, body, headers

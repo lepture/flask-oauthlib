@@ -8,17 +8,18 @@
     :copyright: (c) 2013 by Hsiaoming Yang.
 """
 
-import logging
+from functools import wraps
 from werkzeug import cached_property
-from oauthlib.oauth1 import Server
+from flask import request, redirect
+from oauthlib.oauth1 import RequestValidator
+from oauthlib.oauth1 import WebApplicationServer as Server
 from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
-from oauthlib.common import to_unicode
-from flask import request
+from oauthlib.common import to_unicode, generate_token
+from .._utils import log, _extract_params
+
 SIGNATURE_METHODS = (SIGNATURE_HMAC, SIGNATURE_RSA)
 
-__all__ = ('OAuth1Provider', 'OAuth1Server')
-
-log = logging.getLogger('flask_oauthlib')
+__all__ = ('OAuth1Provider', 'OAuth1RequestValidator')
 
 
 class OAuth1Provider(object):
@@ -66,25 +67,38 @@ class OAuth1Provider(object):
         All in one endpoints. This property is created automaticly
         if you have implemented all the getters and setters.
         """
-        if hasattr(self, '_server'):
-            return self._server
+        if hasattr(self, '_validator'):
+            return Server(self._validator)
 
         if hasattr(self, '_clientgetter') and \
            hasattr(self, '_tokengetter') and \
            hasattr(self, '_requestgetter'):
-            server = OAuth1Server(
+            validator = OAuth1RequestValidator(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
                 requestgetter=self._requestgetter,
             )
-            return server
+            self._validator = validator
+            return Server(validator)
         raise RuntimeError('application not bound to required getters')
 
     def authorize_handler(self, f):
         """Authorization handler decorator."""
         @wraps(f)
         def decorated(*args, **kwargs):
+            server = self.server
+
+            uri, http_method, body, headers = _extract_params()
+            realms, credentials = server.get_realms_and_credentials(
+                request.url,
+                http_method=request.method,
+                body=request.data,
+                headers=request.headers
+            )
+
             if request.method == 'GET':
+                kwargs['realms'] = realms
+                kwargs.update(credentials)
                 return f(*args, **kwargs)
             if request.method == 'POST':
                 if not f(*args, **kwargs):
@@ -98,9 +112,12 @@ class OAuth1Provider(object):
         """When consumer confirm the authrozation."""
         server = self.server
         token = request.values.get('oauth_token')
-        ret = server.create_authorization_response(token)
+        # ret = server.create_authorization_response(token)
+        # TODO: customizable
+        verifier = generate_token(length=16)
+        server.save_verifier(token, verifier)
         log.debug('Authorization successful.')
-        return redirect(ret[0])
+        return redirect('')
 
     def request_token_handler(self, f):
         """Request token decorator."""
@@ -108,11 +125,11 @@ class OAuth1Provider(object):
     def access_token_handler(self, f):
         """Access token decorator."""
 
-    def require_oauth(self, *scopes):
+    def require_oauth(self, *realms, **kwargs):
         """Protect resource with specified scopes."""
 
 
-class OAuth1Server(Server):
+class OAuth1RequestValidator(RequestValidator):
     def __init__(self, clientgetter, tokengetter, requestgetter,
                  config=None):
         self._clientgetter = clientgetter
@@ -199,10 +216,10 @@ class OAuth1Server(Server):
         return False
 
     def validate_timestamp_and_nonce(
-        self, client_key, timestamp, nonce,
-        request_token=None, access_token=None):
+            self, client_key, timestamp, nonce,
+            request_token=None, access_token=None):
         # TODO
-        pass
+        return True
 
     def validate_redirect_uri(self, client_key, redirect_uri):
         client = self._clientgetter(client_key=client_key)
@@ -214,17 +231,30 @@ class OAuth1Server(Server):
 
     def validate_requested_realm(self, client_key, realm):
         # TODO
-        pass
+        return True
 
     def validate_realm(self, client_key, access_token, uri=None,
                        required_realm=None):
         # TODO
-        pass
+        return True
 
     def validate_verifier(self, client_key, request_token, verifier):
         # TODO
+        return True
+
+    def verify_request_token(self, token, request):
+        # TODO
+        return True
+
+    def verify_realms(self, token, realms, request):
+        # TODO
+        return True
+
+    def save_access_token(self, token, request):
         pass
 
-    def create_authorization_response(self, request_token):
-        # TODO
+    def save_request_token(self, token, request):
+        pass
+
+    def save_verfier(oauth_token, verifier, request):
         pass

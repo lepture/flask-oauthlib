@@ -9,19 +9,18 @@
 """
 
 import urllib2
-import logging
 import oauthlib.oauth1
 import oauthlib.oauth2
 from functools import wraps
 from oauthlib.common import to_unicode
 from urlparse import urljoin, urlparse
 from flask import request, redirect, json, session
-from werkzeug import url_quote, url_decode, url_encode, parse_options_header
+from werkzeug import url_quote, url_decode, url_encode
+from werkzeug import parse_options_header
+from ._utils import log
 
 
 __all__ = ('OAuth', 'OAuthRemoteApp', 'OAuthResponse', 'OAuthException')
-
-log = logging.getLogger('flask_oauthlib')
 
 
 class OAuth(object):
