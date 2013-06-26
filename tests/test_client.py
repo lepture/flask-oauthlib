@@ -1,6 +1,6 @@
 from flask import Flask
 from nose.tools import raises
-from flask_oauthlib.client import encode_request_data, add_query
+from flask_oauthlib.client import encode_request_data, add_query, OAuth
 from .oauth2_client import create_client
 
 
@@ -36,3 +36,21 @@ def test_raise_app():
     app = create_client(app)
     client = app.extensions['oauthlib.client']
     assert client.demo.name == 'dev'
+
+
+@raises(ValueError)
+def test_bad_base_url():
+    app = Flask(__name__)
+    oauth = OAuth(app)
+
+    oauth.remote_app(
+        'dev',
+        consumer_key='dev',
+        consumer_secret='dev',
+        request_token_params={'scope': 'email'},
+        base_url='127.0.0.1:5000/api/',
+        request_token_url=None,
+        access_token_method='GET',
+        access_token_url='http://127.0.0.1:5000/oauth/token',
+        authorize_url='http://127.0.0.1:5000/oauth/authorize'
+    )

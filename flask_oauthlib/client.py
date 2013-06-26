@@ -12,6 +12,7 @@ import urllib2
 import logging
 import oauthlib.oauth1
 import oauthlib.oauth2
+import re
 from functools import wraps
 from oauthlib.common import to_unicode
 from urlparse import urljoin, urlparse
@@ -241,7 +242,6 @@ class OAuthRemoteApp(object):
     ):
 
         self.oauth = oauth
-        self.base_url = base_url
         self.name = name
         self.request_token_url = request_token_url
         self.access_token_url = access_token_url
@@ -256,6 +256,13 @@ class OAuthRemoteApp(object):
         self.encoding = encoding
 
         self._tokengetter = None
+
+        if re.search(r'^http[s]?://.+$', base_url, re.I) is None:
+            message = ('`{}` isn\'t a valid http url. '
+                       'Missing http(s):// schema.')
+            raise ValueError(message.format(base_url))
+
+        self.base_url = base_url
 
     def make_client(self, token=None):
         # request_token_url is for oauth1
