@@ -258,7 +258,7 @@ class OAuthRemoteApp(object):
         self._tokengetter = None
 
         if re.search(r'^http[s]?://.+$', base_url, re.I) is None:
-            message = ('`{}` isn\'t a valid http url. '
+            message = ('`{0}` isn\'t a valid http url. '
                        'Missing http(s):// schema.')
             raise ValueError(message.format(base_url))
 
