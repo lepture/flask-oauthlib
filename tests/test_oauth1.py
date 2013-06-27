@@ -41,4 +41,4 @@ class BaseSuite(unittest.TestCase):
 class TestWebAuth(BaseSuite):
     def test_login(self):
         rv = self.client.get('/login')
-        assert 'token' in rv.location
+        assert 'oauth_token' in rv.location

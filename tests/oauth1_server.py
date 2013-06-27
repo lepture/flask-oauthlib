@@ -9,6 +9,16 @@ from flask_oauthlib.provider import OAuth1Provider
 db = SQLAlchemy()
 
 
+def enable_log(name='flask_oauthlib'):
+    import logging
+    logger = logging.getLogger(name)
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.DEBUG)
+
+
+enable_log()
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.Unicode(40), unique=True, index=True,
@@ -59,10 +69,10 @@ class Grant(db.Model):
     )
     client = relationship('Client')
 
-    request_token = db.Column(db.Unicode(255), index=True, nullable=False)
-    request_token_secret = db.Column(db.Unicode(255), nullable=False)
+    token = db.Column(db.Unicode(255), index=True, nullable=False)
+    secret = db.Column(db.Unicode(255), nullable=False)
 
-    verifier = db.Column(db.Unicode(255), nullable=False)
+    verifier = db.Column(db.Unicode(255))
 
     expires = db.Column(db.DateTime)
     redirect_uri = db.Column(db.UnicodeText)
@@ -93,8 +103,8 @@ class Token(db.Model):
     )
     user = relationship('User')
 
-    access_token = db.Column(db.Unicode(255))
-    access_token_secret = db.Column(db.Unicode(255))
+    token = db.Column(db.Unicode(255))
+    secret = db.Column(db.Unicode(255))
 
     _realms = db.Column(db.UnicodeText)
 
@@ -148,9 +158,28 @@ def create_server(app):
     def load_access_token(*args, **kwargs):
         return None
 
+    @oauth.tokensetter
+    def save_token(*args, **kwargs):
+        pass
+
     @oauth.grantgetter
-    def load_request_token(*args, **kwargs):
-        return None
+    def load_request_token(client_key, token):
+        grant = Grant.query.filter_by(
+            client_key=client_key, token=token
+        ).first()
+        return grant
+
+    @oauth.grantsetter
+    def save_grant(token, oauth):
+        grant = Grant(
+            token=token['oauth_token'],
+            secret=token['oauth_token_secret'],
+            client_key=oauth.client.client_key,
+            user_id=g.user.id
+        )
+        db.session.add(grant)
+        db.session.commit()
+        return grant
 
     @app.before_request
     def load_current_user():
