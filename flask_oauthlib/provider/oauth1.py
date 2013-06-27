@@ -14,7 +14,8 @@ from flask import request, redirect
 from oauthlib.oauth1 import RequestValidator
 from oauthlib.oauth1 import WebApplicationServer as Server
 from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
-from oauthlib.common import to_unicode, generate_token
+from oauthlib.common import to_unicode, generate_token, add_params_to_uri
+from oauthlib.oauth1.rfc5849.errors import OAuth1Error
 from .._utils import log, _extract_params
 
 SIGNATURE_METHODS = (SIGNATURE_HMAC, SIGNATURE_RSA)
@@ -82,6 +83,32 @@ class OAuth1Provider(object):
             return Server(validator)
         raise RuntimeError('application not bound to required getters')
 
+    def clientgetter(self, f):
+        """Register a function as the client getter.
+
+        The function accepts one parameter `client_key`, and it returns
+        a client object with at least these information:
+
+            - client_key: A random string
+            - client_secret: A random string
+            - redirect_uris: A list of redirect uris
+            - realms: Default scopes of the client
+
+        The client may contain more information, which is suggested:
+
+            - default_redirect_uri: One of the redirect uris
+            - default_realms: Certain default realms
+
+        Implement the client getter::
+
+            @oauth.clientgetter
+            def get_client(client_key):
+                client = get_client_model(client_key)
+                # Client is an object
+                return client
+        """
+        self._clientgetter = f
+
     def authorize_handler(self, f):
         """Authorization handler decorator."""
         @wraps(f)
@@ -102,31 +129,61 @@ class OAuth1Provider(object):
                 return f(*args, **kwargs)
             if request.method == 'POST':
                 if not f(*args, **kwargs):
-                    # denied by user
-                    # TODO: add paramters on uri
-                    return redirect(self.error_uri)
+                    uri = add_params_to_uri(
+                        self.error_uri, [('error', 'denied')]
+                    )
+                    return redirect(uri)
                 return self.confirm_authorization_request()
         return decorated
 
     def confirm_authorization_request(self):
         """When consumer confirm the authrozation."""
         server = self.server
-        token = request.values.get('oauth_token')
-        # ret = server.create_authorization_response(token)
-        # TODO: customizable
-        verifier = generate_token(length=16)
-        server.save_verifier(token, verifier)
-        log.debug('Authorization successful.')
-        return redirect('')
+
+        # TODO
+        realms = []
+        credentials = {}
+        uri, http_method, body, headers = _extract_params()
+        try:
+            ret = server.create_authorization_response(
+                uri, http_method, body, headers, realms, credentials)
+            log.debug('Authorization successful.')
+            return redirect(ret[0])
+        except OAuth1Error as e:
+            return redirect(e.in_uri(redirect_uri))
 
     def request_token_handler(self, f):
         """Request token decorator."""
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            # server = self.server
+            return f(*args, **kwargs)
+        return decorated
+
 
     def access_token_handler(self, f):
         """Access token decorator."""
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            # server = self.server
+            return f(*args, **kwargs)
+        return decorated
 
     def require_oauth(self, *realms, **kwargs):
         """Protect resource with specified scopes."""
+        def wrapper(f):
+            @wraps(f)
+            def decorated(*args, **kwargs):
+                server = self.server
+                uri, http_method, body, headers = _extract_params()
+                valid, req = server.verify_request(
+                    uri, http_method, body, headers, scopes
+                )
+                if not valid:
+                    return abort(403)
+                return f(*((req,) + args), **kwargs)
+            return decorated
+        return wrapper
 
 
 class OAuth1RequestValidator(RequestValidator):

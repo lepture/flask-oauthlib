@@ -12,5 +12,9 @@ after_success:
     - DEBUG=1 coverage run --source=flask_oauthlib setup.py -q nosetests
     - coveralls
 
+branches:
+  only:
+    - master
+
 notifications:
     email: false
