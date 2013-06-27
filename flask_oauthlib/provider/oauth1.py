@@ -125,16 +125,14 @@ class OAuth1Provider(object):
 
             uri, http_method, body, headers = _extract_params()
             realms, credentials = server.get_realms_and_credentials(
-                request.url,
-                http_method=request.method,
-                body=request.data,
-                headers=request.headers
+                uri, http_method=http_method, body=body, headers=headers
             )
 
             if request.method == 'GET':
                 kwargs['realms'] = realms
                 kwargs.update(credentials)
                 return f(*args, **kwargs)
+
             if request.method == 'POST':
                 if not f(*args, **kwargs):
                     uri = add_params_to_uri(
@@ -170,11 +168,12 @@ class OAuth1Provider(object):
             uri, http_method, body, headers = _extract_params()
             credentials = f(*args, **kwargs)
             try:
+                #if self.app.testing:
+                #    server._check_signature = lambda *args, **kwargs: True
                 ret = server.create_request_token_response(
                     uri, http_method, body, headers, credentials)
-                print ret
                 uri, headers, body, status = ret
-                response = make_response(body, status)
+                response = make_response(body or '', status)
                 for k, v in headers.items():
                     response.headers[k] = v
                 return response
@@ -317,6 +316,15 @@ class OAuth1RequestValidator(RequestValidator):
             return client.default_realms
         return []
 
+    def get_realms(self, token, request):
+        log.debug('Get realms of %r', token)
+        # TODO
+        return []
+
+    def get_redirect_uri(self, token, request):
+        log.debug('Get redirect uri of %r', token)
+        pass
+
     def validate_client_key(self, client_key, request):
         log.debug('Validate client key for %r', client_key)
         client = self._clientgetter(client_key=client_key)
@@ -393,6 +401,6 @@ class OAuth1RequestValidator(RequestValidator):
     def save_request_token(self, token, request):
         pass
 
-    def save_verfier(oauth_token, verifier, request):
+    def save_verifier(self, token, verifier, request):
         log.debug('Save verifier %r', verifier)
         pass
