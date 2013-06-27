@@ -118,7 +118,10 @@ def prepare_app(app):
 
     client1 = Client(
         client_key=u'dev', client_secret=u'dev',
-        _redirect_uris=u'http://localhost:8000/authorized'
+        _redirect_uris=(
+            u'http://localhost:8000/authorized '
+            u'http://localhost/authorized'
+        )
     )
 
     user = User(username=u'admin')
@@ -203,7 +206,9 @@ if __name__ == '__main__':
     app.debug = True
     app.secret_key = 'development'
     app.config.update({
-        'SQLALCHEMY_DATABASE_URI': 'sqlite:///oauth1.sqlite'
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///oauth1.sqlite',
+        'OAUTH1_PROVIDER_ENFORCE_SSL': False,
+        'OAUTH1_PROVIDER_KEY_LENGTH': (3, 30),
     })
     app = create_server(app)
     app.run()
