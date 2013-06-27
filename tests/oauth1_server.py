@@ -141,6 +141,14 @@ def create_server(app):
     def get_client(client_key):
         return Client.query.filter_by(client_key=client_key).first()
 
+    @oauth.tokengetter
+    def load_access_token(*args, **kwargs):
+        return None
+
+    @oauth.grantgetter
+    def load_request_token(*args, **kwargs):
+        return None
+
     @app.before_request
     def load_current_user():
         user = User.query.get(1)

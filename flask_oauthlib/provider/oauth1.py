@@ -11,10 +11,11 @@
 from functools import wraps
 from werkzeug import cached_property
 from flask import request, redirect
+from flask import make_response
 from oauthlib.oauth1 import RequestValidator
 from oauthlib.oauth1 import WebApplicationServer as Server
 from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
-from oauthlib.common import to_unicode, generate_token, add_params_to_uri
+from oauthlib.common import to_unicode, add_params_to_uri
 from oauthlib.oauth1.rfc5849.errors import OAuth1Error
 from .._utils import log, _extract_params
 
@@ -73,11 +74,12 @@ class OAuth1Provider(object):
 
         if hasattr(self, '_clientgetter') and \
            hasattr(self, '_tokengetter') and \
-           hasattr(self, '_requestgetter'):
+           hasattr(self, '_grantgetter'):
             validator = OAuth1RequestValidator(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
-                requestgetter=self._requestgetter,
+                grantgetter=self._grantgetter,
+                config=self.app.config,
             )
             self._validator = validator
             return Server(validator)
@@ -108,6 +110,12 @@ class OAuth1Provider(object):
                 return client
         """
         self._clientgetter = f
+
+    def tokengetter(self, f):
+        self._tokengetter = f
+
+    def grantgetter(self, f):
+        self._grantgetter = f
 
     def authorize_handler(self, f):
         """Authorization handler decorator."""
@@ -150,16 +158,30 @@ class OAuth1Provider(object):
             log.debug('Authorization successful.')
             return redirect(ret[0])
         except OAuth1Error as e:
+            redirect_uri = request.values.get('redirect_uri', None)
             return redirect(e.in_uri(redirect_uri))
 
     def request_token_handler(self, f):
         """Request token decorator."""
         @wraps(f)
         def decorated(*args, **kwargs):
-            # server = self.server
-            return f(*args, **kwargs)
-        return decorated
+            server = self.server
 
+            uri, http_method, body, headers = _extract_params()
+            credentials = f(*args, **kwargs)
+            try:
+                ret = server.create_request_token_response(
+                    uri, http_method, body, headers, credentials)
+                print ret
+                uri, headers, body, status = ret
+                response = make_response(body, status)
+                for k, v in headers.items():
+                    response.headers[k] = v
+                return response
+            except OAuth1Error as e:
+                redirect_uri = request.values.get('redirect_uri', None)
+                return redirect(e.in_uri(redirect_uri))
+        return decorated
 
     def access_token_handler(self, f):
         """Access token decorator."""
@@ -187,7 +209,7 @@ class OAuth1Provider(object):
 
 
 class OAuth1RequestValidator(RequestValidator):
-    def __init__(self, clientgetter, tokengetter, requestgetter,
+    def __init__(self, clientgetter, tokengetter, grantgetter,
                  config=None):
         self._clientgetter = clientgetter
 
@@ -195,17 +217,52 @@ class OAuth1RequestValidator(RequestValidator):
         self._tokengetter = tokengetter
 
         # request token getter
-        self._requestgetter = requestgetter
+        self._grantgetter = grantgetter
 
         if not config:
             config = {}
         self._config = config
 
-    @cached_property
+    @property
     def allowed_signature_methods(self):
         return self._config.get(
             'OAUTH1_PROVIDER_SIGNATURE_METHODS',
             SIGNATURE_METHODS,
+        )
+
+    @property
+    def client_key_length(self):
+        return self._config.get(
+            'OAUTH1_PROVIDER_KEY_LENGTH',
+            (20, 30)
+        )
+
+    @property
+    def reqeust_token_length(self):
+        return self._config.get(
+            'OAUTH1_PROVIDER_KEY_LENGTH',
+            (20, 30)
+        )
+
+    @property
+    def access_token_length(self):
+        return self._config.get(
+            'OAUTH1_PROVIDER_KEY_LENGTH',
+            (20, 30)
+        )
+
+    @property
+    def nonce_length(self):
+        return self._config.get(
+            'OAUTH1_PROVIDER_KEY_LENGTH',
+            (20, 30)
+        )
+
+    @property
+    def verifier_length(self):
+        return self._config.get(
+            'OAUTH1_PROVIDER_KEY_LENGTH',
+            (20, 30)
         )
 
     @property
@@ -231,7 +288,7 @@ class OAuth1RequestValidator(RequestValidator):
         return to_unicode('dummy_resource_owner')
 
     def get_request_token_secret(self, client_key, request_token):
-        tok = self._requestgetter(
+        tok = self._grantgetter(
             client_key=client_key,
             token=request_token
         )
@@ -248,6 +305,12 @@ class OAuth1RequestValidator(RequestValidator):
             return tok.secret
         return ''
 
+    def get_default_realms(self, client_key, request):
+        client = self._clientgetter(client_key=client_key)
+        if hasattr(client, 'default_realms'):
+            return client.default_realms
+        return []
+
     def validate_client_key(self, client_key):
         client = self._clientgetter(client_key=client_key)
         if client:
@@ -255,7 +318,7 @@ class OAuth1RequestValidator(RequestValidator):
         return False
 
     def validate_request_token(self, client_key, request_token):
-        tok = self._requestgetter(
+        tok = self._grantgetter(
             client_key=client_key,
             token=request_token
         )
