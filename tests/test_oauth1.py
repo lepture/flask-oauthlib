@@ -3,6 +3,7 @@
 import os
 import tempfile
 import unittest
+from urlparse import urlparse
 from flask import Flask
 from .oauth1_server import create_server, db
 from .oauth1_client import create_client
@@ -39,6 +40,24 @@ class BaseSuite(unittest.TestCase):
 
 
 class TestWebAuth(BaseSuite):
-    def test_login(self):
+    def test_access_token(self):
         rv = self.client.get('/login')
         assert 'oauth_token' in rv.location
+
+        auth_url = clean_url(rv.location)
+        rv = self.client.get(auth_url)
+        assert '</form>' in rv.data
+
+        rv = self.client.post(auth_url, data={
+            'confirm': 'yes'
+        })
+        assert 'oauth_token' in rv.location
+
+        token_url = clean_url(rv.location)
+        rv = self.client.get(token_url)
+        assert 'oauth_token_secret' in rv.data
+
+
+def clean_url(location):
+    ret = urlparse(location)
+    return '%s?%s' % (ret.path, ret.query)
