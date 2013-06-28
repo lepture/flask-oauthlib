@@ -108,12 +108,6 @@ class Token(db.Model):
 
     _realms = db.Column(db.UnicodeText)
 
-    def __init__(self, **kwargs):
-        expires_in = kwargs.get('expires_in')
-        self.expires = datetime.utcnow() + timedelta(seconds=expires_in)
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
     @property
     def realms(self):
         if self._realms:
@@ -159,8 +153,16 @@ def create_server(app):
         return None
 
     @oauth.tokensetter
-    def save_token(*args, **kwargs):
-        pass
+    def save_access_token(token, req):
+        tok = Token(
+            client_key=req.client.client_key,
+            user_id=req.request_token.user_id,
+            token=token['oauth_token'],
+            secret=token['oauth_token_secret'],
+            _realms=token['oauth_authorized_realms'],
+        )
+        db.session.add(tok)
+        db.session.commit()
 
     @oauth.grantgetter
     def load_request_token(client_key, token):
@@ -170,7 +172,7 @@ def create_server(app):
         return grant
 
     @oauth.grantsetter
-    def save_grant(token, oauth):
+    def save_request_token(token, oauth):
         grant = Grant(
             token=token['oauth_token'],
             secret=token['oauth_token_secret'],
@@ -180,6 +182,14 @@ def create_server(app):
         db.session.add(grant)
         db.session.commit()
         return grant
+
+    @oauth.noncegetter
+    def load_nonce(*args, **kwargs):
+        return None
+
+    @oauth.noncesetter
+    def save_nonce(*args, **kwargs):
+        return None
 
     @app.before_request
     def load_current_user():

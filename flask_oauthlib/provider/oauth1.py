@@ -11,7 +11,7 @@
 from functools import wraps
 from werkzeug import cached_property
 from flask import request, redirect
-from flask import make_response
+from flask import make_response, abort
 from oauthlib.oauth1 import RequestValidator
 from oauthlib.oauth1 import WebApplicationServer as Server
 from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
@@ -75,14 +75,18 @@ class OAuth1Provider(object):
         if hasattr(self, '_clientgetter') and \
            hasattr(self, '_tokengetter') and \
            hasattr(self, '_tokensetter') and \
+           hasattr(self, '_noncegetter') and \
+           hasattr(self, '_noncesetter') and \
            hasattr(self, '_grantgetter') and \
            hasattr(self, '_grantsetter'):
             validator = OAuth1RequestValidator(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
-                grantgetter=self._grantgetter,
                 tokensetter=self._tokensetter,
+                grantgetter=self._grantgetter,
                 grantsetter=self._grantsetter,
+                noncegetter=self._noncegetter,
+                noncesetter=self._noncesetter,
                 config=self.app.config,
             )
 
@@ -134,6 +138,38 @@ class OAuth1Provider(object):
 
     def grantsetter(self, f):
         self._grantsetter = f
+
+    def noncegetter(self, f):
+        """Register a function as the nonce and timestamp getter.
+
+        The function accepts parameters:
+
+            - client_key: The client/consure key
+            - timestamp: The ``oauth_timestamp`` parameter
+            - nonce: The ``oauth_nonce`` parameter
+            - request_token: Request token string, if any
+            - access_token: Access token string, if any
+
+        A nonce and timestamp make each request unique. The implementation::
+
+            @oauth.noncegetter
+            def get_nonce(client_key, timestamp, nonce, request_token,
+                          access_token):
+                return get_nonce_from_database("...")
+        """
+        self._noncegetter = f
+
+    def noncesetter(self, f):
+        """Register a function as the nonce and timestamp setter.
+
+        The parameters are the same with :meth:`noncegetter`::
+
+            @oauth.noncegetter
+            def save_nonce(client_key, timestamp, nonce, request_token,
+                           access_token):
+                return save_to_database("...")
+        """
+        self._noncesetter = f
 
     def authorize_handler(self, f):
         """Authorization handler decorator."""
@@ -223,7 +259,7 @@ class OAuth1Provider(object):
                 server = self.server
                 uri, http_method, body, headers = _extract_params()
                 valid, req = server.verify_request(
-                    uri, http_method, body, headers, scopes
+                    uri, http_method, body, headers
                 )
                 if not valid:
                     return abort(403)
@@ -233,8 +269,20 @@ class OAuth1Provider(object):
 
 
 class OAuth1RequestValidator(RequestValidator):
-    def __init__(self, clientgetter, tokengetter, grantgetter,
-                 tokensetter, grantsetter, config=None):
+    """Subclass of Request Validator.
+
+    :param clientgetter: a function to get client object
+    :param tokengetter: a function to get access token
+    :param tokensetter: a function to save access token
+    :param grantgetter: a function to get request token
+    :param grantsetter: a function to save request token
+    :param noncegetter: a function to get nonce and timestamp
+    :param noncesetter: a function to save nonce and timestamp
+    """
+
+    def __init__(self, clientgetter, tokengetter, tokensetter,
+                 grantgetter, grantsetter, noncegetter, noncesetter,
+                 config=None):
         self._clientgetter = clientgetter
 
         # access token getter and setter
@@ -245,10 +293,22 @@ class OAuth1RequestValidator(RequestValidator):
         self._grantgetter = grantgetter
         self._grantsetter = grantsetter
 
+        # nonce and timestamp
+        self._noncegetter = noncegetter
+        self._noncesetter = noncesetter
+
         self._config = config or {}
 
     @property
     def allowed_signature_methods(self):
+        """Allowed signature methods.
+
+        Default value: SIGNATURE_HMAC and SIGNATURE_RSA.
+
+        You can customize with Flask Config:
+
+            - OAUTH1_PROVIDER_SIGNATURE_METHODS
+        """
         return self._config.get(
             'OAUTH1_PROVIDER_SIGNATURE_METHODS',
             SIGNATURE_METHODS,
@@ -295,6 +355,12 @@ class OAuth1RequestValidator(RequestValidator):
 
     @property
     def enforce_ssl(self):
+        """Enforce SSL request.
+
+        Default is True. You can customize with:
+
+            - OAUTH1_PROVIDER_ENFORCE_SSL
+        """
         return self._config.get('OAUTH1_PROVIDER_ENFORCE_SSL', True)
 
     @property
@@ -320,22 +386,24 @@ class OAuth1RequestValidator(RequestValidator):
     def get_request_token_secret(self, client_key, token, request):
         log.debug('Get request token secret of %r for %r',
                   token, client_key)
-        tok = self._grantgetter(
+        tok = request.request_token or self._grantgetter(
             client_key=client_key,
             token=token,
         )
         if tok:
+            request.request_token = tok
             return tok.secret
         return None
 
     def get_access_token_secret(self, client_key, token, request):
         log.debug('Get access token secret of %r for %r',
                   token, client_key)
-        tok = self._tokengetter(
+        tok = request.access_token or self._tokengetter(
             client_key=client_key,
             token=token,
         )
         if tok:
+            request.access_token = tok
             return tok.secret
         return None
 
@@ -361,6 +429,7 @@ class OAuth1RequestValidator(RequestValidator):
         return 'http://localhost:8000/authorized'
 
     def validate_client_key(self, client_key, request):
+        """Validates that supplied client key."""
         log.debug('Validate client key for %r', client_key)
         if not request.client:
             request.client = self._clientgetter(client_key=client_key)
@@ -369,33 +438,47 @@ class OAuth1RequestValidator(RequestValidator):
         return False
 
     def validate_request_token(self, client_key, token, request):
+        """Validates request token is available for client."""
         log.debug('Validate request token %r for %r',
                   token, client_key)
-        tok = self._grantgetter(
+        tok = request.request_token or self._grantgetter(
             client_key=client_key,
             token=token,
         )
         if tok:
+            request.request_token = tok
             return True
         return False
 
     def validate_access_token(self, client_key, token, request):
+        """Validates access token is available for client."""
         log.debug('Validate access token %r for %r',
                   token, client_key)
-        tok = self._tokengetter(
+        tok = request.access_token or self._tokengetter(
             client_key=client_key,
             token=token,
         )
         if tok:
+            request.access_token = tok
             return True
         return False
 
     def validate_timestamp_and_nonce(self, client_key, timestamp, nonce,
             request, request_token=None, access_token=None):
         log.debug('Validate timestamp and nonce %r', client_key)
-        # TODO
-        if not request.client:
-            request.client = self._clientgetter(client_key=client_key)
+        nonce = self._noncegetter(
+            client_key=client_key, timestamp=timestamp,
+            nonce=nonce, request_token=request_token,
+            access_token=access_token
+        )
+        if nonce:
+            return False
+        # TODO: should we put it here
+        self._noncesetter(
+            client_key=client_key, timestamp=timestamp,
+            nonce=nonce, request_token=request_token,
+            access_token=access_token
+        )
         return True
 
     def validate_redirect_uri(self, client_key, redirect_uri, request):
@@ -418,7 +501,7 @@ class OAuth1RequestValidator(RequestValidator):
 
     def validate_realm(self, client_key, token, request, uri=None,
                        required_realm=None):
-        log.debug('Validate realm %r for %r', realm, client_key)
+        log.debug('Validate realm for %r', client_key)
 
         if not request.client:
             request.client = self._clientgetter(client_key=client_key)
