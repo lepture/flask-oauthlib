@@ -57,6 +57,16 @@ class TestWebAuth(BaseSuite):
         rv = self.client.get(token_url)
         assert 'oauth_token_secret' in rv.data
 
+    def test_no_confirm(self):
+        rv = self.client.get('/login')
+        assert 'oauth_token' in rv.location
+
+        auth_url = clean_url(rv.location)
+        rv = self.client.post(auth_url, data={
+            'confirm': 'no'
+        })
+        assert 'error=denied' in rv.location
+
 
 def clean_url(location):
     ret = urlparse(location)

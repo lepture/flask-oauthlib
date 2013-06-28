@@ -64,6 +64,27 @@ class OAuth1Provider(object):
         app.extensions['oauthlib.provider.oauth1'] = self
 
     @cached_property
+    def error_uri(self):
+        """The error page URI.
+
+        When something turns error, it will redirect to this error page.
+        You can configure the error page URI with Flask config::
+
+            OAUTH1_PROVIDER_ERROR_URI = '/error'
+
+        You can also define the error page by a named endpoint::
+
+            OAUTH1_PROVIDER_ERROR_ENDPOINT = 'oauth.error'
+        """
+        error_uri = self.app.config.get('OAUTH1_PROVIDER_ERROR_URI')
+        if error_uri:
+            return error_uri
+        error_endpoint = self.app.config.get('OAUTH1_PROVIDER_ERROR_ENDPOINT')
+        if error_endpoint:
+            return url_for(error_endpoint)
+        return '/oauth/errors'
+
+    @cached_property
     def server(self):
         """
         All in one endpoints. This property is created automaticly
