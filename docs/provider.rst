@@ -265,6 +265,10 @@ implemented with decorators::
             user=get_current_user(),
             expires=expires
         )
+        db.session.add(grant)
+        db.session.commit()
+        return grant
+
 
 In the sample code, there is a ``get_current_user`` method, that will return
 the current user object, you should implement it yourself.
