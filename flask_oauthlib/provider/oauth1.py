@@ -100,6 +100,11 @@ class OAuth1Provider(object):
            hasattr(self, '_noncesetter') and \
            hasattr(self, '_grantgetter') and \
            hasattr(self, '_grantsetter'):
+
+            # you can have no verifier getter and setter
+            verifiergetter = getattr(self, '_verifiergetter', None)
+            verifiersetter = getattr(self, '_verifiersetter', None)
+
             validator = OAuth1RequestValidator(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
@@ -108,6 +113,8 @@ class OAuth1Provider(object):
                 grantsetter=self._grantsetter,
                 noncegetter=self._noncegetter,
                 noncesetter=self._noncesetter,
+                verifiergetter=verifiergetter,
+                verifiersetter=verifiersetter,
                 config=self.app.config,
             )
 
@@ -191,6 +198,12 @@ class OAuth1Provider(object):
                 return save_to_database("...")
         """
         self._noncesetter = f
+
+    def verifiergetter(self, f):
+        self._verifiergetter = f
+
+    def verifiersetter(self, f):
+        self._verifiersetter = f
 
     def authorize_handler(self, f):
         """Authorization handler decorator."""
@@ -303,6 +316,7 @@ class OAuth1RequestValidator(RequestValidator):
 
     def __init__(self, clientgetter, tokengetter, tokensetter,
                  grantgetter, grantsetter, noncegetter, noncesetter,
+                 verifiergetter=None, verifiersetter=None,
                  config=None):
         self._clientgetter = clientgetter
 
@@ -317,6 +331,10 @@ class OAuth1RequestValidator(RequestValidator):
         # nonce and timestamp
         self._noncegetter = noncegetter
         self._noncesetter = noncesetter
+
+        # verifier getter and setter
+        self._verifiergetter = verifiergetter
+        self._verifiersetter = verifiersetter
 
         self._config = config or {}
 
@@ -426,6 +444,7 @@ class OAuth1RequestValidator(RequestValidator):
         return None
 
     def get_default_realms(self, client_key, request):
+        """Default realms of the client."""
         log.debug('Get realms for %r', client_key)
 
         if not request.client:
@@ -437,11 +456,18 @@ class OAuth1RequestValidator(RequestValidator):
         return []
 
     def get_realms(self, token, request):
+        """Realms for this request token."""
         log.debug('Get realms of %r', token)
-        # TODO
+        tok = request.request_token or self._grantgetter(token=token)
+        if not tok:
+            return []
+        request.request_token = tok
+        if hasattr(tok, 'realms'):
+            return tok.realms or []
         return []
 
     def get_redirect_uri(self, token, request):
+        """Redirect uri for this request token."""
         log.debug('Get redirect uri of %r', token)
         tok = request.request_token or self._grantgetter(token=token)
         return tok.redirect_uri
@@ -480,6 +506,7 @@ class OAuth1RequestValidator(RequestValidator):
 
     def validate_timestamp_and_nonce(self, client_key, timestamp, nonce,
             request, request_token=None, access_token=None):
+        """Validate the timestamp and nonce is used or not."""
         log.debug('Validate timestamp and nonce %r', client_key)
         nonce = self._noncegetter(
             client_key=client_key, timestamp=timestamp,
@@ -488,7 +515,6 @@ class OAuth1RequestValidator(RequestValidator):
         )
         if nonce:
             return False
-        # TODO: should we put it here
         self._noncesetter(
             client_key=client_key, timestamp=timestamp,
             nonce=nonce, request_token=request_token,
@@ -497,6 +523,7 @@ class OAuth1RequestValidator(RequestValidator):
         return True
 
     def validate_redirect_uri(self, client_key, redirect_uri, request):
+        """Validate if the redirect_uri is allowed by the client."""
         log.debug('Validate redirect_uri %r for %r', redirect_uri, client_key)
         if not request.client:
             request.client = self._clientgetter(client_key=client_key)
@@ -525,12 +552,18 @@ class OAuth1RequestValidator(RequestValidator):
 
     def validate_verifier(self, client_key, token, verifier, request):
         log.debug('Validate verifier %r for %r', verifier, client_key)
-        # TODO
-        if not request.client:
-            request.client = self._clientgetter(client_key=client_key)
+        if not self._verifiergetter:
+            # verifier is disabled
+            return True
+        data = self._verifiergetter(verifier=verifier, token=token)
+        if not data:
+            return False
+        if hasattr(data, 'client_key'):
+            return data.client_key == client_key
         return True
 
     def verify_request_token(self, token, request):
+        """Verify if the request token is existed."""
         log.debug('Verify request token %r', token)
         tok = request.request_token or self._grantgetter(token=token)
         if tok:
@@ -539,6 +572,7 @@ class OAuth1RequestValidator(RequestValidator):
         return False
 
     def verify_realms(self, token, realms, request):
+        """Verify if the realms match the requested realms."""
         log.debug('Verify realms %r', realms)
         tok = request.request_token or self._grantgetter(token=token)
         if not tok:
@@ -560,7 +594,10 @@ class OAuth1RequestValidator(RequestValidator):
 
     def save_verifier(self, token, verifier, request):
         log.debug('Save verifier %r for %r', verifier, token)
-        pass
+        if self._verifiersetter:
+            self._verifiergetter(
+                token=token, verifier=verifier, request=request
+            )
 
 
 def _error_response(e):
