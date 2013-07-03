@@ -562,11 +562,12 @@ class OAuth1RequestValidator(RequestValidator):
     def validate_realm(self, client_key, token, request, uri=None,
                        required_realm=None):
         log.debug('Validate realm for %r', client_key)
-
-        if not request.client:
-            request.client = self._clientgetter(client_key=client_key)
-        # TODO
-        return True
+        if request.access_token:
+            tok = request.access_token
+        else:
+            tok = self._tokengetter(client_key=client_key, token=token)
+            request.access_token = tok
+        return set(tok.realms).issuperset(set(required_realm))
 
     def validate_verifier(self, client_key, token, verifier, request):
         log.debug('Validate verifier %r for %r', verifier, client_key)
