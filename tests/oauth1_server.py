@@ -1,5 +1,4 @@
 # coding: utf-8
-from datetime import datetime, timedelta
 from flask import g, render_template, request, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
@@ -50,7 +49,7 @@ class Client(db.Model):
         return self.redirect_uris[0]
 
     @property
-    def realms(self):
+    def default_realms(self):
         if self._realms:
             return self._realms.split()
         return []
@@ -125,7 +124,8 @@ def prepare_app(app):
         _redirect_uris=(
             u'http://localhost:8000/authorized '
             u'http://localhost/authorized'
-        )
+        ),
+        _realms='email',
     )
 
     user = User(username=u'admin')
@@ -171,11 +171,16 @@ def create_server(app):
 
     @oauth.grantsetter
     def save_request_token(token, oauth):
+        if oauth.realm:
+            realm = ' '.join(oauth.realm)
+        else:
+            realm = None
         grant = Grant(
             token=token['oauth_token'],
             secret=token['oauth_token_secret'],
             client_key=oauth.client.client_key,
             redirect_uri=oauth.redirect_uri,
+            _realms=realm,
             user_id=g.user.id,
         )
         db.session.add(grant)
@@ -247,6 +252,7 @@ if __name__ == '__main__':
         'SQLALCHEMY_DATABASE_URI': 'sqlite:///oauth1.sqlite',
         'OAUTH1_PROVIDER_ENFORCE_SSL': False,
         'OAUTH1_PROVIDER_KEY_LENGTH': (3, 30),
+        'OAUTH1_PROVIDER_REALMS': ['email', 'address']
     })
     app = create_server(app)
     app.run()

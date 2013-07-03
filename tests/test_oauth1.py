@@ -20,6 +20,7 @@ class BaseSuite(unittest.TestCase):
         config = {
             'OAUTH1_PROVIDER_ENFORCE_SSL': False,
             'OAUTH1_PROVIDER_KEY_LENGTH': (3, 30),
+            'OAUTH1_PROVIDER_REALMS': ['email', 'address'],
             'SQLALCHEMY_DATABASE_URI': 'sqlite:///%s' % self.db_file
         }
         app.config.update(config)

@@ -9,7 +9,7 @@ def create_client(app):
         'dev',
         consumer_key='dev',
         consumer_secret='dev',
-        request_token_params={'realms': 'email'},
+        request_token_params={'realm': 'email'},
         base_url='http://127.0.0.1:5000/api/',
         request_token_url='http://127.0.0.1:5000/oauth/request_token',
         access_token_method='GET',

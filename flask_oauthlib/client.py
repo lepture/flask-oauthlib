@@ -404,9 +404,15 @@ class OAuthRemoteApp(object):
 
         client = self.make_client()
         client.callback_uri = _encode(callback, self.encoding)
+
+        realm = self.request_token_params.get('realm')
+        realms = self.request_token_params.get('realms')
+        if not realm and realms:
+            realm = ' '.join(realms)
         uri, headers, _ = client.sign(
-            self.expand_url(self.request_token_url)
+            self.expand_url(self.request_token_url), realm=realm
         )
+        log.debug('Generate request token header %r', headers)
         resp, content = make_request(
             uri, headers, test_client=self.test_client
         )

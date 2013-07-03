@@ -206,21 +206,23 @@ class OAuth1Provider(object):
         self._verifiersetter = f
 
     def authorize_handler(self, f):
-        """Authorization handler decorator."""
+        """Authorization handler decorator.
+
+        This decorator will sort the parameters and headers out, and
+        pre validate everything::
+
+            @app.route('/oauth/authorize', methods=['GET', 'POST'])
+            @oauth.authorize_handler
+            def authorize(*args, **kwargs):
+                if request.method == 'GET':
+                    # render a page for user to confirm the authorization
+                    return render_template('oauthorize.html')
+
+                confirm = request.form.get('confirm', 'no')
+                return confirm == 'yes'
+        """
         @wraps(f)
         def decorated(*args, **kwargs):
-            server = self.server
-
-            uri, http_method, body, headers = _extract_params()
-            realms, credentials = server.get_realms_and_credentials(
-                uri, http_method=http_method, body=body, headers=headers
-            )
-
-            if request.method == 'GET':
-                kwargs['realms'] = realms
-                kwargs.update(credentials)
-                return f(*args, **kwargs)
-
             if request.method == 'POST':
                 if not f(*args, **kwargs):
                     uri = add_params_to_uri(
@@ -228,24 +230,35 @@ class OAuth1Provider(object):
                     )
                     return redirect(uri)
                 return self.confirm_authorization_request()
+
+            server = self.server
+
+            uri, http_method, body, headers = _extract_params()
+            realms, credentials = server.get_realms_and_credentials(
+                uri, http_method=http_method, body=body, headers=headers
+            )
+            log.debug('Get realms %r and credentials %r', realms, credentials)
+            kwargs['realms'] = realms
+            kwargs.update(credentials)
+            return f(*args, **kwargs)
         return decorated
 
     def confirm_authorization_request(self):
         """When consumer confirm the authrozation."""
         server = self.server
 
-        # TODO
-        realms = []
-        credentials = {}
         uri, http_method, body, headers = _extract_params()
+        realms, credentials = server.get_realms_and_credentials(
+            uri, http_method=http_method, body=body, headers=headers
+        )
+        log.debug('Confirm realms %r and credentials %r', realms, credentials)
         try:
             ret = server.create_authorization_response(
                 uri, http_method, body, headers, realms, credentials)
             log.debug('Authorization successful.')
             return redirect(ret[0])
         except OAuth1Error as e:
-            redirect_uri = request.values.get('redirect_uri', None)
-            return redirect(e.in_uri(redirect_uri))
+            return redirect(e.in_uri(self.error_uri))
 
     def request_token_handler(self, f):
         """Request token decorator."""
@@ -538,7 +551,12 @@ class OAuth1RequestValidator(RequestValidator):
         log.debug('Validate requested realm %r for %r', realm, client_key)
         if not request.client:
             request.client = self._clientgetter(client_key=client_key)
-        # TODO
+
+        client = request.client
+        if hasattr(client, 'validate_realm'):
+            return client.validate_realm(realm)
+        if set(client.default_realms).issuperset(set(realm)):
+            return True
         return True
 
     def validate_realm(self, client_key, token, request, uri=None,
