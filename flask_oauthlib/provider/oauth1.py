@@ -138,12 +138,11 @@ class OAuth1Provider(object):
             - client_key: A random string
             - client_secret: A random string
             - redirect_uris: A list of redirect uris
-            - realms: Default scopes of the client
+            - default_realms: Default scopes of the client
 
         The client may contain more information, which is suggested:
 
             - default_redirect_uri: One of the redirect uris
-            - default_realms: Certain default realms
 
         Implement the client getter::
 
@@ -156,15 +155,67 @@ class OAuth1Provider(object):
         self._clientgetter = f
 
     def tokengetter(self, f):
+        """Register a function as the access token getter.
+
+        The function accepts `client_key` and `token` parameters, and it
+        returns an access token object contains:
+
+            - client: Client associated with this token
+            - client_key: Key of the client
+            - user: User associated with this token
+            - token: Access token
+            - secret: Access token secret
+            - realms: Realms with this access token
+
+        Implement the token getter::
+
+            @oauth.tokengetter
+            def get_access_token(client_key, token):
+                return get_token_model(client_key=client_key, token=token)
+        """
         self._tokengetter = f
 
     def tokensetter(self, f):
+        """Register a function as the access token setter.
+
+        The setter accepts two parameters at least, one is token,
+        the other is request::
+
+            @oauth.tokensetter
+            def save_access_token(token, request):
+                tok = AccessToken(
+                    client_key=request.client.client_key,
+                    user_id=request.request_token.user_id,
+                    token=token['oauth_token'],
+                    secret=token['oauth_token_secret'],
+                    _realms=token['oauth_authorized_realms'],
+                )
+                db.session.add(tok)
+                db.session.commit()
+
+        The parameter token is a dict, that looks like::
+
+            {
+                u'oauth_token': u'arandomstringoftoken',
+                u'oauth_token_secret': u'arandomstringofsecret',
+                u'oauth_authorized_realms': u'email address'
+            }
+
+        The `request` object would provide these information (at least)::
+
+            - client: Client object associated with this token
+            - request_token: Requst token for exchanging this access token
+        """
         self._tokensetter = f
 
     def grantgetter(self, f):
+        """Register a function as the request token getter.
+        """
         self._grantgetter = f
 
     def grantsetter(self, f):
+        """Register a function as the request token setter.
+        """
         self._grantsetter = f
 
     def noncegetter(self, f):
