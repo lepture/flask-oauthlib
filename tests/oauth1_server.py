@@ -15,7 +15,7 @@ def enable_log(name='flask_oauthlib'):
     logger.setLevel(logging.DEBUG)
 
 
-#enable_log()
+# enable_log()
 
 
 class User(db.Model):
@@ -157,7 +157,7 @@ def create_server(app):
     def save_access_token(token, req):
         tok = Token(
             client_key=req.client.client_key,
-            user_id=req.request_token.user_id,
+            user_id=req.user.id,
             token=token['oauth_token'],
             secret=token['oauth_token_secret'],
             _realms=token['oauth_authorized_realms'],
@@ -182,11 +182,23 @@ def create_server(app):
             client_key=oauth.client.client_key,
             redirect_uri=oauth.redirect_uri,
             _realms=realms,
-            user_id=g.user.id,
         )
         db.session.add(grant)
         db.session.commit()
         return grant
+
+    @oauth.verifiergetter
+    def load_verifier(verifier, token):
+        return Grant.query.filter_by(verifier=verifier, token=token).first()
+
+    @oauth.verifiersetter
+    def save_verifier(token, verifier, *args, **kwargs):
+        tok = Grant.query.filter_by(token=token).first()
+        tok.verifier = verifier['oauth_verifier']
+        tok.user_id = g.user.id
+        db.session.add(tok)
+        db.session.commit()
+        return tok
 
     @oauth.noncegetter
     def load_nonce(*args, **kwargs):

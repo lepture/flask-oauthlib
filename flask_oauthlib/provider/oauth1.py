@@ -99,11 +99,9 @@ class OAuth1Provider(object):
            hasattr(self, '_noncegetter') and \
            hasattr(self, '_noncesetter') and \
            hasattr(self, '_grantgetter') and \
-           hasattr(self, '_grantsetter'):
-
-            # you can have no verifier getter and setter
-            verifiergetter = getattr(self, '_verifiergetter', None)
-            verifiersetter = getattr(self, '_verifiersetter', None)
+           hasattr(self, '_grantsetter') and \
+           hasattr(self, '_verifiergetter') and \
+           hasattr(self, '_verifiersetter'):
 
             validator = OAuth1RequestValidator(
                 clientgetter=self._clientgetter,
@@ -113,8 +111,8 @@ class OAuth1Provider(object):
                 grantsetter=self._grantsetter,
                 noncegetter=self._noncegetter,
                 noncesetter=self._noncesetter,
-                verifiergetter=verifiergetter,
-                verifiersetter=verifiersetter,
+                verifiergetter=self._verifiergetter,
+                verifiersetter=self._verifiersetter,
                 config=self.app.config,
             )
 
@@ -185,7 +183,7 @@ class OAuth1Provider(object):
             def save_access_token(token, request):
                 tok = AccessToken(
                     client_key=request.client.client_key,
-                    user_id=request.request_token.user_id,
+                    user_id=request.user.id,
                     token=token['oauth_token'],
                     secret=token['oauth_token_secret'],
                     _realms=token['oauth_authorized_realms'],
@@ -204,6 +202,7 @@ class OAuth1Provider(object):
         The `request` object would provide these information (at least)::
 
             - client: Client object associated with this token
+            - user: User object associated with this token
             - request_token: Requst token for exchanging this access token
         """
         self._tokensetter = f
@@ -361,6 +360,8 @@ class OAuth1Provider(object):
                 )
                 if not valid:
                     return abort(403)
+                # alias user for convenience
+                req.user = req.access_token.user
                 return f(*((req,) + args), **kwargs)
             return decorated
         return wrapper
@@ -380,8 +381,7 @@ class OAuth1RequestValidator(RequestValidator):
 
     def __init__(self, clientgetter, tokengetter, tokensetter,
                  grantgetter, grantsetter, noncegetter, noncesetter,
-                 verifiergetter=None, verifiersetter=None,
-                 config=None):
+                 verifiergetter, verifiersetter, config=None):
         self._clientgetter = clientgetter
 
         # access token getter and setter
@@ -622,12 +622,11 @@ class OAuth1RequestValidator(RequestValidator):
 
     def validate_verifier(self, client_key, token, verifier, request):
         log.debug('Validate verifier %r for %r', verifier, client_key)
-        if not self._verifiergetter:
-            # verifier is disabled
-            return True
         data = self._verifiergetter(verifier=verifier, token=token)
         if not data:
             return False
+        # verifier should has user object
+        request.user = data.user
         if hasattr(data, 'client_key'):
             return data.client_key == client_key
         return True
@@ -664,10 +663,9 @@ class OAuth1RequestValidator(RequestValidator):
 
     def save_verifier(self, token, verifier, request):
         log.debug('Save verifier %r for %r', verifier, token)
-        if self._verifiersetter:
-            self._verifiergetter(
-                token=token, verifier=verifier, request=request
-            )
+        self._verifiersetter(
+            token=token, verifier=verifier, request=request
+        )
 
 
 def _error_response(e):
