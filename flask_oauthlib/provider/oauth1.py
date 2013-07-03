@@ -305,8 +305,8 @@ class OAuth1Provider(object):
             def decorated(*args, **kwargs):
                 server = self.server
                 uri, http_method, body, headers = _extract_params()
-                valid, req = server.verify_request(
-                    uri, http_method, body, headers
+                valid, req = server.validate_protected_resource_request(
+                    uri, http_method, body, headers, realms
                 )
                 if not valid:
                     return abort(403)

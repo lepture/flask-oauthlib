@@ -19,7 +19,7 @@ def create_client(app):
 
     @app.route('/')
     def index():
-        if 'dev_token' in session:
+        if 'dev_oauth' in session:
             ret = dev.get('email')
             return jsonify(ret.data)
         return redirect(url_for('login'))
@@ -40,8 +40,8 @@ def create_client(app):
             return 'Access denied: error=%s' % (
                 request.args['error']
             )
-        if 'access_token' in resp:
-            session['dev_token'] = (resp['access_token'], '')
+        if 'oauth_token' in resp:
+            session['dev_oauth'] = resp
             return jsonify(resp)
         return str(resp)
 
@@ -60,7 +60,9 @@ def create_client(app):
 
     @dev.tokengetter
     def get_oauth_token():
-        return session.get('dev_token')
+        if 'dev_oauth' in session:
+            resp = session['dev_oauth']
+            return resp['oauth_token'], resp['oauth_token_secret']
 
     return app
 

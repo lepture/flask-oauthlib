@@ -41,7 +41,7 @@ class BaseSuite(unittest.TestCase):
 
 
 class TestWebAuth(BaseSuite):
-    def test_access_token(self):
+    def test_full_flow(self):
         rv = self.client.get('/login')
         assert 'oauth_token' in rv.location
 
@@ -57,6 +57,9 @@ class TestWebAuth(BaseSuite):
         token_url = clean_url(rv.location)
         rv = self.client.get(token_url)
         assert 'oauth_token_secret' in rv.data
+
+        rv = self.client.get('/')
+        assert 'email' in rv.data
 
     def test_no_confirm(self):
         rv = self.client.get('/login')

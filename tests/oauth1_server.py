@@ -15,7 +15,7 @@ def enable_log(name='flask_oauthlib'):
     logger.setLevel(logging.DEBUG)
 
 
-enable_log()
+#enable_log()
 
 
 class User(db.Model):
@@ -125,7 +125,7 @@ def prepare_app(app):
             u'http://localhost:8000/authorized '
             u'http://localhost/authorized'
         ),
-        _realms='email',
+        _realms=u'email',
     )
 
     user = User(username=u'admin')
@@ -149,8 +149,9 @@ def create_server(app):
         return Client.query.filter_by(client_key=client_key).first()
 
     @oauth.tokengetter
-    def load_access_token(*args, **kwargs):
-        return None
+    def load_access_token(client_key, token, *args, **kwargs):
+        t = Token.query.filter_by(client_key=client_key, token=token).first()
+        return t
 
     @oauth.tokensetter
     def save_access_token(token, req):
@@ -228,7 +229,7 @@ def create_server(app):
     @app.route('/api/email')
     @oauth.require_oauth('email')
     def email_api(oauth):
-        return jsonify(email='me@oauth.net', username=oauth.user.username)
+        return jsonify(email='me@oauth.net')
 
     @app.route('/api/address/<city>')
     @oauth.require_oauth('address')
