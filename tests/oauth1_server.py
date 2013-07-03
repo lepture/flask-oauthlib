@@ -69,7 +69,7 @@ class Grant(db.Model):
     )
     client = relationship('Client')
 
-    token = db.Column(db.Unicode(255), index=True, nullable=False)
+    token = db.Column(db.Unicode(255), index=True, unique=True)
     secret = db.Column(db.Unicode(255), nullable=False)
 
     verifier = db.Column(db.Unicode(255))
@@ -165,10 +165,8 @@ def create_server(app):
         db.session.commit()
 
     @oauth.grantgetter
-    def load_request_token(client_key, token):
-        grant = Grant.query.filter_by(
-            client_key=client_key, token=token
-        ).first()
+    def load_request_token(token):
+        grant = Grant.query.filter_by(token=token).first()
         return grant
 
     @oauth.grantsetter
@@ -177,7 +175,8 @@ def create_server(app):
             token=token['oauth_token'],
             secret=token['oauth_token_secret'],
             client_key=oauth.client.client_key,
-            user_id=g.user.id
+            redirect_uri=oauth.redirect_uri,
+            user_id=g.user.id,
         )
         db.session.add(grant)
         db.session.commit()

@@ -10,7 +10,7 @@
 
 from functools import wraps
 from werkzeug import cached_property
-from flask import request, redirect
+from flask import request, redirect, url_for
 from flask import make_response, abort
 from oauthlib.oauth1 import RequestValidator
 from oauthlib.oauth1 import WebApplicationServer as Server
@@ -407,11 +407,8 @@ class OAuth1RequestValidator(RequestValidator):
     def get_request_token_secret(self, client_key, token, request):
         log.debug('Get request token secret of %r for %r',
                   token, client_key)
-        tok = request.request_token or self._grantgetter(
-            client_key=client_key,
-            token=token,
-        )
-        if tok:
+        tok = request.request_token or self._grantgetter(token=token)
+        if tok and tok.client_key == client_key:
             request.request_token = tok
             return tok.secret
         return None
@@ -446,8 +443,8 @@ class OAuth1RequestValidator(RequestValidator):
 
     def get_redirect_uri(self, token, request):
         log.debug('Get redirect uri of %r', token)
-        # TODO
-        return 'http://localhost:8000/authorized'
+        tok = request.request_token or self._grantgetter(token=token)
+        return tok.redirect_uri
 
     def validate_client_key(self, client_key, request):
         """Validates that supplied client key."""
@@ -462,11 +459,8 @@ class OAuth1RequestValidator(RequestValidator):
         """Validates request token is available for client."""
         log.debug('Validate request token %r for %r',
                   token, client_key)
-        tok = request.request_token or self._grantgetter(
-            client_key=client_key,
-            token=token,
-        )
-        if tok:
+        tok = request.request_token or self._grantgetter(token=token)
+        if tok and tok.client_key == client_key:
             request.request_token = tok
             return True
         return False
@@ -537,14 +531,24 @@ class OAuth1RequestValidator(RequestValidator):
         return True
 
     def verify_request_token(self, token, request):
-        log.debug('Validate request token %r', token)
-        # TODO
-        return True
+        log.debug('Verify request token %r', token)
+        tok = request.request_token or self._grantgetter(token=token)
+        if tok:
+            request.request_token = tok
+            return True
+        return False
 
     def verify_realms(self, token, realms, request):
-        log.debug('Validate realms %r', realms)
-        # TODO
-        return True
+        log.debug('Verify realms %r', realms)
+        tok = request.request_token or self._grantgetter(token=token)
+        if not tok:
+            return False
+
+        request.request_token = tok
+        if not hasattr(tok, 'realms'):
+            # realms not enabled
+            return True
+        return set(tok.realms) == set(realms)
 
     def save_access_token(self, token, request):
         log.debug('Save access token %r', token)
