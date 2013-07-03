@@ -172,16 +172,16 @@ def create_server(app):
 
     @oauth.grantsetter
     def save_request_token(token, oauth):
-        if oauth.realm:
-            realm = ' '.join(oauth.realm)
+        if oauth.realms:
+            realms = ' '.join(oauth.realms)
         else:
-            realm = None
+            realms = None
         grant = Grant(
             token=token['oauth_token'],
             secret=token['oauth_token_secret'],
             client_key=oauth.client.client_key,
             redirect_uri=oauth.redirect_uri,
-            _realms=realm,
+            _realms=realms,
             user_id=g.user.id,
         )
         db.session.add(grant)

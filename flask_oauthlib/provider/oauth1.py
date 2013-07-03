@@ -42,7 +42,7 @@ class OAuth1Provider(object):
             oauth.init_app(app)
             return app
 
-    And now you can protect the resource with realm::
+    And now you can protect the resource with realms::
 
         @app.route('/api/user')
         @oauth.require_oauth('email', 'username')
@@ -547,27 +547,27 @@ class OAuth1RequestValidator(RequestValidator):
         request.redirect_uri = redirect_uri
         return redirect_uri in request.client.redirect_uris
 
-    def validate_requested_realm(self, client_key, realm, request):
-        log.debug('Validate requested realm %r for %r', realm, client_key)
+    def validate_requested_realms(self, client_key, realms, request):
+        log.debug('Validate requested realms %r for %r', realms, client_key)
         if not request.client:
             request.client = self._clientgetter(client_key=client_key)
 
         client = request.client
-        if hasattr(client, 'validate_realm'):
-            return client.validate_realm(realm)
-        if set(client.default_realms).issuperset(set(realm)):
+        if hasattr(client, 'validate_realms'):
+            return client.validate_realms(realms)
+        if set(client.default_realms).issuperset(set(realms)):
             return True
         return True
 
-    def validate_realm(self, client_key, token, request, uri=None,
-                       required_realm=None):
-        log.debug('Validate realm for %r', client_key)
+    def validate_realms(self, client_key, token, request, uri=None,
+                       realms=None):
+        log.debug('Validate realms %r for %r', realms, client_key)
         if request.access_token:
             tok = request.access_token
         else:
             tok = self._tokengetter(client_key=client_key, token=token)
             request.access_token = tok
-        return set(tok.realms).issuperset(set(required_realm))
+        return set(tok.realms).issuperset(set(realms))
 
     def validate_verifier(self, client_key, token, verifier, request):
         log.debug('Validate verifier %r for %r', verifier, client_key)
