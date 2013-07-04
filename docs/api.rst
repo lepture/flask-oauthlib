@@ -24,10 +24,20 @@ Client Reference
    :members:
 
 
-Provider Reference
-------------------
+OAuth1 Provider
+---------------
 
 .. module:: flask_oauthlib.provider
+
+.. autoclass:: OAuth1Provider
+   :members:
+
+.. autoclass:: OAuth1RequestValidator
+   :members:
+
+
+OAuth2 Provider
+---------------
 
 .. autoclass:: OAuth2Provider
    :members:
