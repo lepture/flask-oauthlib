@@ -16,7 +16,7 @@ from oauthlib.oauth1 import RequestValidator
 from oauthlib.oauth1 import WebApplicationServer as Server
 from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
 from oauthlib.common import to_unicode, add_params_to_uri
-from oauthlib.oauth1.rfc5849.errors import OAuth1Error
+from oauthlib.oauth1.rfc5849 import errors
 from .._utils import log, _extract_params
 
 SIGNATURE_METHODS = (SIGNATURE_HMAC, SIGNATURE_RSA)
@@ -284,13 +284,17 @@ class OAuth1Provider(object):
             server = self.server
 
             uri, http_method, body, headers = _extract_params()
-            realms, credentials = server.get_realms_and_credentials(
-                uri, http_method=http_method, body=body, headers=headers
-            )
-            log.debug('Get realms %r and credentials %r', realms, credentials)
-            kwargs['realms'] = realms
-            kwargs.update(credentials)
-            return f(*args, **kwargs)
+            try:
+                realms, credentials = server.get_realms_and_credentials(
+                    uri, http_method=http_method, body=body, headers=headers
+                )
+                kwargs['realms'] = realms
+                kwargs.update(credentials)
+                return f(*args, **kwargs)
+            except errors.OAuth1Error as e:
+                return redirect(e.in_uri(self.error_uri))
+            except errors.InvalidClientError as e:
+                return redirect(e.in_uri(self.error_uri))
         return decorated
 
     def confirm_authorization_request(self):
@@ -298,16 +302,17 @@ class OAuth1Provider(object):
         server = self.server
 
         uri, http_method, body, headers = _extract_params()
-        realms, credentials = server.get_realms_and_credentials(
-            uri, http_method=http_method, body=body, headers=headers
-        )
-        log.debug('Confirm realms %r and credentials %r', realms, credentials)
         try:
+            realms, credentials = server.get_realms_and_credentials(
+                uri, http_method=http_method, body=body, headers=headers
+            )
             ret = server.create_authorization_response(
                 uri, http_method, body, headers, realms, credentials)
             log.debug('Authorization successful.')
             return redirect(ret[0])
-        except OAuth1Error as e:
+        except errors.OAuth1Error as e:
+            return redirect(e.in_uri(self.error_uri))
+        except errors.InvalidClientError as e:
             return redirect(e.in_uri(self.error_uri))
 
     def request_token_handler(self, f):
@@ -325,7 +330,7 @@ class OAuth1Provider(object):
                 for k, v in headers.items():
                     response.headers[k] = v
                 return response
-            except OAuth1Error as e:
+            except errors.OAuth1Error as e:
                 return _error_response(e)
         return decorated
 
@@ -344,7 +349,7 @@ class OAuth1Provider(object):
                 for k, v in headers.items():
                     response.headers[k] = v
                 return response
-            except OAuth1Error as e:
+            except errors.OAuth1Error as e:
                 return _error_response(e)
         return decorated
 
@@ -604,6 +609,9 @@ class OAuth1RequestValidator(RequestValidator):
             request.client = self._clientgetter(client_key=client_key)
 
         client = request.client
+        if not client:
+            return False
+
         if hasattr(client, 'validate_realms'):
             return client.validate_realms(realms)
         if set(client.default_realms).issuperset(set(realms)):
