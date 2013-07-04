@@ -10,7 +10,7 @@ Version 0.2.0
 
 Release on June 19, 2013.
 
-- OAuth2 Provider available. Documentation at :ref:`provider`. :)
+- OAuth2 Provider available. Documentation at :doc:`oauth2`. :)
 - Make client part testable.
 - Change extension name of client from ``oauth-client`` to ``oauthlib.client``.
 

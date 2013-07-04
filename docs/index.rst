@@ -36,7 +36,8 @@ instructions for getting the most out of Flask-OAuthlib
    intro
    install
    client
-   provider
+   oauth1
+   oauth2
 
 
 API Documentation

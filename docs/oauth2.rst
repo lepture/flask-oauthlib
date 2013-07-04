@@ -1,18 +1,5 @@
-.. _provider:
-
-Provider
-========
-
-This part of documentation covers the tutorial of setting up an OAuth
-provider. Currently, only OAuth2 is implemented.
-
-If you need OAuth1 provider, vote for `OAuth1 Provider`_.
-
-.. _`OAuth1 Provider`: https://github.com/lepture/flask-oauthlib/issues/13
-
-
 OAuth2 Server
--------------
+=============
 
 An OAuth2 server concerns how to grant the auothorization and how to protect
 the resource. Register an **OAuth** provider::
@@ -34,13 +21,13 @@ Like any other Flask extensions, we can pass the application later::
 To implemente the oauthorization flow, we need to understand the data model.
 
 User (Resource Owner)
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 A user, or resource owner, is usally the registered user on your site. You
 design your own user model, there is not much to say.
 
 Client (Application)
-~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 A client is the app which want to use the resource of a user. It is suggested
 that the client is registered by a user on your site, but it is not required.
@@ -108,7 +95,7 @@ An example of the data model in SQLAlchemy (SQLAlchemy is not required)::
 
 
 Grant Token
-~~~~~~~~~~~
+-----------
 
 A grant token is created in the authorization flow, and will be destroyed
 when the authorization finished. In this case, it would be better to store
@@ -159,7 +146,7 @@ Also in SQLAlchemy model (would be better if it is in a cache)::
             return []
 
 Bearer Token
-~~~~~~~~~~~~
+------------
 
 A bearer token is the final token that could be use by the client. There
 are other token types, but bearer token is widely used. Flask-OAuthlib only
@@ -205,7 +192,7 @@ An example of the data model in SQLAlchemy::
 
 
 Configuration
-~~~~~~~~~~~~~
+-------------
 
 The oauth provider has some built-in defaults, you can change them with Flask
 config:
@@ -221,7 +208,7 @@ config:
 
 
 Implements
-~~~~~~~~~~
+----------
 
 The implementings of authorization flow needs two handlers, one is authorize
 handler for user to confirm the grant, the other is token handler for client
@@ -435,7 +422,7 @@ Every getter and setter is started with ``_``.
 
 
 Protect Resource
-~~~~~~~~~~~~~~~~
+----------------
 
 Protect the resource of a user with ``require_oauth`` decorator now::
 
