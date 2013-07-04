@@ -4,4 +4,4 @@ Flask
 # for testing
 Flask-SQLAlchemy
 # use the master
--e git@github.com:idan/oauthlib.git#egg=oauthlib
+-e git://github.com/idan/oauthlib.git#egg=oauthlib
