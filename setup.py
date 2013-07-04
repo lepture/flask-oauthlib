@@ -29,6 +29,8 @@ setup(
         'Flask',
         'oauthlib',
     ],
+    tests_require=['nose', 'Flask-SQLAlchemy'],
+    test_suite='nose.collector',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
