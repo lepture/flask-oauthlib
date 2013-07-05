@@ -139,7 +139,9 @@ class GrantCacheBinding(object):
         kwargs = self.cache.get(grant.key)
         log.debug("KWARGS: {0}".format(kwargs))
         if kwargs:
-            return Grant(self.cache, **kwargs)
+            for k, v in kwargs.iteritems():
+                setattr(grant, k, v)
+            return grant
         log.debug("GET NOT FOUND")
         return None
 

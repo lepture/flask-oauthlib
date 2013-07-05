@@ -150,7 +150,7 @@ def create_server(app):
 
     oauth = OAuth2Provider(app)
 
-    from flask_oauthlib.contrib.handlers import (
+    from flask_oauthlib.contrib.bindings import (
         SQLAlchemyBinding,
         GrantCacheBinding
     )
@@ -161,13 +161,13 @@ def create_server(app):
     def get_session():
         return db.session
 
-    SQLAlchemyBinding(oauth, get_session, user=User, token=Token,
-                      client=Client, grant=Grant, current_user=current_user)
+    # SQLAlchemyBinding(oauth, get_session, user=User, token=Token,
+    #                   client=Client, grant=Grant, current_user=current_user)
 
-    # SQLAlchemyBinding(oauth, get_session, user=User,
-    #                   token=Token, client=Client)
+    SQLAlchemyBinding(oauth, get_session, user=User,
+                      token=Token, client=Client)
 
-    # GrantCacheBinding(app, oauth, current_user, config={'OAUTH2_CACHE_TYPE': 'simple'})
+    GrantCacheBinding(app, oauth, current_user, config={'OAUTH2_CACHE_TYPE': 'simple'})
 
     '''
      app=app, config={
