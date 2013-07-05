@@ -12,9 +12,9 @@ import oauthlib.oauth1
 import oauthlib.oauth2
 from functools import wraps
 from oauthlib.common import to_unicode
-from flask import request, redirect, json, session
+from flask import request, redirect, json, session, current_app
 from werkzeug import url_quote, url_decode, url_encode
-from werkzeug import parse_options_header
+from werkzeug import parse_options_header, cached_property
 try:
     from urlparse import urljoin, urlparse
     import urllib2 as http
@@ -232,33 +232,97 @@ class OAuthRemoteApp(object):
     """
     def __init__(
         self, oauth, name,
-        base_url, request_token_url,
-        access_token_url, authorize_url,
-        consumer_key, consumer_secret,
+        base_url=None,
+        request_token_url=None,
+        access_token_url=None,
+        authorize_url=None,
+        consumer_key=None,
+        consumer_secret=None,
         request_token_params=None,
         access_token_params=None,
         access_token_method='GET',
         content_type=None,
         test_client=None,
+        app_key=None,
         encoding='utf-8',
     ):
-
         self.oauth = oauth
-        self.base_url = base_url
         self.name = name
-        self.request_token_url = request_token_url
-        self.access_token_url = access_token_url
-        self.authorize_url = authorize_url
-        self.consumer_key = consumer_key
-        self.consumer_secret = consumer_secret
-        self.request_token_params = request_token_params or {}
-        self.access_token_params = access_token_params or {}
-        self.access_token_method = access_token_method
-        self.content_type = content_type
-        self.test_client = test_client
-        self.encoding = encoding
+
+        if (not consumer_key or not consumer_secret) and not app_key:
+            raise TypeError(
+                'OAuthRemoteApp requires consumer key and secret'
+            )
+
+
+        self._base_url = base_url
+        self._request_token_url = request_token_url
+        self._access_token_url = access_token_url
+        self._authorize_url = authorize_url
+        self._consumer_key = consumer_key
+        self._consumer_secret = consumer_secret
+        self._request_token_params = request_token_params or {}
+        self._access_token_params = access_token_params or {}
+        self._access_token_method = access_token_method
+        self._content_type = content_type
 
         self._tokengetter = None
+
+        self.test_client = test_client
+        self.app_key = app_key
+        self.encoding = encoding
+
+    @cached_property
+    def base_url(self):
+        return self._get_property('base_url')
+
+    @cached_property
+    def request_token_url(self):
+        return self._get_property('request_token_url', None)
+
+    @cached_property
+    def access_token_url(self):
+        return self._get_property('access_token_url')
+
+    @cached_property
+    def authorize_url(self):
+        return self._get_property('authorize_url')
+
+    @cached_property
+    def consumer_key(self):
+        return self._get_property('consumer_key')
+
+    @cached_property
+    def consumer_secret(self):
+        return self._get_property('consumer_secret')
+
+    @cached_property
+    def request_token_params(self):
+        return self._get_property('request_token_params', None)
+
+    @cached_property
+    def access_token_params(self):
+        return self._get_property('access_token_params', None)
+
+    @cached_property
+    def access_token_method(self):
+        return self._get_property('access_token_method', 'GET')
+
+    @cached_property
+    def content_type(self):
+        return self._get_property('content_type', None)
+
+    def _get_property(self, key, default=False):
+        attr = getattr(self, '_%s' % key)
+        if attr:
+            return attr
+        if default is not False and not self.app_key:
+            return attr
+        app = self.oauth.app or current_app
+        config = app.config[self.app_key]
+        if default is not False:
+            return config.get(key, default)
+        return config[key]
 
     def make_client(self, token=None):
         # request_token_url is for oauth1

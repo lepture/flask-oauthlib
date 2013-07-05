@@ -1,6 +1,7 @@
 from flask import Flask
 from nose.tools import raises
 from flask_oauthlib.client import encode_request_data, add_query
+from flask_oauthlib.client import OAuthRemoteApp, OAuth
 from .oauth2_client import create_client
 
 
@@ -36,3 +37,39 @@ def test_raise_app():
     app = create_client(app)
     client = app.extensions['oauthlib.client']
     assert client.demo.name == 'dev'
+
+
+class TestOAuthRemoteApp(object):
+    @raises(TypeError)
+    def test_raise_init(self):
+        OAuthRemoteApp('oauth', 'twitter')
+
+    def test_not_raise_init(self):
+        OAuthRemoteApp('oauth', 'twitter', app_key='foo')
+
+    def test_lazy_load(self):
+        oauth = OAuth()
+        twitter = oauth.remote_app(
+            'twitter',
+            base_url='https://api.twitter.com/1/',
+            app_key='twitter'
+        )
+        assert twitter.base_url == 'https://api.twitter.com/1/'
+
+        app = Flask(__name__)
+        app.config.update({
+            'twitter': dict(
+                consumer_key='twitter key',
+                consumer_secret='twitter secret',
+                request_token_url='request url',
+                access_token_url='token url',
+                authorize_url='auth url',
+            )
+        })
+        oauth.init_app(app)
+        assert twitter.consumer_key == 'twitter key'
+        assert twitter.consumer_secret == 'twitter secret'
+        assert twitter.request_token_url == 'request url'
+        assert twitter.access_token_url == 'token url'
+        assert twitter.authorize_url == 'auth url'
+        assert twitter.content_type is None
