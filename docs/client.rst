@@ -29,6 +29,64 @@ Find the OAuth2 client example at `github.py`_.
 .. _`github.py`: https://github.com/lepture/flask-oauthlib/blob/master/example/github.py
 
 
+Lazy Configuration
+------------------
+
+.. versionadded:: 0.3.0
+
+When creating an open source project, we need to keep our consumer key and
+consumer secret secret. We usually keep them in a config file, and don't
+keep track of the config in the version control.
+
+Client of Flask-OAuthlib has a mechanism for you to lazy load your
+configuration from your Flask config object::
+
+    from flask_oauthlib.client import OAuth
+
+    oauth = OAuth()
+    twitter = oauth.remote_app(
+        'twitter',
+        base_url='https://api.twitter.com/1/',
+        request_token_url='https://api.twitter.com/oauth/request_token',
+        access_token_url='https://api.twitter.com/oauth/access_token',
+        authorize_url='https://api.twitter.com/oauth/authenticate',
+        app_key='TWITTER'
+    )
+
+At this moment, we didn't put the ``consumer_key`` and ``consumer_secret``
+in the ``remote_app``, instead, we set a ``app_key``. It will load from
+Flask config by the key ``TWITTER``, the configuration looks like::
+
+    app.config['TWITTER'] = {
+        'consumer_key': 'a random string key',
+        'consumer_secret': 'a random string secret',
+    }
+
+    oauth.init_app(app)
+
+Twitter can get consumer key and secret from the Flask instance now.
+
+You can put all the configuration in ``app.config`` if you like, which
+means you can do it this way::
+
+    from flask_oauthlib.client import OAuth
+
+    oauth = OAuth()
+    twitter = oauth.remote_app(
+        'twitter',
+        app_key='TWITTER'
+    )
+
+    app.config['TWITTER'] = dict(
+        consumer_key='a random key',
+        consumer_secret='a random secret',
+        base_url='https://api.twitter.com/1/',
+        request_token_url='https://api.twitter.com/oauth/request_token',
+        access_token_url='https://api.twitter.com/oauth/access_token',
+        authorize_url='https://api.twitter.com/oauth/authenticate',
+    )
+    oauth.init_app(app)
+
 Fix non-standard OAuth
 ----------------------
 

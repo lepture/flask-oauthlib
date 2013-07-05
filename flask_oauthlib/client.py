@@ -229,6 +229,11 @@ class OAuthRemoteApp(object):
     :param content_type: force to parse the content with this content_type,
                          usually used when the server didn't return the
                          right content type.
+
+    .. versionadded:: 0.3.0
+
+    :param app_key: lazy load configuration from Flask app config with
+                    this app key
     """
     def __init__(
         self, oauth, name,
