@@ -4,10 +4,13 @@ import os
 import tempfile
 import unittest
 import json
-from urlparse import urlparse
 from flask import Flask
 from .oauth2_server import create_server, db, enable_log
 from .oauth2_client import create_client
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 
 class BaseSuite(unittest.TestCase):

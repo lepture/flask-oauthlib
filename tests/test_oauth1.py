@@ -5,11 +5,14 @@ import time
 import tempfile
 import unittest
 from nose.tools import raises
-from urlparse import urlparse
 from flask import Flask
 from flask_oauthlib.client import OAuth, OAuthException
 from .oauth1_server import create_server, db
 from .oauth1_client import create_client
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 
 class BaseSuite(unittest.TestCase):

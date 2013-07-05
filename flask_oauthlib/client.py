@@ -8,15 +8,19 @@
     :copyright: (c) 2013 by Hsiaoming Yang.
 """
 
-import urllib2
 import oauthlib.oauth1
 import oauthlib.oauth2
 from functools import wraps
 from oauthlib.common import to_unicode
-from urlparse import urljoin, urlparse
 from flask import request, redirect, json, session
 from werkzeug import url_quote, url_decode, url_encode
 from werkzeug import parse_options_header
+try:
+    from urlparse import urljoin, urlparse
+    import urllib2 as http
+except ImportError:
+    from urllib import request as http
+    from urllib.parse import urljoin, urlparse
 from ._utils import log
 
 
@@ -148,11 +152,11 @@ def make_request(uri, headers=None, data=None, method=None,
         resp.code = resp.status_code
         return resp, resp.data
 
-    req = urllib2.Request(uri, headers=headers, data=data)
+    req = http.Request(uri, headers=headers, data=data)
     req.get_method = lambda: method.upper()
     try:
-        resp = urllib2.urlopen(req)
-    except urllib2.HTTPError as resp:
+        resp = http.urlopen(req)
+    except http.HTTPError as resp:
         pass
     content = resp.read()
     resp.close()
