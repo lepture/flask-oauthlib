@@ -66,6 +66,8 @@ class OAuth2Provider(object):
     """
 
     def __init__(self, app=None):
+        self._before_request_funcs = []
+        self._after_request_funcs = []
         if app:
             self.init_app(app)
 
@@ -142,6 +144,40 @@ class OAuth2Provider(object):
             self._validator = validator
             return Server(validator, token_expires_in=expires_in)
         raise RuntimeError('application not bound to required getters')
+
+    def before_request(self, f):
+        """Register functions to be invoked before accessing the resource.
+
+        The function accepts nothing as parameters, but you can get
+        information from `Flask.request` object. It is usually useful
+        for setting limitation on the client request::
+
+            @oauth.before_request
+            def limit_client_request():
+                client_key = request.values.get('client_key')
+                if not client_key:
+                    return
+                client = Client.get(client_key)
+                if over_limit(client):
+                    return abort(403)
+
+                track_request(client)
+        """
+        self._before_request_funcs.append(f)
+
+    def after_request(self, f):
+        """Register functions to be invoked after accessing the resource.
+
+        The function accepts ``valid`` and ``request`` as parameters,
+        and it should return a tuple of them::
+
+            @oauth.after_request
+            def valid_after_request(valid, oauth):
+                if oauth.user in black_list:
+                    return False, oauth
+                return valid, oauth
+        """
+        self._after_request_funcs.append(f)
 
     def clientgetter(self, f):
         """Register a function as the client getter.
@@ -367,11 +403,18 @@ class OAuth2Provider(object):
         def wrapper(f):
             @wraps(f)
             def decorated(*args, **kwargs):
+                for func in self._before_request_funcs:
+                    func()
+
                 server = self.server
                 uri, http_method, body, headers = _extract_params()
                 valid, req = server.verify_request(
                     uri, http_method, body, headers, scopes
                 )
+
+                for func in self._after_request_funcs:
+                    valid, req = func(valid, req)
+
                 if not valid:
                     return abort(403)
                 return f(*((req,) + args), **kwargs)
