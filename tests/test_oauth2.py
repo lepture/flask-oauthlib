@@ -5,9 +5,22 @@ import tempfile
 import unittest
 import json
 from urlparse import urlparse
-from flask import Flask
-from .oauth2_server import create_server, db, enable_log
+from oauth2_server import User, Token, Client, Grant, db
+from flask import g, Flask
+from datetime import datetime, timedelta
+from flask_oauthlib.contrib.bindings import (
+    SQLAlchemyBinding,
+    GrantCacheBinding
+)
+from flask_oauthlib.provider import OAuth2Provider
 from .oauth2_client import create_client
+from .oauth2_server import create_server, setup_oauth
+
+
+authorize_url = (
+    '/oauth/authorize?response_type=code&client_id=dev'
+    '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized&scope=email'
+)
 
 
 class BaseSuite(unittest.TestCase):
@@ -23,12 +36,17 @@ class BaseSuite(unittest.TestCase):
         }
         app.config.update(config)
 
+        oauth = self.get_provider(app)
         app = create_server(app)
+        app = setup_oauth(app, oauth)
         app = create_client(app)
 
         self.app = app
         self.client = app.test_client()
         return app
+
+    def get_provider(app):
+        raise NotImplementedError()
 
     def tearDown(self):
         db.session.remove()
@@ -38,13 +56,92 @@ class BaseSuite(unittest.TestCase):
         os.unlink(self.db_file)
 
 
-authorize_url = (
-    '/oauth/authorize?response_type=code&client_id=dev'
-    '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized&scope=email'
-)
+def cache_provider(app):
+    oauth = OAuth2Provider(app)
+
+    SQLAlchemyBinding(oauth, get_session, user=User,
+                      token=Token, client=Client)
+
+    GrantCacheBinding(app, oauth, current_user,
+                      config={'OAUTH2_CACHE_TYPE': 'simple'})
+
+    return oauth
+
+
+def sqlalchemy_provider(app):
+    oauth = OAuth2Provider(app)
+
+    SQLAlchemyBinding(oauth, get_session, user=User, token=Token,
+                      client=Client, grant=Grant, current_user=current_user)
+
+    return oauth
+
+
+def default_provider(app):
+    oauth = OAuth2Provider(app)
+
+    @oauth.clientgetter
+    def get_client(client_id):
+        return Client.query.filter_by(client_id=client_id).first()
+
+    @oauth.grantgetter
+    def get_grant(client_id, code):
+        return Grant.query.filter_by(client_id=client_id, code=code).first()
+
+    @oauth.tokengetter
+    def get_token(access_token=None, refresh_token=None):
+        if access_token:
+            return Token.query.filter_by(access_token=access_token).first()
+        if refresh_token:
+            return Token.query.filter_by(refresh_token=refresh_token).first()
+        return None
+
+    @oauth.grantsetter
+    def set_grant(client_id, code, request, *args, **kwargs):
+        expires = datetime.utcnow() + timedelta(seconds=100)
+        grant = Grant(
+            client_id=client_id,
+            code=code['code'],
+            redirect_uri=request.redirect_uri,
+            scope=' '.join(request.scopes),
+            user_id=g.user.id,
+            expires=expires,
+        )
+        db.session.add(grant)
+        db.session.commit()
+
+    @oauth.tokensetter
+    def set_token(token, request, *args, **kwargs):
+        # In real project, a token is unique bound to user and client.
+        # Which means, you don't need to create a token every time.
+        tok = Token(**token)
+        tok.user_id = request.user.id
+        tok.client_id = request.client.client_id
+        db.session.add(tok)
+        db.session.commit()
+
+    @oauth.usergetter
+    def get_user(username, password, *args, **kwargs):
+        # This is optional, if you don't need password credential
+        # there is no need to implement this method
+        return User.query.get(1)
+
+    return oauth
+
+
+def current_user():
+    return g.user
+
+
+def get_session():
+    return db.session
 
 
 class TestWebAuth(BaseSuite):
+
+    def get_provider(self, app):
+        return default_provider(app)
+
     def test_login(self):
         rv = self.client.get('/login')
         assert 'response_type=code' in rv.location
@@ -123,7 +220,22 @@ class TestWebAuth(BaseSuite):
         assert 'error' in rv.data
 
 
+class TestWebAuthSQLAlchemy(TestWebAuth):
+
+    def get_provider(self, app):
+        return sqlalchemy_provider(app)
+
+
+class TestWebAuthCache(TestWebAuth):
+
+    def get_provider(self, app):
+        return cache_provider(app)
+
+
 class TestPasswordAuth(BaseSuite):
+    def get_provider(self, app):
+        return default_provider(app)
+
     def test_get_access_token(self):
         auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/token?grant_type=password&state=foo'
@@ -136,6 +248,9 @@ class TestPasswordAuth(BaseSuite):
 
 
 class TestRefreshToken(BaseSuite):
+    def get_provider(self, app):
+        return default_provider(app)
+
     def test_refresh_token_in_password_grant(self):
         auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/token?grant_type=password'
@@ -159,6 +274,9 @@ class TestRefreshToken(BaseSuite):
 
 
 class TestCredentialAuth(BaseSuite):
+    def get_provider(self, app):
+        return default_provider(app)
+
     def test_get_access_token(self):
         auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/token?grant_type=client_credentials'

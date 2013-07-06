@@ -1,19 +1,11 @@
 # coding: utf-8
-from datetime import datetime, timedelta
 from flask import g, render_template, request, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
+from datetime import datetime, timedelta
 from sqlalchemy.orm import relationship
-from flask_oauthlib.provider import OAuth2Provider
 
 
 db = SQLAlchemy()
-
-
-def enable_log(name='flask_oauthlib'):
-    import logging
-    logger = logging.getLogger(name)
-    logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.DEBUG)
 
 
 class User(db.Model):
@@ -117,7 +109,43 @@ class Token(db.Model):
         return []
 
 
-def prepare_app(app):
+def setup_oauth(app, oauth):
+
+    @app.route('/oauth/authorize', methods=['GET', 'POST'])
+    @oauth.authorize_handler
+    def authorize(*args, **kwargs):
+        # NOTICE: for real project, you need to require login
+        if request.method == 'GET':
+            # render a page for user to confirm the authorization
+            return render_template('confirm.html')
+
+        confirm = request.form.get('confirm', 'no')
+        return confirm == 'yes'
+
+    @app.route('/oauth/token')
+    @oauth.token_handler
+    def access_token():
+        return {}
+
+    @app.route('/api/email')
+    @oauth.require_oauth('email')
+    def email_api(oauth):
+        return jsonify(email='me@oauth.net', username=oauth.user.username)
+
+    @app.route('/api/address/<city>')
+    @oauth.require_oauth('address')
+    def address_api(oauth, city):
+        return jsonify(address=city, username=oauth.user.username)
+
+    @app.route('/api/method', methods=['GET', 'POST', 'PUT', 'DELETE'])
+    @oauth.require_oauth()
+    def method_api(oauth):
+        return jsonify(method=request.method)
+
+    return app
+
+
+def create_server(app):
     db.init_app(app)
     db.app = app
     db.create_all()
@@ -142,40 +170,6 @@ def prepare_app(app):
         db.session.commit()
     except:
         db.session.rollback()
-    return app
-
-
-def create_server(app):
-    app = prepare_app(app)
-
-    oauth = OAuth2Provider(app)
-
-    from flask_oauthlib.contrib.bindings import (
-        SQLAlchemyBinding,
-        GrantCacheBinding
-    )
-
-    def current_user():
-        return g.user
-
-    def get_session():
-        return db.session
-
-    # SQLAlchemyBinding(oauth, get_session, user=User, token=Token,
-    #                   client=Client, grant=Grant, current_user=current_user)
-
-    SQLAlchemyBinding(oauth, get_session, user=User,
-                      token=Token, client=Client)
-
-    GrantCacheBinding(app, oauth, current_user, config={'OAUTH2_CACHE_TYPE': 'simple'})
-
-    '''
-     app=app, config={
-        'OAUTH2_CACHE_TYPE': 'redis',
-        'OAUTH2_CACHE_REDIS_DB': 1
-    },
-
-    '''
 
     @app.before_request
     def load_current_user():
@@ -185,131 +179,6 @@ def create_server(app):
     @app.route('/home')
     def home():
         return render_template('home.html')
-
-    @app.route('/oauth/authorize', methods=['GET', 'POST'])
-    @oauth.authorize_handler
-    def authorize(*args, **kwargs):
-        # NOTICE: for real project, you need to require login
-        if request.method == 'GET':
-            # render a page for user to confirm the authorization
-            return render_template('confirm.html')
-
-        confirm = request.form.get('confirm', 'no')
-        return confirm == 'yes'
-
-    @app.route('/oauth/token')
-    @oauth.token_handler
-    def access_token():
-        return {}
-
-    @app.route('/api/email')
-    @oauth.require_oauth('email')
-    def email_api(oauth):
-        return jsonify(email='me@oauth.net', username=oauth.user.username)
-
-    @app.route('/api/address/<city>')
-    @oauth.require_oauth('address')
-    def address_api(oauth, city):
-        return jsonify(address=city, username=oauth.user.username)
-
-    @app.route('/api/method', methods=['GET', 'POST', 'PUT', 'DELETE'])
-    @oauth.require_oauth()
-    def method_api(oauth):
-        return jsonify(method=request.method)
-
-    return app
-
-
-def _create_server(app):
-    app = prepare_app(app)
-
-    oauth = OAuth2Provider(app)
-
-    @oauth.clientgetter
-    def get_client(client_id):
-        return Client.query.filter_by(client_id=client_id).first()
-
-    @oauth.grantgetter
-    def get_grant(client_id, code):
-        return Grant.query.filter_by(client_id=client_id, code=code).first()
-
-    @oauth.tokengetter
-    def get_token(access_token=None, refresh_token=None):
-        if access_token:
-            return Token.query.filter_by(access_token=access_token).first()
-        if refresh_token:
-            return Token.query.filter_by(refresh_token=refresh_token).first()
-        return None
-
-    @oauth.grantsetter
-    def set_grant(client_id, code, request, *args, **kwargs):
-        expires = datetime.utcnow() + timedelta(seconds=100)
-        grant = Grant(
-            client_id=client_id,
-            code=code['code'],
-            redirect_uri=request.redirect_uri,
-            scope=' '.join(request.scopes),
-            user_id=g.user.id,
-            expires=expires,
-        )
-        db.session.add(grant)
-        db.session.commit()
-
-    @oauth.tokensetter
-    def set_token(token, request, *args, **kwargs):
-        # In real project, a token is unique bound to user and client.
-        # Which means, you don't need to create a token every time.
-        tok = Token(**token)
-        tok.user_id = request.user.id
-        tok.client_id = request.client.client_id
-        db.session.add(tok)
-        db.session.commit()
-
-    @oauth.usergetter
-    def get_user(username, password, *args, **kwargs):
-        # This is optional, if you don't need password credential
-        # there is no need to implement this method
-        return User.query.get(1)
-
-    @app.before_request
-    def load_current_user():
-        user = User.query.get(1)
-        g.user = user
-
-    @app.route('/home')
-    def home():
-        return render_template('home.html')
-
-    @app.route('/oauth/authorize', methods=['GET', 'POST'])
-    @oauth.authorize_handler
-    def authorize(*args, **kwargs):
-        # NOTICE: for real project, you need to require login
-        if request.method == 'GET':
-            # render a page for user to confirm the authorization
-            return render_template('confirm.html')
-
-        confirm = request.form.get('confirm', 'no')
-        return confirm == 'yes'
-
-    @app.route('/oauth/token')
-    @oauth.token_handler
-    def access_token():
-        return {}
-
-    @app.route('/api/email')
-    @oauth.require_oauth('email')
-    def email_api(oauth):
-        return jsonify(email='me@oauth.net', username=oauth.user.username)
-
-    @app.route('/api/address/<city>')
-    @oauth.require_oauth('address')
-    def address_api(oauth, city):
-        return jsonify(address=city, username=oauth.user.username)
-
-    @app.route('/api/method', methods=['GET', 'POST', 'PUT', 'DELETE'])
-    @oauth.require_oauth()
-    def method_api(oauth):
-        return jsonify(method=request.method)
 
     return app
 
