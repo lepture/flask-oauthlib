@@ -47,14 +47,11 @@ class Grant(object):
         )
         return key
 
-    def to_dict(self):
-        return dict(
-            client_id=self.client_id,
-            code=self.code,
-            redirect_uri=self.redirect_uri,
-            scopes=self.scopes,
-            user=self.user
-        )
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+    def keys(self):
+        return ['client_id', 'code', 'redirect_uri', 'scopes', 'user']
 
 
 class GrantCacheBinding(object):
@@ -131,7 +128,7 @@ class GrantCacheBinding(object):
             scopes=request.scopes,
             user=self.current_user()
         )
-        self.cache.set(grant.key, grant.to_dict())
+        self.cache.set(grant.key, dict(grant))
 
     def get(self, client_id, code):
         log.debug("GET GRANT")
@@ -186,7 +183,7 @@ class BaseBinding(object):
         if hasattr(self.model, 'query'):
             return self.model.query
         else:
-            return self.get_session()(self.model).query
+            return self.get_session().query(self.model)
 
 
 class UserBinding(BaseBinding):
