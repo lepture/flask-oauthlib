@@ -61,8 +61,8 @@ class OAuth2Provider(object):
 
         @app.route('/api/user')
         @oauth.require_oauth('email', 'username')
-        def user():
-            return jsonify(g.user)
+        def user(oauth):
+            return jsonify(oauth.user)
     """
 
     def __init__(self, app=None):

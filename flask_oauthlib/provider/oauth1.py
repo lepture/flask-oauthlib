@@ -46,8 +46,8 @@ class OAuth1Provider(object):
 
         @app.route('/api/user')
         @oauth.require_oauth('email', 'username')
-        def user():
-            return jsonify(g.user)
+        def user(oauth):
+            return jsonify(oauth.user)
     """
 
     def __init__(self, app=None):
@@ -159,7 +159,6 @@ class OAuth1Provider(object):
         returns an access token object contains:
 
             - client: Client associated with this token
-            - client_key: Key of the client
             - user: User associated with this token
             - token: Access token
             - secret: Access token secret
@@ -169,7 +168,7 @@ class OAuth1Provider(object):
 
             @oauth.tokengetter
             def get_access_token(client_key, token):
-                return get_token_model(client_key=client_key, token=token)
+                return AccessToken.get(client_key=client_key, token=token)
         """
         self._tokengetter = f
 
@@ -181,15 +180,14 @@ class OAuth1Provider(object):
 
             @oauth.tokensetter
             def save_access_token(token, request):
-                tok = AccessToken(
-                    client_key=request.client.client_key,
-                    user_id=request.user.id,
+                access_token = AccessToken(
+                    client=request.client,
+                    user=request.user,
                     token=token['oauth_token'],
                     secret=token['oauth_token_secret'],
-                    _realms=token['oauth_authorized_realms'],
+                    realms=token['oauth_authorized_realms'].split(' '),
                 )
-                db.session.add(tok)
-                db.session.commit()
+                return access_token.save()
 
         The parameter token is a dict, that looks like::
 
@@ -209,11 +207,39 @@ class OAuth1Provider(object):
 
     def grantgetter(self, f):
         """Register a function as the request token getter.
+
+        The function accepts a `token` parameter, and it returns an
+        request token object contains:
+
+            - client: Client associated with this token
+            - token: Access token
+            - secret: Access token secret
+            - realms: Realms with this access token
+            - redirect_uri: A URI for redirecting
+
+        Implement the token getter::
+
+            @oauth.tokengetter
+            def get_request_token(token):
+                return RequestToken.get(token=token)
         """
         self._grantgetter = f
 
     def grantsetter(self, f):
         """Register a function as the request token setter.
+
+        The setter accepts a token and request parameters::
+
+            @oauth.grantsetter
+            def save_request_token(token, request):
+                data = RequestToken(
+                    token=token['oauth_token'],
+                    secret=token['oauth_token_secret'],
+                    client=request.client,
+                    redirect_uri=oauth.redirect_uri,
+                    realms=request.realms,
+                )
+                return data.save()
         """
         self._grantsetter = f
 
@@ -233,7 +259,7 @@ class OAuth1Provider(object):
             @oauth.noncegetter
             def get_nonce(client_key, timestamp, nonce, request_token,
                           access_token):
-                return get_nonce_from_database("...")
+                return Nonce.get("...")
         """
         self._noncegetter = f
 
@@ -245,14 +271,51 @@ class OAuth1Provider(object):
             @oauth.noncegetter
             def save_nonce(client_key, timestamp, nonce, request_token,
                            access_token):
-                return save_to_database("...")
+                data = Nonce("...")
+                return data.save()
+
+        The timestamp will be expired in 60s, it would be a better design
+        if you put timestamp and nonce object in a cache.
         """
         self._noncesetter = f
 
     def verifiergetter(self, f):
+        """Register a function as the verifier getter.
+
+        The return verifier object should at least contain a user object
+        which is the current user.
+
+        The implemented code looks like::
+
+            @oauth.verifiergetter
+            def load_verifier(verifier, token):
+                data = Verifier.get(verifier)
+                if data.request_token == token:
+                    # check verifier for safety
+                    return data
+                return data
+        """
         self._verifiergetter = f
 
     def verifiersetter(self, f):
+        """Register a function as the verifier setter.
+
+        A verifier is better together with request token, but it is not
+        required. A verifier is used together with request token for
+        exchanging access token, it has an expire time, in this case, it
+        would be a better design if you put them in a cache.
+
+        The implemented code looks like::
+
+            @oauth.verifiersetter
+            def save_verifier(verifier, token, *args, **kwargs):
+                data = Verifier(
+                    verifier=verifier['oauth_verifier'],
+                    request_token=token,
+                    user=get_current_user()
+                )
+                return data.save()
+        """
         self._verifiersetter = f
 
     def authorize_handler(self, f):
@@ -316,7 +379,19 @@ class OAuth1Provider(object):
             return redirect(e.in_uri(self.error_uri))
 
     def request_token_handler(self, f):
-        """Request token decorator."""
+        """Request token handler decorator.
+
+        The decorated function should return an dictionary or None as
+        the extra credentials for creating the token response.
+
+        If you don't need to add any extra credentials, it could be as
+        simple as::
+
+            @app.route('/oauth/request_token')
+            @oauth.request_token_handler
+            def request_token():
+                return {}
+        """
         @wraps(f)
         def decorated(*args, **kwargs):
             server = self.server
@@ -335,7 +410,19 @@ class OAuth1Provider(object):
         return decorated
 
     def access_token_handler(self, f):
-        """Access token decorator."""
+        """Access token handler decorator.
+
+        The decorated function should return an dictionary or None as
+        the extra credentials for creating the token response.
+
+        If you don't need to add any extra credentials, it could be as
+        simple as::
+
+            @app.route('/oauth/access_token')
+            @oauth.access_token_handler
+            def access_token():
+                return {}
+        """
         @wraps(f)
         def decorated(*args, **kwargs):
             server = self.server
@@ -484,6 +571,10 @@ class OAuth1RequestValidator(RequestValidator):
         return to_unicode('dummy_request_token', 'utf-8')
 
     def get_client_secret(self, client_key, request):
+        """Get client secret.
+
+        The client object must has ``client_secret`` attribute.
+        """
         log.debug('Get client secret of %r', client_key)
         if not request.client:
             request.client = self._clientgetter(client_key=client_key)
@@ -492,6 +583,10 @@ class OAuth1RequestValidator(RequestValidator):
         return None
 
     def get_request_token_secret(self, client_key, token, request):
+        """Get request token secret.
+
+        The request token object should a ``secret`` attribute.
+        """
         log.debug('Get request token secret of %r for %r',
                   token, client_key)
         tok = request.request_token or self._grantgetter(token=token)
@@ -501,6 +596,10 @@ class OAuth1RequestValidator(RequestValidator):
         return None
 
     def get_access_token_secret(self, client_key, token, request):
+        """Get access token secret.
+
+        The access token object should a ``secret`` attribute.
+        """
         log.debug('Get access token secret of %r for %r',
                   token, client_key)
         tok = request.access_token or self._tokengetter(
@@ -620,6 +719,7 @@ class OAuth1RequestValidator(RequestValidator):
 
     def validate_realms(self, client_key, token, request, uri=None,
                        realms=None):
+        """Check if the token has permission on those realms."""
         log.debug('Validate realms %r for %r', realms, client_key)
         if request.access_token:
             tok = request.access_token
@@ -629,11 +729,14 @@ class OAuth1RequestValidator(RequestValidator):
         return set(tok.realms).issuperset(set(realms))
 
     def validate_verifier(self, client_key, token, verifier, request):
+        """Validate verifier exists."""
         log.debug('Validate verifier %r for %r', verifier, client_key)
         data = self._verifiergetter(verifier=verifier, token=token)
         if not data:
             return False
-        # verifier should has user object
+        if not hasattr(data, 'user'):
+            log.debug('Verifier should has user attribute')
+            return False
         request.user = data.user
         if hasattr(data, 'client_key'):
             return data.client_key == client_key
@@ -662,14 +765,60 @@ class OAuth1RequestValidator(RequestValidator):
         return set(tok.realms) == set(realms)
 
     def save_access_token(self, token, request):
+        """Save access token to database.
+
+        A tokensetter is required, which accepts a token and request
+        parameters::
+
+            def tokensetter(token, request):
+                access_token = Token(
+                    client=request.client,
+                    user=request.user,
+                    token=token['oauth_token'],
+                    secret=token['oauth_token_secret'],
+                    realms=token['oauth_authorized_realms'],
+                )
+                return access_token.save()
+        """
         log.debug('Save access token %r', token)
         self._tokensetter(token, request)
 
     def save_request_token(self, token, request):
+        """Save request token to database.
+
+        A grantsetter is required, which accepts a token and request
+        parameters::
+
+            def grantsetter(token, request):
+                grant = Grant(
+                    token=token['oauth_token'],
+                    secret=token['oauth_token_secret'],
+                    client=request.client,
+                    redirect_uri=oauth.redirect_uri,
+                    realms=request.realms,
+                )
+                return grant.save()
+        """
         log.debug('Save request token %r', token)
         self._grantsetter(token, request)
 
     def save_verifier(self, token, verifier, request):
+        """Save verifier to database.
+
+        A verifiersetter is required. It would be better to combine request
+        token and verifier together::
+
+            def verifiersetter(token, verifier, request):
+                tok = Grant.query.filter_by(token=token).first()
+                tok.verifier = verifier['oauth_verifier']
+                tok.user = get_current_user()
+                return tok.save()
+
+        .. admonition:: Note:
+
+            A user is required on verifier, remember to attach current
+            user to verifier.
+        """
         log.debug('Save verifier %r for %r', verifier, token)
         self._verifiersetter(
             token=token, verifier=verifier, request=request
