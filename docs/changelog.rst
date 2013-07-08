@@ -5,6 +5,18 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.3.0
+-------------
+
+Release date to be decided.
+
+- OAuth1 Provider available. Documentation at :doc:`oauth1`. :)
+- Add ``before_request`` and ``after_request`` via `#22`_.
+- Lazy load configuration for client via `#23`_. Documentation at :ref:`lazy-configuration`.
+
+.. _`#22`: https://github.com/lepture/flask-oauthlib/issues/22
+.. _`#23`: https://github.com/lepture/flask-oauthlib/issues/23
+
 Version 0.2.0
 -------------
 

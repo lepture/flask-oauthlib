@@ -92,12 +92,106 @@ Request token is designed for exchanging access token. Verifier token is
 designed to verify the current user. It is always suggested that you combine
 request token and verifier together.
 
+The request token should contain:
+
+- client: Client associated with this token
+- token: Access token
+- secret: Access token secret
+- realms: Realms with this access token
+- redirect_uri: A URI for redirecting
+
+The verifier should contain:
+
+- verifier: A random string for verifier
+- user: The current user
+
+And the all in one token example::
+
+    class RequestToken(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        user_id = db.Column(
+            db.Integer, db.ForeignKey('user.id', ondelete='CASCADE')
+        )
+        user = relationship('User')
+
+        client_key = db.Column(
+            db.Unicode(40), db.ForeignKey('client.client_key'),
+            nullable=False,
+        )
+        client = relationship('Client')
+
+        token = db.Column(db.Unicode(255), index=True, unique=True)
+        secret = db.Column(db.Unicode(255), nullable=False)
+
+        verifier = db.Column(db.Unicode(255))
+
+        redirect_uri = db.Column(db.UnicodeText)
+        _realms = db.Column(db.UnicodeText)
+
+        @property
+        def realms(self):
+            if self._realms:
+                return self._realms.split()
+            return []
+
+Since the request token and verifier is a one-time token, it would be better
+to put them in a cache.
+
+
+Timestamp and Nonce
+-------------------
+
+Timestamp and nonce is a token for preventing repeating requests, it can store
+these information:
+
+- client_key: The client/consure key
+- timestamp: The ``oauth_timestamp`` parameter
+- nonce: The ``oauth_nonce`` parameter
+- request_token: Request token string, if any
+- access_token: Access token string, if any
+
+The timelife of a timestamp and nonce is 60 senconds, put it in a cache please.
+
 
 Access Token
 ------------
 
 An access token is the final token that could be use by the client. Client
 will send access token everytime when it need to access resource.
+
+A access token requires at least these information:
+
+- client: Client associated with this token
+- user: User associated with this token
+- token: Access token
+- secret: Access token secret
+- realms: Realms with this access token
+
+The implementation in SQLAlchemy::
+
+    class AccessToken(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        client_key = db.Column(
+            db.Unicode(40), db.ForeignKey('client.client_key'),
+            nullable=False,
+        )
+        client = relationship('Client')
+
+        user_id = db.Column(
+            db.Integer, db.ForeignKey('user.id'),
+        )
+        user = relationship('User')
+
+        token = db.Column(db.Unicode(255))
+        secret = db.Column(db.Unicode(255))
+
+        _realms = db.Column(db.UnicodeText)
+
+        @property
+        def realms(self):
+            if self._realms:
+                return self._realms.split()
+            return []
 
 
 Configuration
@@ -128,5 +222,169 @@ config:
 Implements
 ----------
 
+The implementings of authorization flow needs three handlers, one is request
+token handler, one is authorize handler for user to confirm the grant, the
+other is token handler for client to exchange access token.
+
+Before the implementing of authorize and request/access token handler, we need
+to set up some getters and setter to communicate with the database.
+
+
+Client getter
+`````````````
+
+A client getter is required. It tells which client is sending the requests,
+creating the getter with decorator::
+
+    @oauth.clientgetter
+    def load_client(client_key):
+        return Client.query.filter_by(client_key=client_key).first()
+
+
+Request token & verifier getters and setters
+````````````````````````````````````````````
+
+Request token & verifier getters and setters are required. They are used in the
+authorization flow, implemented with decorators::
+
+    @oauth.grantgetter
+    def load_request_token(token):
+        grant = RequestToken.query.filter_by(token=token).first()
+        return grant
+
+    @oauth.grantsetter
+    def save_request_token(token, request):
+        if oauth.realms:
+            realms = ' '.join(request.realms)
+        else:
+            realms = None
+        grant = RequestToken(
+            token=token['oauth_token'],
+            secret=token['oauth_token_secret'],
+            client=request.client,
+            redirect_uri=request.redirect_uri,
+            _realms=realms,
+        )
+        db.session.add(grant)
+        db.session.commit()
+        return grant
+
+    @oauth.verifiergetter
+    def load_verifier(verifier, token):
+        return RequestToken.query.filter_by(verifier=verifier, token=token).first()
+
+    @oauth.verifiersetter
+    def save_verifier(token, verifier, *args, **kwargs):
+        tok = RequestToken.query.filter_by(token=token).first()
+        tok.verifier = verifier['oauth_verifier']
+        tok.user = get_current_user()
+        db.session.add(tok)
+        db.session.commit()
+        return tok
+
+
+In the sample code, there is a ``get_current_user`` method, that will return
+the current user object, you should implement it yourself.
+
+The ``token`` for ``grantsetter`` is a dict, that contains::
+
+    {
+        u'oauth_token': u'arandomstringoftoken',
+        u'oauth_token_secret': u'arandomstringofsecret',
+        u'oauth_authorized_realms': u'email address'
+    }
+
+And the ``verifier`` for ``verifiersetter`` is a dict too, it contains::
+
+    {
+        u'oauth_verifier': u'Gqm3id67MdkrASOCQIAlb3XODaPlun',
+        u'oauth_token': u'eTYP46AJbhp8u4LE5QMjXeItRGGoAI',
+        u'resource_owner_key': u'eTYP46AJbhp8u4LE5QMjXeItRGGoAI'
+    }
+
+Token getter and setter
+```````````````````````
+
+Token getter and setters are required. They are used in the authorization flow
+and accessing resource flow. Implemented with decorators::
+
+    @oauth.tokengetter
+    def load_access_token(client_key, token, *args, **kwargs):
+        t = AccessToken.query.filter_by(
+                client_key=client_key, token=token).first()
+        return t
+
+    @oauth.tokensetter
+    def save_access_token(token, request):
+        tok = AccessToken(
+            client=request.client,
+            user=request.user,
+            token=token['oauth_token'],
+            secret=token['oauth_token_secret'],
+            _realms=token['oauth_authorized_realms'],
+        )
+        db.session.add(tok)
+        db.session.commit()
+
+The setter receives ``token`` and ``request`` parameters. The ``token`` is a
+dict, which contains::
+
+    {
+        u'oauth_token_secret': u'H1xGH4X1ZkRAulHHdLfdFm7NR350tr',
+        u'oauth_token': u'aXNlKcjkVImnTfTKj8CgFpc1XRZr6P',
+        u'oauth_authorized_realms': u'email'
+    }
+
+The ``request`` is an object, it contains at least a `user` and `client`
+objects for current flow.
+
+
+Timestamp and Nonce getter and setter
+`````````````````````````````````````
+
+Request token handler
+`````````````````````
+
+Authorize handler
+`````````````````
+
+Access token handler
+````````````````````
+
 Protect Resource
 ----------------
+
+Protect the resource of a user with ``require_oauth`` decorator now::
+
+    @app.route('/api/me')
+    @oauth.require_oauth('email')
+    def me(request):
+        user = request.user
+        return jsonify(email=user.email, username=user.username)
+
+    @app.route('/api/user/<username>')
+    @oauth.require_oauth('email')
+    def user(request, username):
+        user = User.query.filter_by(username=username).first()
+        return jsonify(email=user.email, username=user.username)
+
+The decorator accepts a list of realms, only the clients with the given realms
+can access the defined resources.
+
+The handlers accepts an extended parameter ``request``, as we have explained
+above, it contains at least:
+
+- client: client model object
+- realms: a list of scopes
+- user: user model object
+- headers: headers of the request
+- body: body content of the request
+
+You may find the name confused, since Flask has a ``request`` model, you can
+rename it to other names, for exmaple::
+
+    @app.route('/api/me')
+    @oauth.require_oauth('email', 'username')
+    def me(data):
+        user = data.user
+        return jsonify(email=user.email, username=user.username)

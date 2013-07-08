@@ -28,6 +28,7 @@ Find the OAuth2 client example at `github.py`_.
 
 .. _`github.py`: https://github.com/lepture/flask-oauthlib/blob/master/example/github.py
 
+.. _lazy-configuration:
 
 Lazy Configuration
 ------------------
