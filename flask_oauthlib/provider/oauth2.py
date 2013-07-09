@@ -154,10 +154,10 @@ class OAuth2Provider(object):
 
             @oauth.before_request
             def limit_client_request():
-                client_key = request.values.get('client_key')
-                if not client_key:
+                client_id = request.values.get('client_id')
+                if not client_id:
                     return
-                client = Client.get(client_key)
+                client = Client.get(client_id)
                 if over_limit(client):
                     return abort(403)
 
