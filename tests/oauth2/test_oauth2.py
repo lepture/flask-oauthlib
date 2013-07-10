@@ -3,7 +3,13 @@
 import json
 import base64
 from flask import Flask
-from .server import create_server, db
+from .server import (
+    create_server,
+    db,
+    cache_provider,
+    sqlalchemy_provider,
+    default_provider,
+)
 from .client import create_client
 from .._base import BaseSuite, clean_url
 from .._base import to_bytes as b
@@ -15,6 +21,10 @@ class OAuthSuite(BaseSuite):
     def database(self):
         return db
 
+    def create_oauth_provider(app):
+        raise NotImplementedError('Each test class must'
+                                  'implement this method.')
+
     def create_app(self):
         app = Flask(__name__)
         app.debug = True
@@ -23,7 +33,8 @@ class OAuthSuite(BaseSuite):
         return app
 
     def setup_app(self, app):
-        create_server(app)
+        oauth = self.create_oauth_provider(app)
+        create_server(app, oauth)
         create_client(app)
         return app
 
@@ -37,10 +48,15 @@ authorize_url = (
 def _base64(text):
     return u(base64.b64encode(b(text)))
 
+
 auth_code = _base64('confidential:confidential')
 
 
 class TestWebAuth(OAuthSuite):
+
+    def create_oauth_provider(self, app):
+        return default_provider(app)
+
     def test_login(self):
         rv = self.client.get('/login')
         assert 'response_type=code' in rv.location
@@ -119,7 +135,23 @@ class TestWebAuth(OAuthSuite):
         assert 'error' in u(rv.data)
 
 
+class TestWebAuthCached(TestWebAuth):
+
+    def create_oauth_provider(self, app):
+        return cache_provider(app)
+
+
+class TestWebAuthSQLAlchemy(TestWebAuth):
+
+    def create_oauth_provider(self, app):
+        return sqlalchemy_provider(app)
+
+
 class TestPasswordAuth(OAuthSuite):
+
+    def create_oauth_provider(self, app):
+        return default_provider(app)
+
     def test_get_access_token(self):
         url = ('/oauth/token?grant_type=password&state=foo'
                '&scope=email+address&username=admin&password=admin')
@@ -130,7 +162,23 @@ class TestPasswordAuth(OAuthSuite):
         assert 'state' in u(rv.data)
 
 
+class TestPasswordAuthCached(TestPasswordAuth):
+
+    def create_oauth_provider(self, app):
+        return cache_provider(app)
+
+
+class TestPasswordAuthSQLAlchemy(TestPasswordAuth):
+
+    def create_oauth_provider(self, app):
+        return sqlalchemy_provider(app)
+
+
 class TestRefreshToken(OAuthSuite):
+
+    def create_oauth_provider(self, app):
+        return default_provider(app)
+
     def test_refresh_token_in_password_grant(self):
         url = ('/oauth/token?grant_type=password'
                '&scope=email+address&username=admin&password=admin')
@@ -151,7 +199,23 @@ class TestRefreshToken(OAuthSuite):
         assert 'access_token' in u(rv.data)
 
 
+class TestRefreshTokenCached(TestRefreshToken):
+
+    def create_oauth_provider(self, app):
+        return cache_provider(app)
+
+
+class TestRefreshTokenSQLAlchemy(TestRefreshToken):
+
+    def create_oauth_provider(self, app):
+        return sqlalchemy_provider(app)
+
+
 class TestCredentialAuth(OAuthSuite):
+
+    def create_oauth_provider(self, app):
+        return default_provider(app)
+
     def test_get_access_token(self):
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address&username=admin&password=admin')
@@ -185,3 +249,15 @@ class TestCredentialAuth(OAuthSuite):
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
         assert 'invalid_client' in u(rv.data)
+
+
+class TestCredentialAuthCached(TestCredentialAuth):
+
+    def create_oauth_provider(self, app):
+        return cache_provider(app)
+
+
+class TestCredentialAuthSQLAlchemy(TestCredentialAuth):
+
+    def create_oauth_provider(self, app):
+        return sqlalchemy_provider(app)

@@ -4,22 +4,22 @@ from flask import g, render_template, request, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_oauthlib.provider import OAuth2Provider
+from flask_oauthlib.contrib.bindings import (
+    SQLAlchemyBinding,
+    GrantCacheBinding
+)
 
 
 db = SQLAlchemy()
-
-
-def enable_log(name='flask_oauthlib'):
-    import logging
-    logger = logging.getLogger(name)
-    logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.DEBUG)
 
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.Unicode(40), unique=True, index=True,
                          nullable=False)
+
+    def check_password(self, password):
+        return True
 
 
 class Client(db.Model):
@@ -102,7 +102,7 @@ class Token(db.Model):
     scope = db.Column(db.UnicodeText)
 
     def __init__(self, **kwargs):
-        expires_in = kwargs.get('expires_in')
+        expires_in = kwargs.pop('expires_in')
         self.expires = datetime.utcnow() + timedelta(seconds=expires_in)
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -114,37 +114,36 @@ class Token(db.Model):
         return []
 
 
-def prepare_app(app):
-    db.init_app(app)
-    db.app = app
-    db.create_all()
-
-    client1 = Client(
-        name=u'dev', client_id=u'dev', client_secret=u'dev',
-        _redirect_uris=u'http://localhost:8000/authorized'
-    )
-
-    client2 = Client(
-        name=u'confidential', client_id=u'confidential',
-        client_secret=u'confidential', client_type=u'confidential',
-        _redirect_uris=u'http://localhost:8000/authorized'
-    )
-
-    user = User(username=u'admin')
-
-    try:
-        db.session.add(client1)
-        db.session.add(client2)
-        db.session.add(user)
-        db.session.commit()
-    except:
-        db.session.rollback()
-    return app
+def current_user():
+    return g.user
 
 
-def create_server(app):
-    app = prepare_app(app)
+def get_session():
+    return db.session
 
+
+def cache_provider(app):
+    oauth = OAuth2Provider(app)
+
+    SQLAlchemyBinding(oauth, get_session, user=User,
+                      token=Token, client=Client)
+
+    GrantCacheBinding(app, oauth, current_user,
+                      config={'OAUTH2_CACHE_TYPE': 'simple'})
+
+    return oauth
+
+
+def sqlalchemy_provider(app):
+    oauth = OAuth2Provider(app)
+
+    SQLAlchemyBinding(oauth, get_session, user=User, token=Token,
+                      client=Client, grant=Grant, current_user=current_user)
+
+    return oauth
+
+
+def default_provider(app):
     oauth = OAuth2Provider(app)
 
     @oauth.clientgetter
@@ -192,6 +191,40 @@ def create_server(app):
         # This is optional, if you don't need password credential
         # there is no need to implement this method
         return User.query.get(1)
+
+    return oauth
+
+
+def prepare_app(app):
+    db.init_app(app)
+    db.app = app
+    db.create_all()
+
+    client1 = Client(
+        name=u'dev', client_id=u'dev', client_secret=u'dev',
+        _redirect_uris=u'http://localhost:8000/authorized'
+    )
+
+    client2 = Client(
+        name=u'confidential', client_id=u'confidential',
+        client_secret=u'confidential', client_type=u'confidential',
+        _redirect_uris=u'http://localhost:8000/authorized'
+    )
+
+    user = User(username=u'admin')
+
+    try:
+        db.session.add(client1)
+        db.session.add(client2)
+        db.session.add(user)
+        db.session.commit()
+    except:
+        db.session.rollback()
+    return app
+
+
+def create_server(app, oauth):
+    app = prepare_app(app)
 
     @app.before_request
     def load_current_user():
