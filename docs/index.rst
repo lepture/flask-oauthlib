@@ -39,6 +39,7 @@ instructions for getting the most out of Flask-OAuthlib
    client
    oauth1
    oauth2
+   additional
 
 
 API Documentation
