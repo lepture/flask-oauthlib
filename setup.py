@@ -17,6 +17,12 @@ from email.utils import parseaddr
 info = imp.load_source('info', 'flask_oauthlib/info.py')
 author, author_email = parseaddr(info.AUTHOR)
 
+
+def fread(filename):
+    with open(filename) as f:
+        return f.read()
+
+
 setup(
     name=info.NAME,
     version=info.VERSION,
@@ -28,8 +34,8 @@ setup(
     zip_safe=False,
     include_package_data=True,
     platforms='any',
-    long_description=open('README.rst').read(),
-    license=open('LICENSE').read(),
+    long_description=fread('README.rst'),
+    license='BSD',
     install_requires=[
         'Flask',
         'oauthlib',
