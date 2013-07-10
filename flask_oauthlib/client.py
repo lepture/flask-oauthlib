@@ -11,7 +11,7 @@
 import oauthlib.oauth1
 import oauthlib.oauth2
 from functools import wraps
-from oauthlib.common import to_unicode
+from oauthlib.common import to_unicode, PY3
 from flask import request, redirect, json, session, current_app
 from werkzeug import url_quote, url_decode, url_encode
 from werkzeug import parse_options_header, cached_property
@@ -201,6 +201,8 @@ class OAuthException(RuntimeError):
         self.data = data
 
     def __str__(self):
+        if PY3:
+            return self.message
         return self.message.encode('utf-8')
 
     def __unicode__(self):

@@ -40,7 +40,7 @@ def create_client(app):
             return 'Access denied: error=%s' % (
                 request.args['error']
             )
-        if 'access_token' in resp:
+        if isinstance(resp, dict) and 'access_token' in resp:
             session['dev_token'] = (resp['access_token'], '')
             return jsonify(resp)
         return str(resp)
