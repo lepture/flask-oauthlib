@@ -683,6 +683,14 @@ class OAuth1RequestValidator(RequestValidator):
         tok = request.request_token or self._grantgetter(token=token)
         return tok.redirect_uri
 
+    def get_rsa_key(self, client_key, request):
+        """Retrieves a previously stored client provided RSA key."""
+        if not request.client:
+            request.client = self._clientgetter(client_key=client_key)
+        if hasattr(request.client, 'rsa_key'):
+            return request.client.rsa_key
+        return None
+
     def validate_client_key(self, client_key, request):
         """Validates that supplied client key."""
         log.debug('Validate client key for %r', client_key)
