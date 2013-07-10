@@ -8,7 +8,7 @@ Here you can see the full list of changes between each Flask-OAuthlib release.
 Version 0.3.0
 -------------
 
-Release date to be decided.
+Release on July 10, 2013.
 
 - OAuth1 Provider available. Documentation at :doc:`oauth1`. :)
 - Add ``before_request`` and ``after_request`` via `#22`_.

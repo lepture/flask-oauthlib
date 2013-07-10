@@ -37,8 +37,8 @@ setup(
     long_description=fread('README.rst'),
     license='BSD',
     install_requires=[
-        'Flask',
-        'oauthlib',
+        'Flask>=0.10',
+        'oauthlib>=0.5',
     ],
     tests_require=['nose', 'Flask-SQLAlchemy'],
     test_suite='nose.collector',
