@@ -16,6 +16,8 @@ else:
     python_version = 2
     string_type = unicode
 
+os.environ['DEBUG'] = 'true'
+
 
 class BaseSuite(unittest.TestCase):
     def setUp(self):

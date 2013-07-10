@@ -7,11 +7,11 @@ python:
     - "pypy"
 
 script:
-    - DEBUG=1 nosetests -s
+    - nosetests -s
 
 after_success:
     - pip install coveralls
-    - DEBUG=1 coverage run --source=flask_oauthlib setup.py -q nosetests
+    - coverage run --source=flask_oauthlib setup.py -q nosetests
     - coveralls
 
 branches:
