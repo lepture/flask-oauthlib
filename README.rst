@@ -22,6 +22,7 @@ Features
 - Friendly API (same with Flask-OAuth)
 - Direct integration with Flask
 - Basic support for remote method invocation of RESTful APIs
+- Support OAuth1 provider with HMAC and RSA signature
 - Support OAuth2 provider with Bearer token
 
 And request more features at `github issues`_.
