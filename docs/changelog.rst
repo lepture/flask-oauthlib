@@ -13,6 +13,7 @@ Release date to be decided.
 - OAuth1 Provider available. Documentation at :doc:`oauth1`. :)
 - Add ``before_request`` and ``after_request`` via `#22`_.
 - Lazy load configuration for client via `#23`_. Documentation at :ref:`lazy-configuration`.
+- Python 3 compatible now.
 
 .. _`#22`: https://github.com/lepture/flask-oauthlib/issues/22
 .. _`#23`: https://github.com/lepture/flask-oauthlib/issues/23
