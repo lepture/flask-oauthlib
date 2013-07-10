@@ -23,6 +23,15 @@ log = logging.getLogger('flask_oauthlib')
 
 
 class Grant(object):
+    """Grant object returned back to the provider
+
+    :param cache: cache instance
+    :param client_id:
+    :param code:
+    :param redirect_uri:
+    :param scopes: a space delimited list of scopes
+    :param user: user object returned from self.current_user
+    """
 
     def __init__(self, cache=None, client_id=None, code=None,
                  redirect_uri=None, scopes=None, user=None):
@@ -34,13 +43,16 @@ class Grant(object):
         self.user = user
 
     def delete(self):
-        log.debug("DELETE GRANT")
-        log.debug("CODE: {0}".format(self.code))
+        """Removes itself from the cache"""
+        log.debug("Deleting grant")
+        log.debug("Code: {0}".format(self.code))
+        log.debug("Client id: {0}".format(self.client_id))
         self._cache.delete(self.key)
         return None
 
     @property
     def key(self):
+        """String used as the key for the cache"""
         key = '{code}{client_id}'.format(
             code=self.code,
             client_id=self.client_id
@@ -51,10 +63,12 @@ class Grant(object):
         return getattr(self, item)
 
     def keys(self):
-        return ['client_id', 'code', 'redirect_uri', 'scopes', 'user']
+        return ['client_id', 'code', 'redirect_uri', 'scopes']
 
 
 class GrantCacheBinding(object):
+    """
+    """
 
     def __init__(self, app, provider, current_user, config=None):
 
@@ -77,13 +91,13 @@ class GrantCacheBinding(object):
 
         self.config = config
         kwargs = dict(default_timeout=config['OAUTH2_CACHE_DEFAULT_TIMEOUT'])
-        cache_type = '_{}'.format(config['OAUTH2_CACHE_TYPE'])
+        cache_type = '_{0}'.format(config['OAUTH2_CACHE_TYPE'])
 
         try:
             self.cache = getattr(self, cache_type)(kwargs)
         except AttributeError:
             raise AttributeError(
-                '`{}` is not a valid cache type!'.format(cache_type))
+                '`{0}` is not a valid cache type!'.format(cache_type))
 
         provider.grantgetter(self.get)
         provider.grantsetter(self.set)
@@ -132,7 +146,8 @@ class GrantCacheBinding(object):
 
     def get(self, client_id, code):
         log.debug("GET GRANT")
-        grant = Grant(self.cache, client_id=client_id, code=code)
+        grant = Grant(self.cache, client_id=client_id,
+                      code=code, user=self.current_user())
         kwargs = self.cache.get(grant.key)
         log.debug("KWARGS: {0}".format(kwargs))
         if kwargs:
