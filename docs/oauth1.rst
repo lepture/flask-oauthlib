@@ -151,6 +151,20 @@ these information:
 - access_token: Access token string, if any
 
 The timelife of a timestamp and nonce is 60 senconds, put it in a cache please.
+Here is an example in SQLAlchemy::
+
+    class Nonce(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+
+        timestamp = db.Column(db.Integer)
+        nonce = db.Column(db.Unicode(40))
+        client_key = db.Column(
+            db.Unicode(40), db.ForeignKey('client.client_key'),
+            nullable=False,
+        )
+        client = relationship('Client')
+        request_token = db.Column(db.Unicode(50))
+        access_token = db.Column(db.Unicode(50))
 
 
 Access Token
@@ -342,14 +356,85 @@ objects for current flow.
 Timestamp and Nonce getter and setter
 `````````````````````````````````````
 
+Timestamp and Nonce getter and setter is required. They are used everywhere::
+
+    @oauth.noncegetter
+    def load_nonce(client_key, timestamp, nonce, request_token, access_token):
+        return Nonce.query.filter_by(
+            client_key=client_key, timestamp=timestamp, nonce=nonce,
+            request_token=request_token, access_token=access_token,
+        ).first()
+
+    @oauth.noncesetter
+    def save_nonce(client_key, timestamp, nonce, request_token, access_token):
+        nonce = Nonce(
+            client_key=client_key,
+            timestamp=timestamp,
+            nonce=nonce,
+            request_token=request_token,
+            access_token=access_token,
+        )
+        db.session.add(nonce)
+        db.session.commit()
+        return nonce
+
 Request token handler
 `````````````````````
+
+Request token handler is a decorator for generating request token. You don't
+need to do much::
+
+    @app.route('/oauth/request_token')
+    @oauth.request_token_handler
+    def request_token():
+        return {}
+
+You can add more data on token response::
+
+    @app.route('/oauth/request_token')
+    @oauth.request_token_handler
+    def request_token():
+        return {'version': '0.1.0'}
 
 Authorize handler
 `````````````````
 
+Authorize handler is a decorator for authorize endpoint. It is suggested
+that you implemented it this way::
+
+    @app.route('/oauth/authorize', methods=['GET', 'POST'])
+    @require_login
+    @oauth.authorize_handler
+    def authorize(*args, **kwargs):
+        if request.method == 'GET':
+            client_key = kwargs.get('resource_owner_key')
+            client = Client.query.filter_by(client_key=client_key).first()
+            kwargs['client'] = client
+            return render_template('authorize.html', **kwargs)
+        confirm = request.form.get('confirm', 'no')
+        return confirm == 'yes'
+
+The GET request will render a page for user to confirm the grant, parameters
+in kwargs are:
+
+- resource_owner_key: same as client_key
+- realms: realms that this client requests
+
+The POST request needs to return a bool value that tells whether user grantted
+the access or not.
+
 Access token handler
 ````````````````````
+
+Access token handler is a decorator for exchange access token. Client will
+request an access token with a request token. You don't need to do much::
+
+    @app.route('/oauth/access_token')
+    @oauth.access_token_handler
+    def access_token():
+        return {}
+
+Just like request token handler, you can add more data in access token.
 
 Protect Resource
 ----------------
