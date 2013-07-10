@@ -17,7 +17,7 @@ from werkzeug import cached_property
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
 from oauthlib.common import to_unicode
-from .._utils import _extract_params, log
+from .._utils import _extract_params, log, decode_base64
 
 __all__ = ('OAuth2Provider', 'OAuth2RequestValidator')
 
@@ -451,8 +451,8 @@ class OAuth2RequestValidator(RequestValidator):
         log.debug('Authenticate client %r', auth)
         if auth:
             try:
-                _, base64 = auth.split(' ')
-                client_id, client_secret = base64.decode('base64').split(':')
+                _, s = auth.split(' ')
+                client_id, client_secret = decode_base64(s).split(':')
                 client_id = to_unicode(client_id, 'utf-8')
                 client_secret = to_unicode(client_secret, 'utf-8')
             except Exception as e:

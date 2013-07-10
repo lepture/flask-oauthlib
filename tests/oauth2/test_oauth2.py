@@ -32,7 +32,12 @@ authorize_url = (
     '/oauth/authorize?response_type=code&client_id=dev'
     '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized&scope=email'
 )
-auth_code = base64.b64encode(b('confidential:confidential'))
+
+
+def _base64(text):
+    return u(base64.b64encode(b(text)))
+
+auth_code = _base64('confidential:confidential')
 
 
 class TestWebAuth(OAuthSuite):
@@ -164,7 +169,7 @@ class TestCredentialAuth(OAuthSuite):
         assert 'invalid_client' in u(rv.data)
 
     def test_no_client(self):
-        auth_code = base64.b64encode(b('none:confidential'))
+        auth_code = _base64('none:confidential')
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
@@ -173,7 +178,7 @@ class TestCredentialAuth(OAuthSuite):
         assert 'invalid_client' in u(rv.data)
 
     def test_wrong_secret_client(self):
-        auth_code = base64.b64encode(b('confidential:wrong'))
+        auth_code = _base64('confidential:wrong')
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
