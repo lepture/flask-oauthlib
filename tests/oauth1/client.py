@@ -27,7 +27,9 @@ def create_client(app, oauth=None):
     def index():
         if 'dev_oauth' in session:
             ret = oauth.get('email')
-            return jsonify(ret.data)
+            if isinstance(ret.data, dict):
+                return jsonify(ret.data)
+            return str(ret.data)
         return redirect(url_for('login'))
 
     @app.route('/login')
@@ -36,7 +38,7 @@ def create_client(app, oauth=None):
 
     @app.route('/logout')
     def logout():
-        session.pop('dev_token', None)
+        session.pop('dev_oauth', None)
         return redirect(url_for('index'))
 
     @app.route('/authorized')

@@ -606,12 +606,12 @@ class OAuth1RequestValidator(RequestValidator):
         return to_unicode('dummy_client', 'utf-8')
 
     @property
-    def dummy_resource_owner(self):
-        return to_unicode('dummy_resource_owner', 'utf-8')
-
-    @property
     def dummy_request_token(self):
         return to_unicode('dummy_request_token', 'utf-8')
+
+    @property
+    def dummy_access_token(self):
+        return to_unicode('dummy_access_token', 'utf-8')
 
     def get_client_secret(self, client_key, request):
         """Get client secret.
@@ -777,6 +777,8 @@ class OAuth1RequestValidator(RequestValidator):
         else:
             tok = self._tokengetter(client_key=client_key, token=token)
             request.access_token = tok
+        if not tok:
+            return False
         return set(tok.realms).issuperset(set(realms))
 
     def validate_verifier(self, client_key, token, verifier, request):
