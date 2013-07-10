@@ -4,6 +4,10 @@ import os
 import sys
 import tempfile
 import unittest
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 if sys.version_info[0] == 3:
     python_version = 3
@@ -60,3 +64,9 @@ def to_bytes(text):
     if isinstance(text, string_type):
         text = text.encode('utf-8')
     return text
+
+
+def clean_url(location):
+    location = to_unicode(location)
+    ret = urlparse(location)
+    return '%s?%s' % (ret.path, ret.query)

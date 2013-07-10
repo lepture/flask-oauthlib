@@ -6,11 +6,8 @@ from flask import Flask
 from flask_oauthlib.client import OAuth, OAuthException
 from .server import create_server, db
 from .client import create_client
-from .._base import BaseSuite
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
+from .._base import BaseSuite, clean_url
+from .._base import to_unicode as u
 
 
 class OAuthSuite(BaseSuite):
@@ -45,7 +42,7 @@ class TestWebAuth(OAuthSuite):
 
         auth_url = clean_url(rv.location)
         rv = self.client.get(auth_url)
-        assert '</form>' in rv.data
+        assert '</form>' in u(rv.data)
 
         rv = self.client.post(auth_url, data={
             'confirm': 'yes'
@@ -54,22 +51,22 @@ class TestWebAuth(OAuthSuite):
 
         token_url = clean_url(rv.location)
         rv = self.client.get(token_url)
-        assert 'oauth_token_secret' in rv.data
+        assert 'oauth_token_secret' in u(rv.data)
 
         rv = self.client.get('/')
-        assert 'email' in rv.data
+        assert 'email' in u(rv.data)
 
         rv = self.client.get('/address')
         assert rv.status_code == 403
 
         rv = self.client.get('/method/post')
-        assert 'POST' in rv.data
+        assert 'POST' in u(rv.data)
 
         rv = self.client.get('/method/put')
-        assert 'PUT' in rv.data
+        assert 'PUT' in u(rv.data)
 
         rv = self.client.get('/method/delete')
-        assert 'DELETE' in rv.data
+        assert 'DELETE' in u(rv.data)
 
     def test_no_confirm(self):
         rv = self.client.get('/login')
@@ -117,15 +114,15 @@ auth_dict = {
 class TestInvalid(OAuthSuite):
     @raises(OAuthException)
     def test_request(self):
-        rv = self.client.get('/login')
+        self.client.get('/login')
 
     def test_request_token(self):
         rv = self.client.get('/oauth/request_token')
-        assert 'error' in rv.data
+        assert 'error' in u(rv.data)
 
     def test_access_token(self):
         rv = self.client.get('/oauth/access_token')
-        assert 'error' in rv.data
+        assert 'error' in u(rv.data)
 
     def test_invalid_realms(self):
         auth_format = auth_dict.copy()
@@ -135,8 +132,8 @@ class TestInvalid(OAuthSuite):
             u'Authorization': auth_header % auth_format
         }
         rv = self.client.get('/oauth/request_token', headers=headers)
-        assert 'error' in rv.data
-        assert 'realm' in rv.data
+        assert 'error' in u(rv.data)
+        assert 'realm' in u(rv.data)
 
     def test_no_realms(self):
         auth_format = auth_dict.copy()
@@ -146,7 +143,7 @@ class TestInvalid(OAuthSuite):
             u'Authorization': auth_header % auth_format
         }
         rv = self.client.get('/oauth/request_token', headers=headers)
-        assert 'secret' in rv.data
+        assert 'secret' in u(rv.data)
 
     def test_no_callback(self):
         auth_format = auth_dict.copy()
@@ -156,8 +153,8 @@ class TestInvalid(OAuthSuite):
             u'Authorization': auth_header % auth_format
         }
         rv = self.client.get('/oauth/request_token', headers=headers)
-        assert 'error' in rv.data
-        assert 'callback' in rv.data
+        assert 'error' in u(rv.data)
+        assert 'callback' in u(rv.data)
 
     def test_invalid_signature_method(self):
         auth_format = auth_dict.copy()
@@ -167,8 +164,8 @@ class TestInvalid(OAuthSuite):
             u'Authorization': auth_header % auth_format
         }
         rv = self.client.get('/oauth/request_token', headers=headers)
-        assert 'error' in rv.data
-        assert 'signature' in rv.data
+        assert 'error' in u(rv.data)
+        assert 'signature' in u(rv.data)
 
     def create_client(self, app):
         oauth = OAuth(app)
@@ -186,8 +183,3 @@ class TestInvalid(OAuthSuite):
         )
         create_client(app, remote)
         return app
-
-
-def clean_url(location):
-    ret = urlparse(location)
-    return '%s?%s' % (ret.path, ret.query)

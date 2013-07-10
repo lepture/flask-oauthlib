@@ -52,3 +52,5 @@ We keep a documentation at `flask-oauthlib@readthedocs`_.
 
 If you are only interested in client part, you can find some examples
 in the ``example`` directory.
+
+There is also a `development version <https://github.com/lepture/flask-oauthlib/archive/master.zip#egg=Flask-OAuthlib-dev>`_ on GitHub.

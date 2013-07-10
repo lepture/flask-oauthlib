@@ -1,14 +1,13 @@
 # coding: utf-8
 
 import json
+import base64
 from flask import Flask
 from .server import create_server, db
 from .client import create_client
-from .._base import BaseSuite
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
+from .._base import BaseSuite, clean_url
+from .._base import to_bytes as b
+from .._base import to_unicode as u
 
 
 class OAuthSuite(BaseSuite):
@@ -33,6 +32,7 @@ authorize_url = (
     '/oauth/authorize?response_type=code&client_id=dev'
     '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized&scope=email'
 )
+auth_code = base64.b64encode(b('confidential:confidential'))
 
 
 class TestWebAuth(OAuthSuite):
@@ -47,7 +47,7 @@ class TestWebAuth(OAuthSuite):
     def test_oauth_authorize_valid_url(self):
         rv = self.client.get(authorize_url)
         # valid
-        assert '</form>' in rv.data
+        assert '</form>' in u(rv.data)
 
         rv = self.client.post(authorize_url, data=dict(
             confirm='no'
@@ -71,27 +71,27 @@ class TestWebAuth(OAuthSuite):
     def test_get_access_token(self):
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         rv = self.client.get(clean_url(rv.location))
-        assert 'access_token' in rv.data
+        assert 'access_token' in u(rv.data)
 
     def test_full_flow(self):
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         rv = self.client.get(clean_url(rv.location))
-        assert 'access_token' in rv.data
+        assert 'access_token' in u(rv.data)
 
         rv = self.client.get('/')
-        assert 'username' in rv.data
+        assert 'username' in u(rv.data)
 
         rv = self.client.get('/address')
         assert rv.status_code == 403
 
         rv = self.client.get('/method/post')
-        assert 'POST' in rv.data
+        assert 'POST' in u(rv.data)
 
         rv = self.client.get('/method/put')
-        assert 'PUT' in rv.data
+        assert 'PUT' in u(rv.data)
 
         rv = self.client.get('/method/delete')
-        assert 'DELETE' in rv.data
+        assert 'DELETE' in u(rv.data)
 
     def test_invalid_client_id(self):
         authorize_url = (
@@ -101,7 +101,7 @@ class TestWebAuth(OAuthSuite):
         )
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         rv = self.client.get(clean_url(rv.location))
-        assert 'Invalid' in rv.data
+        assert 'Invalid' in u(rv.data)
 
     def test_invalid_response_type(self):
         authorize_url = (
@@ -111,53 +111,49 @@ class TestWebAuth(OAuthSuite):
         )
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         rv = self.client.get(clean_url(rv.location))
-        assert 'error' in rv.data
+        assert 'error' in u(rv.data)
 
 
 class TestPasswordAuth(OAuthSuite):
     def test_get_access_token(self):
-        auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/token?grant_type=password&state=foo'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
-        assert 'access_token' in rv.data
-        assert 'state' in rv.data
+        assert 'access_token' in u(rv.data)
+        assert 'state' in u(rv.data)
 
 
 class TestRefreshToken(OAuthSuite):
     def test_refresh_token_in_password_grant(self):
-        auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/token?grant_type=password'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         })
-        assert 'access_token' in rv.data
-        data = json.loads(rv.data)
+        assert 'access_token' in u(rv.data)
+        data = json.loads(u(rv.data))
 
         args = (data.get('scope').replace(' ', '+'),
                 data.get('refresh_token'))
-        auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/token?grant_type=refresh_token'
                '&scope=%s&refresh_token=%s&username=admin')
         url = url % args
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         })
-        assert 'access_token' in rv.data
+        assert 'access_token' in u(rv.data)
 
 
 class TestCredentialAuth(OAuthSuite):
     def test_get_access_token(self):
-        auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
-        assert 'access_token' in rv.data
+        assert 'access_token' in u(rv.data)
 
     def test_invalid_auth_header(self):
         url = ('/oauth/token?grant_type=client_credentials'
@@ -165,27 +161,22 @@ class TestCredentialAuth(OAuthSuite):
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic foobar'
         }, data={'confirm': 'yes'})
-        assert 'invalid_client' in rv.data
+        assert 'invalid_client' in u(rv.data)
 
     def test_no_client(self):
-        auth_code = 'none:confidential'.encode('base64').strip()
+        auth_code = base64.b64encode(b('none:confidential'))
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
-        assert 'invalid_client' in rv.data
+        assert 'invalid_client' in u(rv.data)
 
     def test_wrong_secret_client(self):
-        auth_code = 'confidential:wrong'.encode('base64').strip()
+        auth_code = base64.b64encode(b('confidential:wrong'))
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
-        assert 'invalid_client' in rv.data
-
-
-def clean_url(location):
-    ret = urlparse(location)
-    return '%s?%s' % (ret.path, ret.query)
+        assert 'invalid_client' in u(rv.data)
