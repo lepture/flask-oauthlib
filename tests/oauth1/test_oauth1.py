@@ -1,56 +1,44 @@
 # coding: utf-8
 
-import os
 import time
-import tempfile
-import unittest
 from nose.tools import raises
 from flask import Flask
 from flask_oauthlib.client import OAuth, OAuthException
-from .oauth1_server import create_server, db
-from .oauth1_client import create_client
+from .server import create_server, db
+from .client import create_client
+from .._base import BaseSuite
 try:
     from urlparse import urlparse
 except ImportError:
     from urllib.parse import urlparse
 
 
-class BaseSuite(unittest.TestCase):
-    def setUp(self):
+class OAuthSuite(BaseSuite):
+    @property
+    def database(self):
+        return db
+
+    def create_app(self):
         app = Flask(__name__)
         app.debug = True
         app.testing = True
         app.secret_key = 'development'
-
-        self.db_fd, self.db_file = tempfile.mkstemp()
-        config = {
-            'OAUTH1_PROVIDER_ENFORCE_SSL': False,
-            'OAUTH1_PROVIDER_KEY_LENGTH': (3, 30),
-            'OAUTH1_PROVIDER_REALMS': ['email', 'address'],
-            'SQLALCHEMY_DATABASE_URI': 'sqlite:///%s' % self.db_file
-        }
-        app.config.update(config)
-
-        app = create_server(app)
-        app = self.create_client(app)
-
-        self.app = app
-        self.client = app.test_client()
         return app
 
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
+    def setup_app(self, app):
+        self.create_server(app)
+        self.create_client(app)
 
-        os.close(self.db_fd)
-        os.unlink(self.db_file)
+    def create_server(self, app):
+        create_server(app)
+        return app
 
     def create_client(self, app):
         create_client(app)
         return app
 
 
-class TestWebAuth(BaseSuite):
+class TestWebAuth(OAuthSuite):
     def test_full_flow(self):
         rv = self.client.get('/login')
         assert 'oauth_token' in rv.location
@@ -126,7 +114,7 @@ auth_dict = {
 }
 
 
-class TestInvalid(BaseSuite):
+class TestInvalid(OAuthSuite):
     @raises(OAuthException)
     def test_request(self):
         rv = self.client.get('/login')

@@ -2,7 +2,7 @@ from flask import Flask
 from nose.tools import raises
 from flask_oauthlib.client import encode_request_data, add_query
 from flask_oauthlib.client import OAuthRemoteApp, OAuth
-from .oauth2_client import create_client
+from .oauth2.client import create_client
 
 
 def test_encode_request_data():

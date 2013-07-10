@@ -1,44 +1,32 @@
 # coding: utf-8
 
-import os
-import tempfile
-import unittest
 import json
 from flask import Flask
-from .oauth2_server import create_server, db, enable_log
-from .oauth2_client import create_client
+from .server import create_server, db
+from .client import create_client
+from .._base import BaseSuite
 try:
     from urlparse import urlparse
 except ImportError:
     from urllib.parse import urlparse
 
 
-class BaseSuite(unittest.TestCase):
-    def setUp(self):
+class OAuthSuite(BaseSuite):
+    @property
+    def database(self):
+        return db
+
+    def create_app(self):
         app = Flask(__name__)
         app.debug = True
         app.testing = True
         app.secret_key = 'development'
-
-        self.db_fd, self.db_file = tempfile.mkstemp()
-        config = {
-            'SQLALCHEMY_DATABASE_URI': 'sqlite:///%s' % self.db_file
-        }
-        app.config.update(config)
-
-        app = create_server(app)
-        app = create_client(app)
-
-        self.app = app
-        self.client = app.test_client()
         return app
 
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-
-        os.close(self.db_fd)
-        os.unlink(self.db_file)
+    def setup_app(self, app):
+        create_server(app)
+        create_client(app)
+        return app
 
 
 authorize_url = (
@@ -46,7 +34,8 @@ authorize_url = (
     '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized&scope=email'
 )
 
-class TestWebAuth(BaseSuite):
+
+class TestWebAuth(OAuthSuite):
     def test_login(self):
         rv = self.client.get('/login')
         assert 'response_type=code' in rv.location
@@ -125,7 +114,7 @@ class TestWebAuth(BaseSuite):
         assert 'error' in rv.data
 
 
-class TestPasswordAuth(BaseSuite):
+class TestPasswordAuth(OAuthSuite):
     def test_get_access_token(self):
         auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/token?grant_type=password&state=foo'
@@ -137,7 +126,7 @@ class TestPasswordAuth(BaseSuite):
         assert 'state' in rv.data
 
 
-class TestRefreshToken(BaseSuite):
+class TestRefreshToken(OAuthSuite):
     def test_refresh_token_in_password_grant(self):
         auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/token?grant_type=password'
@@ -160,7 +149,7 @@ class TestRefreshToken(BaseSuite):
         assert 'access_token' in rv.data
 
 
-class TestCredentialAuth(BaseSuite):
+class TestCredentialAuth(OAuthSuite):
     def test_get_access_token(self):
         auth_code = 'confidential:confidential'.encode('base64').strip()
         url = ('/oauth/token?grant_type=client_credentials'
