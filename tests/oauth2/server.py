@@ -18,20 +18,20 @@ def enable_log(name='flask_oauthlib'):
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.Unicode(40), unique=True, index=True,
+    username = db.Column(db.String(40), unique=True, index=True,
                          nullable=False)
 
 
 class Client(db.Model):
     #id = db.Column(db.Integer, primary_key=True)
     # human readable name
-    name = db.Column(db.Unicode(40))
-    client_id = db.Column(db.Unicode(40), primary_key=True)
-    client_secret = db.Column(db.Unicode(55), unique=True, index=True,
+    name = db.Column(db.String(40))
+    client_id = db.Column(db.String(40), primary_key=True)
+    client_secret = db.Column(db.String(55), unique=True, index=True,
                               nullable=False)
-    client_type = db.Column(db.Unicode(20), default=u'public')
-    _redirect_uris = db.Column(db.UnicodeText)
-    default_scope = db.Column(db.UnicodeText)
+    client_type = db.Column(db.String(20), default='public')
+    _redirect_uris = db.Column(db.Text)
+    default_scope = db.Column(db.Text)
 
     @property
     def user(self):
@@ -62,14 +62,14 @@ class Grant(db.Model):
     user = relationship('User')
 
     client_id = db.Column(
-        db.Unicode(40), db.ForeignKey('client.client_id', ondelete='CASCADE'),
+        db.String(40), db.ForeignKey('client.client_id', ondelete='CASCADE'),
         nullable=False,
     )
     client = relationship('Client')
-    code = db.Column(db.Unicode(255), index=True, nullable=False)
+    code = db.Column(db.String(255), index=True, nullable=False)
 
-    redirect_uri = db.Column(db.Unicode(255))
-    scope = db.Column(db.UnicodeText)
+    redirect_uri = db.Column(db.String(255))
+    scope = db.Column(db.Text)
     expires = db.Column(db.DateTime)
 
     def delete(self):
@@ -87,7 +87,7 @@ class Grant(db.Model):
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     client_id = db.Column(
-        db.Unicode(40), db.ForeignKey('client.client_id', ondelete='CASCADE'),
+        db.String(40), db.ForeignKey('client.client_id', ondelete='CASCADE'),
         nullable=False,
     )
     user_id = db.Column(
@@ -95,11 +95,11 @@ class Token(db.Model):
     )
     user = relationship('User')
     client = relationship('Client')
-    token_type = db.Column(db.Unicode(40))
-    access_token = db.Column(db.Unicode(255))
-    refresh_token = db.Column(db.Unicode(255))
+    token_type = db.Column(db.String(40))
+    access_token = db.Column(db.String(255))
+    refresh_token = db.Column(db.String(255))
     expires = db.Column(db.DateTime)
-    scope = db.Column(db.UnicodeText)
+    scope = db.Column(db.Text)
 
     def __init__(self, **kwargs):
         expires_in = kwargs.get('expires_in')
@@ -120,17 +120,23 @@ def prepare_app(app):
     db.create_all()
 
     client1 = Client(
-        name=u'dev', client_id=u'dev', client_secret=u'dev',
-        _redirect_uris=u'http://localhost:8000/authorized'
+        name='dev', client_id='dev', client_secret='dev',
+        _redirect_uris=(
+            'http://localhost:8000/authorized '
+            'http://localhost/authorized'
+        ),
     )
 
     client2 = Client(
-        name=u'confidential', client_id=u'confidential',
-        client_secret=u'confidential', client_type=u'confidential',
-        _redirect_uris=u'http://localhost:8000/authorized'
+        name='confidential', client_id='confidential',
+        client_secret='confidential', client_type='confidential',
+        _redirect_uris=(
+            'http://localhost:8000/authorized '
+            'http://localhost/authorized'
+        ),
     )
 
-    user = User(username=u'admin')
+    user = User(username='admin')
 
     try:
         db.session.add(client1)

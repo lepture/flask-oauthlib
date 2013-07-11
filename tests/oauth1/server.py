@@ -20,19 +20,19 @@ def enable_log(name='flask_oauthlib'):
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.Unicode(40), unique=True, index=True,
+    username = db.Column(db.String(40), unique=True, index=True,
                          nullable=False)
 
 
 class Client(db.Model):
     #id = db.Column(db.Integer, primary_key=True)
     # human readable name
-    client_key = db.Column(db.Unicode(40), primary_key=True)
-    client_secret = db.Column(db.Unicode(55), unique=True, index=True,
+    client_key = db.Column(db.String(40), primary_key=True)
+    client_secret = db.Column(db.String(55), unique=True, index=True,
                               nullable=False)
-    rsa_key = db.Column(db.Unicode(55))
-    _realms = db.Column(db.UnicodeText)
-    _redirect_uris = db.Column(db.UnicodeText)
+    rsa_key = db.Column(db.String(55))
+    _realms = db.Column(db.Text)
+    _redirect_uris = db.Column(db.Text)
 
     @property
     def user(self):
@@ -63,19 +63,19 @@ class Grant(db.Model):
     user = relationship('User')
 
     client_key = db.Column(
-        db.Unicode(40), db.ForeignKey('client.client_key'),
+        db.String(40), db.ForeignKey('client.client_key'),
         nullable=False,
     )
     client = relationship('Client')
 
-    token = db.Column(db.Unicode(255), index=True, unique=True)
-    secret = db.Column(db.Unicode(255), nullable=False)
+    token = db.Column(db.String(255), index=True, unique=True)
+    secret = db.Column(db.String(255), nullable=False)
 
-    verifier = db.Column(db.Unicode(255))
+    verifier = db.Column(db.String(255))
 
     expires = db.Column(db.DateTime)
-    redirect_uri = db.Column(db.UnicodeText)
-    _realms = db.Column(db.UnicodeText)
+    redirect_uri = db.Column(db.Text)
+    _realms = db.Column(db.Text)
 
     def delete(self):
         db.session.delete(self)
@@ -92,7 +92,7 @@ class Grant(db.Model):
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     client_key = db.Column(
-        db.Unicode(40), db.ForeignKey('client.client_key'),
+        db.String(40), db.ForeignKey('client.client_key'),
         nullable=False,
     )
     client = relationship('Client')
@@ -102,10 +102,10 @@ class Token(db.Model):
     )
     user = relationship('User')
 
-    token = db.Column(db.Unicode(255))
-    secret = db.Column(db.Unicode(255))
+    token = db.Column(db.String(255))
+    secret = db.Column(db.String(255))
 
-    _realms = db.Column(db.UnicodeText)
+    _realms = db.Column(db.Text)
 
     @property
     def realms(self):
@@ -120,15 +120,15 @@ def prepare_app(app):
     db.create_all()
 
     client1 = Client(
-        client_key=u'dev', client_secret=u'dev',
+        client_key='dev', client_secret='dev',
         _redirect_uris=(
-            u'http://localhost:8000/authorized '
-            u'http://localhost/authorized'
+            'http://localhost:8000/authorized '
+            'http://localhost/authorized'
         ),
-        _realms=u'email',
+        _realms='email',
     )
 
-    user = User(username=u'admin')
+    user = User(username='admin')
 
     try:
         db.session.add(client1)
