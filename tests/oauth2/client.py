@@ -66,6 +66,8 @@ def create_client(app):
 
 
 if __name__ == '__main__':
+    import os
+    os.environ['DEBUG'] = 'true'
     # DEBUG=1 python oauth2_client.py
     app = Flask(__name__)
     app.debug = True
