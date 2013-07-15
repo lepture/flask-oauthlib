@@ -45,15 +45,6 @@ client, token and grant with SQLAlchemy, with some sane defaults. To use this
 class you'll need to create a SQLAlchemy model for each object. You can find
 examples of how to setup your SQLAlchemy models here: ref:`oauth2`.
 
-Once you've setup your models you'll need to create a function that returns
-a SQLAlchemy session. Here is an example::
-
-    def get_session():
-        return db.session
-
-This makes sure that the setter and getter functions are using the correct
-session on each call.
-
 You'll also need to provide another function which returns the currently
 logged-in user.
 
@@ -61,7 +52,7 @@ An example of how to use :class:`SQLAlchemyBinding`::
 
     oauth = OAuth2Provider(app)
 
-    SQLAlchemyBinding(oauth, get_session, user=User, client=Client,
+    SQLAlchemyBinding(oauth, db.session, user=User, client=Client,
                       token=Token, grant=Grant, current_user=current_user)
 
 Any of the classes can be omitted if you wish to register the getters and
@@ -69,7 +60,7 @@ setters yourself::
 
     oauth = OAuth2Provider(app)
 
-    SQLAlchemyBinding(oauth, get_session, user=User, client=Client,
+    SQLAlchemyBinding(oauth, db.session, user=User, client=Client,
                       token=Token)
 
     @oauth.grantgetter
