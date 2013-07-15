@@ -264,7 +264,7 @@ class SQLAlchemyBinding(object):
 
         oauth = OAuth2Provider(app)
 
-        SQLAlchemyBinding(oauth, get_session, user=User, client=Client,
+        SQLAlchemyBinding(oauth, session, user=User, client=Client,
                           token=Token, grant=Grant, current_user=current_user)
 
     You can omit any model if you wish to register the functions yourself.
@@ -273,7 +273,7 @@ class SQLAlchemyBinding(object):
 
         oauth = OAuth2Provider(app)
 
-        SQLAlchemyBinding(oauth, get_session, user=User, client=Client,
+        SQLAlchemyBinding(oauth, session, user=User, client=Client,
                           token=Token)
 
         @oauth.grantgetter
@@ -297,7 +297,7 @@ class SQLAlchemyBinding(object):
     GrantCacheBinding instead, omit current_user.
 
     :param provider: :class:`OAuth2Provider` instance
-    :param get_session: a function that returns a :class:`Session` object
+    :param session: A :class:`Session` object
     :param user: :class:`User` model
     :param client: :class:`Client` model
     :param token: :class:`Token` model
@@ -306,19 +306,19 @@ class SQLAlchemyBinding(object):
 
     """
 
-    def __init__(self, provider, get_session, user=None, client=None,
+    def __init__(self, provider, session, user=None, client=None,
                  token=None, grant=None, current_user=None):
 
         if user:
-            user_binding = UserBinding(user, get_session)
+            user_binding = UserBinding(user, session)
             provider.usergetter(user_binding.get)
 
         if client:
-            client_binding = ClientBinding(client, get_session)
+            client_binding = ClientBinding(client, session)
             provider.clientgetter(client_binding.get)
 
         if token:
-            token_binding = TokenBinding(token, get_session)
+            token_binding = TokenBinding(token, session)
             provider.tokengetter(token_binding.get)
             provider.tokensetter(token_binding.set)
 
@@ -326,7 +326,7 @@ class SQLAlchemyBinding(object):
             if not current_user:
                 raise ValueError(('`current_user` is required'
                                   'for Grant Binding'))
-            grant_binding = GrantBinding(grant, get_session, current_user)
+            grant_binding = GrantBinding(grant, session, current_user)
             provider.grantgetter(grant_binding.get)
             provider.grantsetter(grant_binding.set)
 
@@ -335,11 +335,11 @@ class BaseBinding(object):
     """Base Binding
 
     :param model: SQLAlchemy Model class
-    :param get_session: a functiont that returns a :class:`Session` object
+    :param session: A :class:`Session` object
     """
 
-    def __init__(self, model, get_session):
-        self.get_session = get_session
+    def __init__(self, model, session):
+        self.session = session
         self.model = model
 
     @property
@@ -348,7 +348,7 @@ class BaseBinding(object):
         if hasattr(self.model, 'query'):
             return self.model.query
         else:
-            return self.get_session().query(self.model)
+            return self.session.query(self.model)
 
 
 class UserBinding(BaseBinding):
@@ -403,13 +403,12 @@ class TokenBinding(BaseBinding):
         :param token: token object
         :param request: OAuthlib request object
         """
-        session = self.get_session()
         tokens = self.query.filter_by(client_id=request.client.client_id,
                                       user_id=request.user.id).all()
         if tokens:
             for tk in tokens:
-                session.delete(tk)
-            session.commit()
+                self.session.delete(tk)
+            self.session.commit()
 
         expires_in = token.get('expires_in')
         expires = datetime.utcnow() + timedelta(seconds=expires_in)
@@ -419,8 +418,8 @@ class TokenBinding(BaseBinding):
         tok.client_id = request.client.client_id
         tok.user_id = request.user.id
 
-        session.add(tok)
-        session.commit()
+        self.session.add(tok)
+        self.session.commit()
         return tok
 
 
@@ -440,7 +439,6 @@ class GrantBinding(BaseBinding):
         :param code:
         :param request: OAuthlib request object
         """
-        session = self.get_session()
         expires = datetime.utcnow() + timedelta(seconds=100)
         grant = self.model(
             client_id=request.client.client_id,
@@ -450,9 +448,9 @@ class GrantBinding(BaseBinding):
             user=self.current_user(),
             expires=expires
         )
-        session.add(grant)
+        self.session.add(grant)
 
-        session.commit()
+        self.session.commit()
 
     def get(self, client_id, code):
         """Get the Grant object with the given client ID and code

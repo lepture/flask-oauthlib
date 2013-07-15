@@ -118,14 +118,10 @@ def current_user():
     return g.user
 
 
-def get_session():
-    return db.session
-
-
 def cache_provider(app):
     oauth = OAuth2Provider(app)
 
-    SQLAlchemyBinding(oauth, get_session, user=User,
+    SQLAlchemyBinding(oauth, db.session, user=User,
                       token=Token, client=Client)
 
     GrantCacheBinding(app, oauth, current_user,
@@ -137,7 +133,7 @@ def cache_provider(app):
 def sqlalchemy_provider(app):
     oauth = OAuth2Provider(app)
 
-    SQLAlchemyBinding(oauth, get_session, user=User, token=Token,
+    SQLAlchemyBinding(oauth, db.session, user=User, token=Token,
                       client=Client, grant=Grant, current_user=current_user)
 
     return oauth
