@@ -44,3 +44,17 @@ OAuth2 Provider
 
 .. autoclass:: OAuth2RequestValidator
    :members:
+
+
+Contrib Reference
+-----------------
+
+Here are APIs provided by contributors.
+
+.. module:: flask_oauthlib.contrib.bindings
+
+.. autoclass:: SQLAlchemyBinding
+   :members:
+
+.. autoclass:: GrantCacheBinding
+   :members:
