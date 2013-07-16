@@ -116,8 +116,7 @@ def parse_response(resp, content, strict=False, content_type=None):
         return json.loads(content)
 
     if ct in ('application/xml', 'text/xml'):
-        charset = options.get('charset', 'utf-8')
-        return get_etree().fromstring(to_unicode(content, charset))
+        return get_etree().fromstring(content)
 
     if ct != 'application/x-www-form-urlencoded' and strict:
         return content
