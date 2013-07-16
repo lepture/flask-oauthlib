@@ -35,8 +35,10 @@ to guarantee functionality and keep all code written in a good style.
 
 You should follow the code style. Here are some tips to make things simple:
 
-* When you cloned this repo, run ``make``, it will prepare everything for you
+* When you cloned this repo, run ``pip install -r requirements.txt``
 * Check the code style with ``make link``
+* Check the test with ``make test``
+* Check the test coverage with ``make coverage``
 
 
 Git Help
