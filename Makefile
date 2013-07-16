@@ -1,7 +1,7 @@
 .PHONY: lint test coverage clean clean-pyc clean-build docs
 
 lint:
-	@flake8 flask-oauthlib tests
+	@flake8 flask_oauthlib tests
 
 test:
 	@nosetests -s --nologcapture
