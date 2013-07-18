@@ -168,7 +168,7 @@ class TestPasswordAuth(OAuthSuite):
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
 
-        assert 'Invalid credentials given' in rv.data
+        assert 'Invalid credentials given' in u(rv.data)
 
 
 class TestPasswordAuthCached(TestPasswordAuth):
