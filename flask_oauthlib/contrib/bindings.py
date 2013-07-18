@@ -363,7 +363,7 @@ class UserBinding(BaseBinding):
         :param password: password of the user
         """
         user = self.query.filter_by(username=username).first()
-        if user.check_password(password):
+        if user and user.check_password(password):
             return user
         return None
 

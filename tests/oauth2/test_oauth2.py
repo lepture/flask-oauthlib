@@ -161,6 +161,15 @@ class TestPasswordAuth(OAuthSuite):
         assert 'access_token' in u(rv.data)
         assert 'state' in u(rv.data)
 
+    def test_invalid_user_credentials(self):
+        url = ('/oauth/token?grant_type=password&state=foo'
+               '&scope=email+address&username=fake&password=admin')
+        rv = self.client.get(url, headers={
+            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+        }, data={'confirm': 'yes'})
+
+        assert 'Invalid credentials given' in u(rv.data)
+
 
 class TestPasswordAuthCached(TestPasswordAuth):
 
