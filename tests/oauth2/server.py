@@ -186,7 +186,7 @@ def default_provider(app):
     def get_user(username, password, *args, **kwargs):
         # This is optional, if you don't need password credential
         # there is no need to implement this method
-        return User.query.get(1)
+        return User.query.filter_by(username=username).first()
 
     return oauth
 
