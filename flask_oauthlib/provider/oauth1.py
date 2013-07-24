@@ -17,7 +17,7 @@ from oauthlib.oauth1 import WebApplicationServer as Server
 from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
 from oauthlib.common import to_unicode, add_params_to_uri
 from oauthlib.oauth1.rfc5849 import errors
-from .._utils import log, _extract_params
+from ..utils import log, extract_params
 
 SIGNATURE_METHODS = (SIGNATURE_HMAC, SIGNATURE_RSA)
 
@@ -382,7 +382,7 @@ class OAuth1Provider(object):
 
             server = self.server
 
-            uri, http_method, body, headers = _extract_params()
+            uri, http_method, body, headers = extract_params()
             try:
                 realms, credentials = server.get_realms_and_credentials(
                     uri, http_method=http_method, body=body, headers=headers
@@ -400,7 +400,7 @@ class OAuth1Provider(object):
         """When consumer confirm the authrozation."""
         server = self.server
 
-        uri, http_method, body, headers = _extract_params()
+        uri, http_method, body, headers = extract_params()
         try:
             realms, credentials = server.get_realms_and_credentials(
                 uri, http_method=http_method, body=body, headers=headers
@@ -431,7 +431,7 @@ class OAuth1Provider(object):
         @wraps(f)
         def decorated(*args, **kwargs):
             server = self.server
-            uri, http_method, body, headers = _extract_params()
+            uri, http_method, body, headers = extract_params()
             credentials = f(*args, **kwargs)
             try:
                 ret = server.create_request_token_response(
@@ -462,7 +462,7 @@ class OAuth1Provider(object):
         @wraps(f)
         def decorated(*args, **kwargs):
             server = self.server
-            uri, http_method, body, headers = _extract_params()
+            uri, http_method, body, headers = extract_params()
             credentials = f(*args, **kwargs)
             try:
                 ret = server.create_access_token_response(
@@ -485,7 +485,7 @@ class OAuth1Provider(object):
                     func()
 
                 server = self.server
-                uri, http_method, body, headers = _extract_params()
+                uri, http_method, body, headers = extract_params()
                 valid, req = server.validate_protected_resource_request(
                     uri, http_method, body, headers, realms
                 )

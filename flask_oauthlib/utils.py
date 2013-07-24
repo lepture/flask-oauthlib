@@ -8,7 +8,7 @@ from oauthlib.common import to_unicode, bytes_type
 log = logging.getLogger('flask_oauthlib')
 
 
-def _extract_params():
+def extract_params():
     """Extract request params."""
     uri = request.url
     http_method = request.method

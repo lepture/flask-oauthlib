@@ -17,7 +17,7 @@ from werkzeug import cached_property
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
 from oauthlib.common import to_unicode
-from .._utils import _extract_params, log, decode_base64
+from ..utils import extract_params, log, decode_base64
 
 __all__ = ('OAuth2Provider', 'OAuth2RequestValidator')
 
@@ -317,7 +317,7 @@ class OAuth2Provider(object):
         def decorated(*args, **kwargs):
             # raise if server not implemented
             server = self.server
-            uri, http_method, body, headers = _extract_params()
+            uri, http_method, body, headers = extract_params()
 
             if request.method == 'GET':
                 redirect_uri = request.args.get('redirect_uri', None)
@@ -358,7 +358,7 @@ class OAuth2Provider(object):
         redirect_uri = credentials.get('redirect_uri')
         log.debug('Found redirect_uri %s.', redirect_uri)
 
-        uri, http_method, body, headers = _extract_params()
+        uri, http_method, body, headers = extract_params()
         try:
             ret = server.create_authorization_response(
                 uri, http_method, body, headers, scopes, credentials)
@@ -386,7 +386,7 @@ class OAuth2Provider(object):
         @wraps(f)
         def decorated(*args, **kwargs):
             server = self.server
-            uri, http_method, body, headers = _extract_params()
+            uri, http_method, body, headers = extract_params()
             credentials = f(*args, **kwargs) or {}
             log.debug('Fetched extra credentials, %r.', credentials)
             uri, headers, body, status = server.create_token_response(
@@ -407,7 +407,7 @@ class OAuth2Provider(object):
                     func()
 
                 server = self.server
-                uri, http_method, body, headers = _extract_params()
+                uri, http_method, body, headers = extract_params()
                 valid, req = server.verify_request(
                     uri, http_method, body, headers, scopes
                 )

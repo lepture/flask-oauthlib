@@ -21,7 +21,7 @@ try:
 except ImportError:
     from urllib import request as http
     from urllib.parse import urljoin, urlparse
-from ._utils import log
+from .utils import log
 
 
 __all__ = ('OAuth', 'OAuthRemoteApp', 'OAuthResponse', 'OAuthException')
