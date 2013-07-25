@@ -16,7 +16,7 @@ which is pretty and simple.
 Features
 --------
 
-- Support for OAuth 1.0a, OAuth2 client
+- Support for OAuth 1.0a, 1.0, 1.1, OAuth2 client
 - Friendly API (same with Flask-OAuth)
 - Direct integration with Flask
 - Basic support for remote method invocation of RESTful APIs
