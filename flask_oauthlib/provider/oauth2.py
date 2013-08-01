@@ -12,12 +12,12 @@ import os
 import datetime
 from functools import wraps
 from flask import request, url_for
-from flask import redirect, make_response, abort
+from flask import redirect, abort
 from werkzeug import cached_property
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
 from oauthlib.common import to_unicode
-from ..utils import extract_params, log, decode_base64
+from ..utils import extract_params, log, decode_base64, create_response
 
 __all__ = ('OAuth2Provider', 'OAuth2RequestValidator')
 
@@ -363,7 +363,7 @@ class OAuth2Provider(object):
             ret = server.create_authorization_response(
                 uri, http_method, body, headers, scopes, credentials)
             log.debug('Authorization successful.')
-            return redirect(ret[0])
+            return create_response(*ret)
         except oauth2.FatalClientError as e:
             return redirect(e.in_uri(self.error_uri))
         except oauth2.OAuth2Error as e:
@@ -389,13 +389,10 @@ class OAuth2Provider(object):
             uri, http_method, body, headers = extract_params()
             credentials = f(*args, **kwargs) or {}
             log.debug('Fetched extra credentials, %r.', credentials)
-            uri, headers, body, status = server.create_token_response(
+            ret = server.create_token_response(
                 uri, http_method, body, headers, credentials
             )
-            response = make_response(body, status)
-            for k, v in headers.items():
-                response.headers[k] = v
-            return response
+            return create_response(*ret)
         return decorated
 
     def require_oauth(self, *scopes):

@@ -2,7 +2,7 @@
 
 import logging
 import base64
-from flask import request
+from flask import request, redirect, make_response
 from oauthlib.common import to_unicode, bytes_type
 
 log = logging.getLogger('flask_oauthlib')
@@ -30,3 +30,16 @@ def decode_base64(text):
     if not isinstance(text, bytes_type):
         text = text.encode('utf-8')
     return to_unicode(base64.b64decode(text), 'utf-8')
+
+
+def create_response(uri, headers, body, status):
+    """Create response class for Flask."""
+    if uri:
+        response = redirect(uri)
+    else:
+        response = make_response(body or '', status)
+        for k, v in headers.items():
+            response.headers[k] = v
+
+    response.status_code = status
+    return response

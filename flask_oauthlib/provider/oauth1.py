@@ -17,7 +17,7 @@ from oauthlib.oauth1 import WebApplicationServer as Server
 from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
 from oauthlib.common import to_unicode, add_params_to_uri
 from oauthlib.oauth1.rfc5849 import errors
-from ..utils import log, extract_params
+from ..utils import log, extract_params, create_response
 
 SIGNATURE_METHODS = (SIGNATURE_HMAC, SIGNATURE_RSA)
 
@@ -408,15 +408,8 @@ class OAuth1Provider(object):
             ret = server.create_authorization_response(
                 uri, http_method, body, headers, realms, credentials
             )
-            uri, headers, body, status = ret
             log.debug('Authorization successful.')
-
-            if uri:
-                return redirect(uri)
-            response = make_response(body or '', status)
-            for k, v in headers.items():
-                response.headers[k] = v
-            return response
+            return create_response(*ret)
         except errors.OAuth1Error as e:
             return redirect(e.in_uri(self.error_uri))
         except errors.InvalidClientError as e:
@@ -444,11 +437,7 @@ class OAuth1Provider(object):
             try:
                 ret = server.create_request_token_response(
                     uri, http_method, body, headers, credentials)
-                uri, headers, body, status = ret
-                response = make_response(body or '', status)
-                for k, v in headers.items():
-                    response.headers[k] = v
-                return response
+                return create_response(*ret)
             except errors.OAuth1Error as e:
                 return _error_response(e)
         return decorated
@@ -475,11 +464,7 @@ class OAuth1Provider(object):
             try:
                 ret = server.create_access_token_response(
                     uri, http_method, body, headers, credentials)
-                uri, headers, body, status = ret
-                response = make_response(body or '', status)
-                for k, v in headers.items():
-                    response.headers[k] = v
-                return response
+                return create_response(*ret)
             except errors.OAuth1Error as e:
                 return _error_response(e)
         return decorated
