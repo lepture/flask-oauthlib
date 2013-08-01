@@ -406,9 +406,17 @@ class OAuth1Provider(object):
                 uri, http_method=http_method, body=body, headers=headers
             )
             ret = server.create_authorization_response(
-                uri, http_method, body, headers, realms, credentials)
+                uri, http_method, body, headers, realms, credentials
+            )
+            uri, headers, body, status = ret
             log.debug('Authorization successful.')
-            return redirect(ret[0])
+
+            if uri:
+                return redirect(uri)
+            response = make_response(body or '', status)
+            for k, v in headers.items():
+                response.headers[k] = v
+            return response
         except errors.OAuth1Error as e:
             return redirect(e.in_uri(self.error_uri))
         except errors.InvalidClientError as e:
