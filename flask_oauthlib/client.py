@@ -323,7 +323,9 @@ class OAuthRemoteApp(object):
         if attr:
             return attr
         if default is not False and not self.app_key:
-            return default
+            # since it has no app_key, use the original property
+            # YES, it is `attr`, not default
+            return attr
         app = self.oauth.app or current_app
         config = app.config[self.app_key]
         if default is not False:
