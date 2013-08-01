@@ -260,7 +260,6 @@ class OAuthRemoteApp(object):
                 'OAuthRemoteApp requires consumer key and secret'
             )
 
-
         self._base_url = base_url
         self._request_token_url = request_token_url
         self._access_token_url = access_token_url

@@ -11,5 +11,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
+# flake8: noqa
+
 from .info import VERSION as __version__
 from .info import AUTHOR as __author__

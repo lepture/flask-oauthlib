@@ -717,7 +717,8 @@ class OAuth1RequestValidator(RequestValidator):
         return False
 
     def validate_timestamp_and_nonce(self, client_key, timestamp, nonce,
-            request, request_token=None, access_token=None):
+                                     request, request_token=None,
+                                     access_token=None):
         """Validate the timestamp and nonce is used or not."""
         log.debug('Validate timestamp and nonce %r', client_key)
         nonce = self._noncegetter(
@@ -762,7 +763,7 @@ class OAuth1RequestValidator(RequestValidator):
         return True
 
     def validate_realms(self, client_key, token, request, uri=None,
-                       realms=None):
+                        realms=None):
         """Check if the token has permission on those realms."""
         log.debug('Validate realms %r for %r', realms, client_key)
         if request.access_token:
