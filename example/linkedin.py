@@ -60,5 +60,19 @@ def get_linkedin_oauth_token():
     return session.get('linkedin_token')
 
 
+def change_linkedin_query(uri, headers, body):
+    auth = headers.pop('Authorization')
+    headers['x-li-format'] = 'json'
+    if auth:
+        auth = auth.replace('Bearer', '').strip()
+        if '?' in uri:
+            uri += '&oauth2_access_token=' + auth
+        else:
+            uri += '?oauth2_access_token=' + auth
+    return uri, headers, body
+
+linkedin.pre_request = change_linkedin_query
+
+
 if __name__ == '__main__':
     app.run()
