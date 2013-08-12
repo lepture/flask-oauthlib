@@ -2,7 +2,7 @@ OAuth1 Server
 =============
 
 This part of documentation covers the tutorial of setting up an OAuth1
-provider. An OAuth2 server concerns how to grant the auothorization and
+provider. An OAuth1 server concerns how to grant the auothorization and
 how to protect the resource. Register an **OAuth** provider::
 
     from flask_oauthlib.provider import OAuth1Provider

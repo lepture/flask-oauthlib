@@ -1,10 +1,12 @@
 Flask-OAuthlib
 ==============
 
+.. image:: https://badge.fury.io/py/Flask-OAuthlib.png
+   :target: http://badge.fury.io/py/Flask-OAuthlib
 .. image:: https://travis-ci.org/lepture/flask-oauthlib.png?branch=master
-        :target: https://travis-ci.org/lepture/flask-oauthlib
+   :target: https://travis-ci.org/lepture/flask-oauthlib
 .. image:: https://coveralls.io/repos/lepture/flask-oauthlib/badge.png?branch=master
-        :target: https://coveralls.io/r/lepture/flask-oauthlib
+   :target: https://coveralls.io/r/lepture/flask-oauthlib
 
 Flask-OAuthlib is an extension to Flask that allows you to interact with
 remote OAuth enabled applications. On the client site, it is a replacement
