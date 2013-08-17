@@ -5,6 +5,22 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.3.1
+-------------
+
+Release date to be decided.
+
+- Add contrib module via `#15`_. We are still working on it,
+  take your own risk.
+- Add example of linkedin via `#35`_.
+- Compatible with new proposals of oauthlib.
+- Bugfix for client part.
+- Backward compatible for lower version of Flask via `#37`_.
+
+.. _`#15`: https://github.com/lepture/flask-oauthlib/issues/15
+.. _`#35`: https://github.com/lepture/flask-oauthlib/issues/35
+.. _`#37`: https://github.com/lepture/flask-oauthlib/issues/37
+
 Version 0.3.0
 -------------
 

@@ -2,7 +2,7 @@
 
 NAME = 'Flask-OAuthlib'
 
-VERSION = "0.3.0"
+VERSION = "0.3.1-dev"
 
 AUTHOR = "Hsiaoming Yang <me@lepture.com>"
 
