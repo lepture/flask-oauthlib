@@ -1,7 +1,7 @@
 from flask import Flask
 from nose.tools import raises
 from flask_oauthlib.client import encode_request_data, add_query
-from flask_oauthlib.client import OAuthRemoteApp, OAuth
+from flask_oauthlib.client import OAuthRemoteApp, OAuth, make_request
 from .oauth2.client import create_client
 
 
@@ -29,6 +29,18 @@ def test_app():
     app = create_client(app)
     client = app.extensions['oauthlib.client']
     assert client.dev.name == 'dev'
+
+
+def test_make_request():
+    resp, content = make_request('http://www.baidu.com/')
+    assert resp.code == 200
+    assert b'form' in content
+
+    resp, content = make_request('http://www.baidu.com/s',
+                                 method='GET',
+                                 data={'wd': 'flask-oauthlib'})
+    assert resp.code == 200
+    assert b'flask-oauthlib' in content
 
 
 @raises(AttributeError)
