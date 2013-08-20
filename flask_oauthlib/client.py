@@ -338,7 +338,7 @@ class OAuthRemoteApp(object):
                 self.consumer_key, self.consumer_secret
             )
 
-            params = self.request_token_params
+            params = self.request_token_params or {}
             if 'signature_method' in params:
                 client.signature_method = _encode(params['signature_method'])
             if 'rsa_key' in params:
@@ -454,7 +454,7 @@ class OAuthRemoteApp(object):
         else:
             assert callback is not None, 'Callback is required OAuth2'
 
-            params = dict(self.request_token_params)
+            params = self.request_token_params or {}
             client = self.make_client()
 
             scope = params.pop('scope')
