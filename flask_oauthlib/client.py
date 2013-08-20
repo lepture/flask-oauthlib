@@ -303,11 +303,11 @@ class OAuthRemoteApp(object):
 
     @cached_property
     def request_token_params(self):
-        return self._get_property('request_token_params', None)
+        return self._get_property('request_token_params', {})
 
     @cached_property
     def access_token_params(self):
-        return self._get_property('access_token_params', None)
+        return self._get_property('access_token_params', {})
 
     @cached_property
     def access_token_method(self):
