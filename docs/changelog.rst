@@ -8,7 +8,7 @@ Here you can see the full list of changes between each Flask-OAuthlib release.
 Version 0.3.1
 -------------
 
-Release date to be decided.
+Release on Aug 22, 2013
 
 - Add contrib module via `#15`_. We are still working on it,
   take your own risk.
