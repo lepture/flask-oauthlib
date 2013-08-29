@@ -1,9 +1,6 @@
 Flask
-
-# use the master
-#-e git://github.com/idan/oauthlib.git#egg=oauthlib
+Mock
 oauthlib
-
 # for testing
--e git://github.com/mitsuhiko/flask-sqlalchemy.git#egg=Flask-SQLAlchemy
-# Flask-SQLAlchemy
+# -e git://github.com/mitsuhiko/flask-sqlalchemy.git#egg=Flask-SQLAlchemy
+Flask-SQLAlchemy

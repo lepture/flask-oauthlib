@@ -1,8 +1,38 @@
 from flask import Flask
 from nose.tools import raises
 from flask_oauthlib.client import encode_request_data, add_query
-from flask_oauthlib.client import OAuthRemoteApp, OAuth, make_request
+from flask_oauthlib.client import OAuthRemoteApp, OAuth
+from flask_oauthlib.client import make_request, parse_response
+
+try:
+    import urllib2 as http
+    http_urlopen = 'urllib2.urlopen'
+except ImportError:
+    from urllib import request as http
+    http_urlopen = 'urllib.request.urlopen'
+
+from mock import patch
 from .oauth2.client import create_client
+
+
+class Response(object):
+    def __init__(self, content, headers=None):
+        self.content = content
+        self.headers = headers or {}
+
+    @property
+    def code(self):
+        return self.headers.get('status-code', 500)
+
+    @property
+    def status_code(self):
+        return self.code
+
+    def read(self):
+        return self.content
+
+    def close(self):
+        return self
 
 
 def test_encode_request_data():
@@ -31,16 +61,48 @@ def test_app():
     assert client.dev.name == 'dev'
 
 
-def test_make_request():
-    resp, content = make_request('http://www.baidu.com/')
-    assert resp.code == 200
-    assert b'form' in content
+@patch(http_urlopen)
+def test_make_request(urlopen):
+    urlopen.return_value = Response(
+        b'{"foo": "bar"}', headers={'status-code': 200}
+    )
 
-    resp, content = make_request('http://www.baidu.com/s',
+    resp, content = make_request('http://example.com')
+    assert resp.code == 200
+    assert b'foo' in content
+
+    resp, content = make_request('http://example.com/',
                                  method='GET',
                                  data={'wd': 'flask-oauthlib'})
     assert resp.code == 200
-    assert b'flask-oauthlib' in content
+    assert b'foo' in content
+
+    resp, content = make_request('http://example.com/',
+                                 data={'wd': 'flask-oauthlib'})
+    assert resp.code == 200
+    assert b'foo' in content
+
+
+@patch(http_urlopen)
+def test_raise_make_request(urlopen):
+    error = http.HTTPError(
+        'http://example.com/', 404, 'Not Found', None, None
+    )
+    error.read = lambda: b'o'
+    urlopen.side_effect = error
+    resp, content = make_request('http://example.com')
+    assert resp.code == 404
+    assert b'o' in content
+
+
+def test_parse_xml():
+    resp = Response(
+        '<foo>bar</foo>', headers={
+            'status-code': 200,
+            'content-type': 'text/xml'
+        }
+    )
+    parse_response(resp, resp.read())
 
 
 @raises(AttributeError)
