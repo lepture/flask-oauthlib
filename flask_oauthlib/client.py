@@ -155,11 +155,13 @@ def make_request(uri, headers=None, data=None, method=None,
     req.get_method = lambda: method.upper()
     try:
         resp = http.urlopen(req)
+        content = resp.read()
+        resp.close()
+        return resp, content
     except http.HTTPError as resp:
-        pass
-    content = resp.read()
-    resp.close()
-    return resp, content
+        content = resp.read()
+        resp.close()
+        return resp, content
 
 
 def add_query(url, args):
