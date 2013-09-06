@@ -456,7 +456,7 @@ class OAuthRemoteApp(object):
         else:
             assert callback is not None, 'Callback is required OAuth2'
 
-            params = self.request_token_params or {}
+            params = dict(self.request_token_params) or {}
             client = self.make_client()
 
             scope = params.pop('scope')
