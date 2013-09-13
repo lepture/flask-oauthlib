@@ -5,6 +5,17 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+
+Version 0.3.2
+-------------
+
+Release on Sep 13, 2013
+
+- Upgrade oauthlib to 0.6
+- A quick bugfix for request token params via `#40`_.
+
+.. _`#40`: https://github.com/lepture/flask-oauthlib/issues/40
+
 Version 0.3.1
 -------------
 
