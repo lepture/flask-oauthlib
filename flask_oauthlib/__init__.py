@@ -11,7 +11,6 @@
     :license: BSD, see LICENSE for more details.
 """
 
-# flake8: noqa
-
-from .info import VERSION as __version__
-from .info import AUTHOR as __author__
+__version__ = "0.3.2"
+__author__ = "Hsiaoming Yang <me@lepture.com>"
+__homepage__ = 'https://github.com/lepture/flask-oauthlib'

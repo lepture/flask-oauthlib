@@ -14,8 +14,9 @@ except ImportError:
 
 import imp
 from email.utils import parseaddr
-info = imp.load_source('info', 'flask_oauthlib/info.py')
-author, author_email = parseaddr(info.AUTHOR)
+import flask_oauthlib
+
+author, author_email = parseaddr(flask_oauthlib.__author__)
 
 
 def fread(filename):
@@ -24,11 +25,11 @@ def fread(filename):
 
 
 setup(
-    name=info.NAME,
-    version=info.VERSION,
+    name='Flask-OAuthlib',
+    version=flask_oauthlib.__version__,
     author=author,
     author_email=author_email,
-    url=info.REPOSITORY,
+    url=flask_oauthlib.__homepage__,
     packages=[
         "flask_oauthlib",
         "flask_oauthlib.provider",
