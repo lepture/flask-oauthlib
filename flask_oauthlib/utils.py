@@ -32,19 +32,8 @@ def decode_base64(text):
     return to_unicode(base64.b64decode(text), 'utf-8')
 
 
-def create_response(*args):
+def create_response(headers, body, status):
     """Create response class for Flask."""
-
-    # changes due to https://github.com/idan/oauthlib/pull/201
-    if len(args) == 4:
-        uri, headers, body, status = args
-        if uri:
-            headers = {'Location': uri}
-    elif len(args) == 3:
-        headers, body, status = args
-    else:
-        raise ValueError('invalid arguments %r', args)
-
     response = Response(body or '')
     for k, v in headers.items():
         response.headers[k] = v
