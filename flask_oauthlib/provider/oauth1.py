@@ -684,6 +684,10 @@ class OAuth1RequestValidator(RequestValidator):
             return request.client.rsa_key
         return None
 
+    def invalidate_request_token(self, client_key, request_token, request):
+        """Invalidates a used request token."""
+        # TODO
+
     def validate_client_key(self, client_key, request):
         """Validates that supplied client key."""
         log.debug('Validate client key for %r', client_key)
