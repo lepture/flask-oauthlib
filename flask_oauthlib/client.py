@@ -248,7 +248,7 @@ class OAuthRemoteApp(object):
         consumer_secret=None,
         request_token_params=None,
         access_token_params=None,
-        access_token_method='GET',
+        access_token_method=None,
         content_type=None,
         test_client=None,
         app_key=None,
