@@ -270,3 +270,19 @@ class TestCredentialAuthSQLAlchemy(TestCredentialAuth):
 
     def create_oauth_provider(self, app):
         return sqlalchemy_provider(app)
+
+
+class TestTokenGenerator(OAuthSuite):
+
+    def create_oauth_provider(self, app):
+
+        def generator(request, refresh_token=False):
+            return 'foobar'
+
+        app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = generator
+        return default_provider(app)
+
+    def test_get_access_token(self):
+        rv = self.client.post(authorize_url, data={'confirm': 'yes'})
+        rv = self.client.get(clean_url(rv.location))
+        assert 'foobar' in u(rv.data)
