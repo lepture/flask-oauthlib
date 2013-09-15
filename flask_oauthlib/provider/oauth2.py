@@ -14,6 +14,7 @@ from functools import wraps
 from flask import request, url_for
 from flask import redirect, abort
 from werkzeug import cached_property
+from werkzeug.utils import import_string
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
 from oauthlib.common import to_unicode
@@ -120,8 +121,18 @@ class OAuth2Provider(object):
             oauth._validator = MyValidator()
         """
         expires_in = self.app.config.get('OAUTH2_PROVIDER_TOKEN_EXPIRES_IN')
+        token_generator = self.app.config.get(
+            'OAUTH2_PROVIDER_TOKEN_GENERATOR', None
+        )
+        if token_generator and not callable(token_generator):
+            token_generator = import_string(token_generator)
+
         if hasattr(self, '_validator'):
-            return Server(self._validator, token_expires_in=expires_in)
+            return Server(
+                self._validator,
+                token_expires_in=expires_in,
+                token_generator=token_generator,
+            )
 
         if hasattr(self, '_clientgetter') and \
            hasattr(self, '_tokengetter') and \
@@ -142,7 +153,11 @@ class OAuth2Provider(object):
                 grantsetter=self._grantsetter,
             )
             self._validator = validator
-            return Server(validator, token_expires_in=expires_in)
+            return Server(
+                validator,
+                token_expires_in=expires_in,
+                token_generator=token_generator,
+            )
         raise RuntimeError('application not bound to required getters')
 
     def before_request(self, f):
