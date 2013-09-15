@@ -67,8 +67,7 @@ class TestWebAuth(OAuthSuite):
 
     def test_oauth_authorize_valid_url(self):
         rv = self.client.get(authorize_url)
-        # valid
-        assert '</form>' in u(rv.data)
+        assert b'</form>' in rv.data
 
         rv = self.client.post(authorize_url, data=dict(
             confirm='no'
@@ -92,27 +91,27 @@ class TestWebAuth(OAuthSuite):
     def test_get_access_token(self):
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         rv = self.client.get(clean_url(rv.location))
-        assert 'access_token' in u(rv.data)
+        assert b'access_token' in rv.data
 
     def test_full_flow(self):
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         rv = self.client.get(clean_url(rv.location))
-        assert 'access_token' in u(rv.data)
+        assert b'access_token' in rv.data
 
         rv = self.client.get('/')
-        assert 'username' in u(rv.data)
+        assert b'username' in rv.data
 
         rv = self.client.get('/address')
         assert rv.status_code == 403
 
         rv = self.client.get('/method/post')
-        assert 'POST' in u(rv.data)
+        assert b'POST' in rv.data
 
         rv = self.client.get('/method/put')
-        assert 'PUT' in u(rv.data)
+        assert b'PUT' in rv.data
 
         rv = self.client.get('/method/delete')
-        assert 'DELETE' in u(rv.data)
+        assert b'DELETE' in rv.data
 
     def test_invalid_client_id(self):
         authorize_url = (
@@ -122,7 +121,7 @@ class TestWebAuth(OAuthSuite):
         )
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         rv = self.client.get(clean_url(rv.location))
-        assert 'Invalid' in u(rv.data)
+        assert b'Invalid' in rv.data
 
     def test_invalid_response_type(self):
         authorize_url = (
@@ -132,7 +131,7 @@ class TestWebAuth(OAuthSuite):
         )
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         rv = self.client.get(clean_url(rv.location))
-        assert 'error' in u(rv.data)
+        assert b'error' in rv.data
 
 
 class TestWebAuthCached(TestWebAuth):
@@ -158,8 +157,8 @@ class TestPasswordAuth(OAuthSuite):
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
-        assert 'access_token' in u(rv.data)
-        assert 'state' in u(rv.data)
+        assert b'access_token' in rv.data
+        assert b'state' in rv.data
 
     def test_invalid_user_credentials(self):
         url = ('/oauth/token?grant_type=password&state=foo'
@@ -168,7 +167,7 @@ class TestPasswordAuth(OAuthSuite):
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
 
-        assert 'Invalid credentials given' in u(rv.data)
+        assert b'Invalid credentials given' in rv.data
 
 
 class TestPasswordAuthCached(TestPasswordAuth):
@@ -194,7 +193,7 @@ class TestRefreshToken(OAuthSuite):
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         })
-        assert 'access_token' in u(rv.data)
+        assert b'access_token' in rv.data
         data = json.loads(u(rv.data))
 
         args = (data.get('scope').replace(' ', '+'),
@@ -205,7 +204,7 @@ class TestRefreshToken(OAuthSuite):
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         })
-        assert 'access_token' in u(rv.data)
+        assert b'access_token' in rv.data
 
 
 class TestRefreshTokenCached(TestRefreshToken):
@@ -231,7 +230,7 @@ class TestCredentialAuth(OAuthSuite):
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
-        assert 'access_token' in u(rv.data)
+        assert b'access_token' in rv.data
 
     def test_invalid_auth_header(self):
         url = ('/oauth/token?grant_type=client_credentials'
@@ -239,7 +238,7 @@ class TestCredentialAuth(OAuthSuite):
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic foobar'
         }, data={'confirm': 'yes'})
-        assert 'invalid_client' in u(rv.data)
+        assert b'invalid_client' in rv.data
 
     def test_no_client(self):
         auth_code = _base64('none:confidential')
@@ -248,7 +247,7 @@ class TestCredentialAuth(OAuthSuite):
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
-        assert 'invalid_client' in u(rv.data)
+        assert b'invalid_client' in rv.data
 
     def test_wrong_secret_client(self):
         auth_code = _base64('confidential:wrong')
@@ -257,7 +256,7 @@ class TestCredentialAuth(OAuthSuite):
         rv = self.client.get(url, headers={
             'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
-        assert 'invalid_client' in u(rv.data)
+        assert b'invalid_client' in rv.data
 
 
 class TestCredentialAuthCached(TestCredentialAuth):
@@ -285,4 +284,6 @@ class TestTokenGenerator(OAuthSuite):
     def test_get_access_token(self):
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         rv = self.client.get(clean_url(rv.location))
-        assert 'foobar' in u(rv.data)
+        data = json.loads(u(rv.data))
+        assert data['access_token'] == 'foobar'
+        assert data['refresh_token'] == 'foobar'
