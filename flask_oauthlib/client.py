@@ -446,7 +446,11 @@ class OAuthRemoteApp(object):
             params = dict(self.request_token_params) or {}
             client = self.make_client()
 
-            scope = params.pop('scope')
+            if 'scope' in params:
+                scope = params.pop('scope')
+            else:
+                scope = None
+
             if isinstance(scope, str):
                 # oauthlib need unicode
                 scope = _encode(scope, self.encoding)
