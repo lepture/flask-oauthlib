@@ -5,7 +5,7 @@ from flask_oauthlib.client import OAuth
 def create_client(app):
     oauth = OAuth(app)
 
-    dev = oauth.remote_app(
+    remote = oauth.remote_app(
         'dev',
         consumer_key='dev',
         consumer_secret='dev',
@@ -20,13 +20,13 @@ def create_client(app):
     @app.route('/')
     def index():
         if 'dev_token' in session:
-            ret = dev.get('email')
+            ret = remote.get('email')
             return jsonify(ret.data)
         return redirect(url_for('login'))
 
     @app.route('/login')
     def login():
-        return dev.authorize(callback=url_for('authorized', _external=True))
+        return remote.authorize(callback=url_for('authorized', _external=True))
 
     @app.route('/logout')
     def logout():
@@ -34,7 +34,7 @@ def create_client(app):
         return redirect(url_for('index'))
 
     @app.route('/authorized')
-    @dev.authorized_handler
+    @remote.authorized_handler
     def authorized(resp):
         if resp is None:
             return 'Access denied: error=%s' % (
@@ -47,22 +47,22 @@ def create_client(app):
 
     @app.route('/address')
     def address():
-        ret = dev.get('address/hangzhou')
+        ret = remote.get('address/hangzhou')
         if ret.status not in (200, 201):
             return abort(ret.status)
         return ret.raw_data
 
     @app.route('/method/<name>')
     def method(name):
-        func = getattr(dev, name)
+        func = getattr(remote, name)
         ret = func('method')
         return ret.raw_data
 
-    @dev.tokengetter
+    @remote.tokengetter
     def get_oauth_token():
         return session.get('dev_token')
 
-    return dev
+    return remote
 
 
 if __name__ == '__main__':
