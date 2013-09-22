@@ -72,7 +72,7 @@ def create_client(app, oauth=None):
             resp = session['dev_oauth']
             return resp['oauth_token'], resp['oauth_token_secret']
 
-    return app
+    return oauth
 
 
 if __name__ == '__main__':
@@ -80,5 +80,5 @@ if __name__ == '__main__':
     app = Flask(__name__)
     app.debug = True
     app.secret_key = 'development'
-    app = create_client(app)
+    create_client(app)
     app.run(host='localhost', port=8000)

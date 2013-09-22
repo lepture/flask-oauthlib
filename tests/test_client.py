@@ -2,7 +2,7 @@ from flask import Flask
 from nose.tools import raises
 from flask_oauthlib.client import encode_request_data, add_query
 from flask_oauthlib.client import OAuthRemoteApp, OAuth
-from flask_oauthlib.client import make_request, parse_response
+from flask_oauthlib.client import parse_response
 
 try:
     import urllib2 as http
@@ -56,43 +56,9 @@ def test_add_query():
 
 def test_app():
     app = Flask(__name__)
-    app = create_client(app)
+    create_client(app)
     client = app.extensions['oauthlib.client']
     assert client.dev.name == 'dev'
-
-
-@patch(http_urlopen)
-def test_make_request(urlopen):
-    urlopen.return_value = Response(
-        b'{"foo": "bar"}', headers={'status-code': 200}
-    )
-
-    resp, content = make_request('http://example.com')
-    assert resp.code == 200
-    assert b'foo' in content
-
-    resp, content = make_request('http://example.com/',
-                                 method='GET',
-                                 data={'wd': 'flask-oauthlib'})
-    assert resp.code == 200
-    assert b'foo' in content
-
-    resp, content = make_request('http://example.com/',
-                                 data={'wd': 'flask-oauthlib'})
-    assert resp.code == 200
-    assert b'foo' in content
-
-
-@patch(http_urlopen)
-def test_raise_make_request(urlopen):
-    error = http.HTTPError(
-        'http://example.com/', 404, 'Not Found', None, None
-    )
-    error.read = lambda: b'o'
-    urlopen.side_effect = error
-    resp, content = make_request('http://example.com')
-    assert resp.code == 404
-    assert b'o' in content
 
 
 def test_parse_xml():
@@ -147,3 +113,39 @@ class TestOAuthRemoteApp(object):
         assert twitter.access_token_url == 'token url'
         assert twitter.authorize_url == 'auth url'
         assert twitter.content_type is None
+
+    @patch(http_urlopen)
+    def test_http_request(self, urlopen):
+        urlopen.return_value = Response(
+            b'{"foo": "bar"}', headers={'status-code': 200}
+        )
+
+        resp, content = OAuthRemoteApp.http_request('http://example.com')
+        assert resp.code == 200
+        assert b'foo' in content
+
+        resp, content = OAuthRemoteApp.http_request(
+            'http://example.com/',
+            method='GET',
+            data={'wd': 'flask-oauthlib'}
+        )
+        assert resp.code == 200
+        assert b'foo' in content
+
+        resp, content = OAuthRemoteApp.http_request(
+            'http://example.com/',
+            data={'wd': 'flask-oauthlib'}
+        )
+        assert resp.code == 200
+        assert b'foo' in content
+
+    @patch(http_urlopen)
+    def test_raise_http_request(self, urlopen):
+        error = http.HTTPError(
+            'http://example.com/', 404, 'Not Found', None, None
+        )
+        error.read = lambda: b'o'
+        urlopen.side_effect = error
+        resp, content = OAuthRemoteApp.http_request('http://example.com')
+        assert resp.code == 404
+        assert b'o' in content

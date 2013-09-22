@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import time
+from mock import MagicMock
 from nose.tools import raises
 from flask import Flask
 from flask_oauthlib.client import OAuth, OAuthException
@@ -24,15 +25,17 @@ class OAuthSuite(BaseSuite):
 
     def setup_app(self, app):
         self.create_server(app)
-        self.create_client(app)
+        client = self.create_client(app)
+        client.http_request = MagicMock(
+            side_effect=self.patch_request(app)
+        )
 
     def create_server(self, app):
         create_server(app)
         return app
 
     def create_client(self, app):
-        create_client(app)
-        return app
+        return create_client(app)
 
 
 class TestWebAuth(OAuthSuite):
@@ -181,5 +184,4 @@ class TestInvalid(OAuthSuite):
             access_token_url='http://localhost/oauth/access_token',
             authorize_url='http://localhost/oauth/authorize'
         )
-        create_client(app, remote)
-        return app
+        return create_client(app, remote)

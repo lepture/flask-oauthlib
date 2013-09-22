@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 import unittest
+from flask_oauthlib.client import prepare_request
 try:
     from urlparse import urlparse
 except ImportError:
@@ -54,6 +55,26 @@ class BaseSuite(unittest.TestCase):
 
     def setup_app(self, app):
         raise NotImplementedError
+
+    def patch_request(self, app):
+        test_client = app.test_client()
+
+        def make_request(uri, headers=None, data=None, method=None):
+            uri, headers, data, method = prepare_request(
+                uri, headers, data, method
+            )
+
+            # test client is a `werkzeug.test.Client`
+            parsed = urlparse(uri)
+            uri = '%s?%s' % (parsed.path, parsed.query)
+            resp = test_client.open(
+                uri, headers=headers, data=data, method=method
+            )
+            # for compatible
+            resp.code = resp.status_code
+            return resp, resp.data
+
+        return make_request
 
 
 def to_unicode(text):

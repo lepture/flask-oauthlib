@@ -64,10 +64,6 @@ class OAuth(object):
 
         Find more parameters from :class:`OAuthRemoteApp`.
         """
-
-        if self.app and self.app.testing:
-            kwargs['test_client'] = self.app.test_client()
-
         remote = OAuthRemoteApp(self, name, **kwargs)
         if register:
             assert name not in self.remote_apps
@@ -106,7 +102,7 @@ def get_etree():
 
 def parse_response(resp, content, strict=False, content_type=None):
     """
-    Parse the response returned by :meth:`make_request`.
+    Parse the response returned by :meth:`OAuthRemoteApp.http_request`.
     """
     if not content_type:
         content_type = resp.headers.get('content-type', 'application/json')
@@ -124,8 +120,7 @@ def parse_response(resp, content, strict=False, content_type=None):
     return url_decode(content, charset=charset).to_dict()
 
 
-def make_request(uri, headers=None, data=None, method=None,
-                 test_client=None):
+def prepare_request(uri, headers=None, data=None, method=None):
     if headers is None:
         headers = {}
 
@@ -138,30 +133,7 @@ def make_request(uri, headers=None, data=None, method=None,
         uri = add_query(uri, data)
         data = None
 
-    log.debug('Request %r with %r method' % (uri, method))
-
-    if test_client:
-        # test client is a `werkzeug.test.Client`
-        parsed = urlparse(uri)
-        uri = '%s?%s' % (parsed.path, parsed.query)
-        resp = test_client.open(
-            uri, headers=headers, data=data, method=method
-        )
-        # for compatible
-        resp.code = resp.status_code
-        return resp, resp.data
-
-    req = http.Request(uri, headers=headers, data=data)
-    req.get_method = lambda: method.upper()
-    try:
-        resp = http.urlopen(req)
-        content = resp.read()
-        resp.close()
-        return resp, content
-    except http.HTTPError as resp:
-        content = resp.read()
-        resp.close()
-        return resp, content
+    return uri, headers, data, method
 
 
 def add_query(url, args):
@@ -250,7 +222,6 @@ class OAuthRemoteApp(object):
         access_token_params=None,
         access_token_method=None,
         content_type=None,
-        test_client=None,
         app_key=None,
         encoding='utf-8',
     ):
@@ -272,10 +243,8 @@ class OAuthRemoteApp(object):
         self._access_token_params = access_token_params or {}
         self._access_token_method = access_token_method
         self._content_type = content_type
-
         self._tokengetter = None
 
-        self.test_client = test_client
         self.app_key = app_key
         self.encoding = encoding
 
@@ -358,6 +327,25 @@ class OAuthRemoteApp(object):
             )
         return client
 
+    @staticmethod
+    def http_request(uri, headers=None, data=None, method=None):
+        uri, headers, data, method = prepare_request(
+            uri, headers, data, method
+        )
+
+        log.debug('Request %r with %r method' % (uri, method))
+        req = http.Request(uri, headers=headers, data=data)
+        req.get_method = lambda: method.upper()
+        try:
+            resp = http.urlopen(req)
+            content = resp.read()
+            resp.close()
+            return resp, content
+        except http.HTTPError as resp:
+            content = resp.read()
+            resp.close()
+            return resp, content
+
     def get(self, *args, **kwargs):
         """Sends a ``GET`` request. Accepts the same paramters as
         :meth:`request`.
@@ -432,14 +420,13 @@ class OAuthRemoteApp(object):
             )
 
         if hasattr(self, 'pre_request'):
-            # this is desgined for some rubbish serice like weibo
+            # this is desgined for some rubbish service like weibo
             # since they don't follow the standards, we need to
             # change the uri, headers, or body
             uri, headers, body = self.pre_request(uri, headers, body)
 
-        resp, content = make_request(
-            uri, headers, data=body, method=method,
-            test_client=self.test_client
+        resp, content = self.http_request(
+            uri, headers, data=body, method=method
         )
         return OAuthResponse(resp, content, self.content_type)
 
@@ -499,9 +486,7 @@ class OAuthRemoteApp(object):
             self.expand_url(self.request_token_url), realm=realm
         )
         log.debug('Generate request token header %r', headers)
-        resp, content = make_request(
-            uri, headers, test_client=self.test_client
-        )
+        resp, content = self.http_request(uri, headers)
         if resp.code not in (200, 201):
             raise OAuthException(
                 'Failed to generate request token',
@@ -537,9 +522,7 @@ class OAuthRemoteApp(object):
             _encode(self.access_token_method)
         )
 
-        resp, content = make_request(
-            uri, headers, data, test_client=self.test_client
-        )
+        resp, content = self.http_request(uri, headers, data)
         data = parse_response(resp, content)
         if resp.code not in (200, 201):
             raise OAuthException(
@@ -561,20 +544,18 @@ class OAuthRemoteApp(object):
         remote_args.update(self.access_token_params)
         if self.access_token_method == 'POST':
             body = client.prepare_request_body(**remote_args)
-            resp, content = make_request(
+            resp, content = self.http_request(
                 self.expand_url(self.access_token_url),
                 data=body,
                 method=self.access_token_method,
-                test_client=self.test_client,
             )
         elif self.access_token_method == 'GET':
             qs = client.prepare_request_body(**remote_args)
             url = self.expand_url(self.access_token_url)
             url += ('?' in url and '&' or '?') + qs
-            resp, content = make_request(
+            resp, content = self.http_request(
                 url,
                 method=self.access_token_method,
-                test_client=self.test_client,
             )
         else:
             raise OAuthException(

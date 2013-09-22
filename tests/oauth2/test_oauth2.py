@@ -3,6 +3,7 @@
 import json
 import base64
 from flask import Flask
+from mock import MagicMock
 from .server import (
     create_server,
     db,
@@ -35,7 +36,10 @@ class OAuthSuite(BaseSuite):
     def setup_app(self, app):
         oauth = self.create_oauth_provider(app)
         create_server(app, oauth)
-        create_client(app)
+        client = create_client(app)
+        client.http_request = MagicMock(
+            side_effect=self.patch_request(app)
+        )
         return app
 
 
