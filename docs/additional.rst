@@ -13,7 +13,11 @@ before_request::
 
     @oauth.before_request
     def limit_client_request():
-        client_id = request.values.get('client_id')
+        from flask_oauthlib.utils import extract_params
+        uri, http_method, body, headers = extract_params()
+        request = oauth._create_request(uri, http_method, body, headers)
+
+        client_id = request.client_key
         if not client_id:
             return
         client = Client.get(client_id)
