@@ -6,6 +6,18 @@ Changelog
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
 
+Version 0.3.3
+-------------
+
+Release on Oct 4, 2013
+
+- Support for token generator in OAuth2 Provider via `#42`_.
+- Improve client part, improve test cases.
+- Fix scope via `#44`_.
+
+.. _`#42`: https://github.com/lepture/flask-oauthlib/issues/42
+.. _`#44`: https://github.com/lepture/flask-oauthlib/issues/44
+
 Version 0.3.2
 -------------
 
