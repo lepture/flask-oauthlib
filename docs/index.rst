@@ -28,7 +28,7 @@ User's Guide
 ------------
 
 This part of the documentation, which is mostly prose, begins with some
-background information about Flask-OAuthlib, then focuese on step-by-step
+background information about Flask-OAuthlib, then focuses on step-by-step
 instructions for getting the most out of Flask-OAuthlib
 
 .. toctree::
