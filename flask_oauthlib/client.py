@@ -563,7 +563,7 @@ class OAuthRemoteApp(object):
             )
         else:
             raise OAuthException(
-                'Unsupported access_token_method: ' %
+                'Unsupported access_token_method: %s' %
                 self.access_token_method
             )
 
