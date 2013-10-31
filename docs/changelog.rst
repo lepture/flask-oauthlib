@@ -6,6 +6,15 @@ Changelog
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
 
+Version 0.3.4
+-------------
+
+- Bugfix for client missing a string placeholder via `#49`_.
+- Bugfix for client property getter via `#48`_.
+
+.. _`#49`: https://github.com/lepture/flask-oauthlib/issues/49
+.. _`#48`: https://github.com/lepture/flask-oauthlib/issues/48
+
 Version 0.3.3
 -------------
 
