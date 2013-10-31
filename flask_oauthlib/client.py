@@ -290,12 +290,12 @@ class OAuthRemoteApp(object):
 
     def _get_property(self, key, default=False):
         attr = getattr(self, '_%s' % key)
-        if attr:
+        if attr is not None:
             return attr
         if not self.app_key:
             if default is not False:
                 return default
-            return None
+            return attr
         app = self.oauth.app or current_app
         config = app.config[self.app_key]
         if default is not False:
