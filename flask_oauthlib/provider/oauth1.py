@@ -725,12 +725,12 @@ class OAuth1RequestValidator(RequestValidator):
                                      access_token=None):
         """Validate the timestamp and nonce is used or not."""
         log.debug('Validate timestamp and nonce %r', client_key)
-        nonce = self._noncegetter(
+        nonce_exists = self._noncegetter(
             client_key=client_key, timestamp=timestamp,
             nonce=nonce, request_token=request_token,
             access_token=access_token
         )
-        if nonce:
+        if nonce_exists:
             return False
         self._noncesetter(
             client_key=client_key, timestamp=timestamp,
