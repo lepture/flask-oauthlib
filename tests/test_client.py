@@ -114,6 +114,25 @@ class TestOAuthRemoteApp(object):
         assert twitter.authorize_url == 'auth url'
         assert twitter.content_type is None
 
+    def test_lazy_load_with_plain_text_config(self):
+        oauth = OAuth()
+        twitter = oauth.remote_app('twitter', app_key='TWITTER')
+
+        app = Flask(__name__)
+        app.config['TWITTER_CONSUMER_KEY'] = 'twitter key'
+        app.config['TWITTER_CONSUMER_SECRET'] = 'twitter secret'
+        app.config['TWITTER_REQUEST_TOKEN_URL'] = 'request url'
+        app.config['TWITTER_ACCESS_TOKEN_URL'] = 'token url'
+        app.config['TWITTER_AUTHORIZE_URL'] = 'auth url'
+
+        oauth.init_app(app)
+
+        assert twitter.consumer_key == 'twitter key'
+        assert twitter.consumer_secret == 'twitter secret'
+        assert twitter.request_token_url == 'request url'
+        assert twitter.access_token_url == 'token url'
+        assert twitter.authorize_url == 'auth url'
+
     @patch(http_urlopen)
     def test_http_request(self, urlopen):
         urlopen.return_value = Response(
