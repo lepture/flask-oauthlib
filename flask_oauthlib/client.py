@@ -297,15 +297,18 @@ class OAuthRemoteApp(object):
                 return default
             return attr
         app = self.oauth.app or current_app
-        # works with plain text config
-        config_key = "%s_%s" % (self.app_key, key.upper())
-        if config_key in app.config:
+        if self.app_key in app.config:
+            # works with dict config
+            config = app.config[self.app_key]
+            if default is not False:
+                return config.get(key, default)
+            return config[key]
+        else:
+            # works with plain text config
+            config_key = "%s_%s" % (self.app_key, key.upper())
+            if default is not False:
+                return app.config.get(config_key, default)
             return app.config[config_key]
-        # works with dict config
-        config = app.config[self.app_key]
-        if default is not False:
-            return config.get(key, default)
-        return config[key]
 
     def make_client(self, token=None):
         # request_token_url is for oauth1
