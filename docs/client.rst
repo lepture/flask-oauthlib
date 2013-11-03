@@ -65,6 +65,11 @@ Flask config by the key ``TWITTER``, the configuration looks like::
 
     oauth.init_app(app)
 
+Or looks like that::
+
+    app.config['TWITTER_CONSUMER_KEY'] = 'a random string key'
+    app.config['TWITTER_CONSUMER_SECRET'] = 'a random string secret'
+
 Twitter can get consumer key and secret from the Flask instance now.
 
 You can put all the configuration in ``app.config`` if you like, which
