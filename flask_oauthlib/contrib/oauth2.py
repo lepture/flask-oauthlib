@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from .cache import Cache
 
 
-__all__ = ('GrantCacheBinding', 'SQLAlchemyBinding')
+__all__ = ('bind_cache_grant', 'bind_sqlalchemy')
 
 
 log = logging.getLogger('flask_oauthlib')
@@ -63,8 +63,32 @@ class Grant(object):
         return ['client_id', 'code', 'redirect_uri', 'scopes', 'user']
 
 
-def grant_cache_binding(app, provider, current_user):
-    cache = Cache(app, 'OAUTH2')
+def bind_cache_grant(app, provider, current_user, config_prefix='OAUTH2'):
+    """Configures an :class:`OAuth2Provider` instance to use various caching
+    systems to get and set the grant token. This removes the need to
+    register :func:`grantgetter` and :func:`grantsetter` yourself.
+
+    :param app: Flask application instance
+    :param provider: :class:`OAuth2Provider` instance
+    :param current_user: function that returns an :class:`User` object
+    :param config_prefix: prefix for config
+
+    A usage example::
+
+        oauth = OAuth2Provider(app)
+        app.config.update({'OAUTH2_CACHE_TYPE': 'redis'})
+
+        bind_cache_grant(app, oauth, current_user)
+
+    You can define which cache system you would like to use by setting the
+    following configuration option::
+
+        OAUTH2_CACHE_TYPE = 'null' // memcache, simple, redis, filesystem
+
+    For more information on the supported cache systems please visit:
+    `Cache <http://werkzeug.pocoo.org/docs/contrib/cache/>`_
+    """
+    cache = Cache(app, config_prefix)
 
     @provider.grantsetter
     def create_grant(client_id, code, request, *args, **kwargs):
@@ -75,7 +99,7 @@ def grant_cache_binding(app, provider, current_user):
             code=code['code'],
             redirect_uri=request.redirect_uri,
             scopes=request.scopes,
-            user=current_user()
+            user=current_user(),
         )
         log.debug("Set Grant Token with key {0}".format(grant.key))
         cache.set(grant.key, dict(grant))
@@ -94,7 +118,8 @@ def grant_cache_binding(app, provider, current_user):
         return grant
 
 
-class SQLAlchemyBinding(object):
+def bind_sqlalchemy(provider, session, user=None, client=None,
+                    token=None, grant=None, current_user=None):
     """Configures the given :class:`OAuth2Provider` instance with the
     required getters and setters for persistence with SQLAlchemy.
 
@@ -102,8 +127,8 @@ class SQLAlchemyBinding(object):
 
         oauth = OAuth2Provider(app)
 
-        SQLAlchemyBinding(oauth, session, user=User, client=Client,
-                          token=Token, grant=Grant, current_user=current_user)
+        bind_sqlalchemy(oauth, session, user=User, client=Client,
+                        token=Token, grant=Grant, current_user=current_user)
 
     You can omit any model if you wish to register the functions yourself.
     It is also possible to override the functions by registering them
@@ -111,8 +136,7 @@ class SQLAlchemyBinding(object):
 
         oauth = OAuth2Provider(app)
 
-        SQLAlchemyBinding(oauth, session, user=User, client=Client,
-                          token=Token)
+        bind_sqlalchemy(oauth, session, user=User, client=Client, token=Token)
 
         @oauth.grantgetter
         def get_grant(client_id, code):
@@ -141,32 +165,27 @@ class SQLAlchemyBinding(object):
     :param token: :class:`Token` model
     :param grant: :class:`Grant` model
     :param current_user: function that returns a :class:`User` object
-
     """
+    if user:
+        user_binding = UserBinding(user, session)
+        provider.usergetter(user_binding.get)
 
-    def __init__(self, provider, session, user=None, client=None,
-                 token=None, grant=None, current_user=None):
+    if client:
+        client_binding = ClientBinding(client, session)
+        provider.clientgetter(client_binding.get)
 
-        if user:
-            user_binding = UserBinding(user, session)
-            provider.usergetter(user_binding.get)
+    if token:
+        token_binding = TokenBinding(token, session)
+        provider.tokengetter(token_binding.get)
+        provider.tokensetter(token_binding.set)
 
-        if client:
-            client_binding = ClientBinding(client, session)
-            provider.clientgetter(client_binding.get)
-
-        if token:
-            token_binding = TokenBinding(token, session)
-            provider.tokengetter(token_binding.get)
-            provider.tokensetter(token_binding.set)
-
-        if grant:
-            if not current_user:
-                raise ValueError(('`current_user` is required'
-                                  'for Grant Binding'))
-            grant_binding = GrantBinding(grant, session, current_user)
-            provider.grantgetter(grant_binding.get)
-            provider.grantsetter(grant_binding.set)
+    if grant:
+        if not current_user:
+            raise ValueError(('`current_user` is required'
+                              'for Grant Binding'))
+        grant_binding = GrantBinding(grant, session, current_user)
+        provider.grantgetter(grant_binding.get)
+        provider.grantsetter(grant_binding.set)
 
 
 class BaseBinding(object):

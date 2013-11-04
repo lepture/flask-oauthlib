@@ -4,8 +4,8 @@ from flask import g, render_template, request, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_oauthlib.provider import OAuth2Provider
-from flask_oauthlib.contrib.oauth2 import SQLAlchemyBinding
-from flask_oauthlib.contrib.oauth2 import grant_cache_binding
+from flask_oauthlib.contrib.oauth2 import bind_sqlalchemy
+from flask_oauthlib.contrib.oauth2 import bind_cache_grant
 
 
 db = SQLAlchemy()
@@ -119,19 +119,19 @@ def current_user():
 def cache_provider(app):
     oauth = OAuth2Provider(app)
 
-    SQLAlchemyBinding(oauth, db.session, user=User,
-                      token=Token, client=Client)
+    bind_sqlalchemy(oauth, db.session, user=User,
+                    token=Token, client=Client)
 
     app.config.update({'OAUTH2_CACHE_TYPE': 'simple'})
-    grant_cache_binding(app, oauth, current_user)
+    bind_cache_grant(app, oauth, current_user)
     return oauth
 
 
 def sqlalchemy_provider(app):
     oauth = OAuth2Provider(app)
 
-    SQLAlchemyBinding(oauth, db.session, user=User, token=Token,
-                      client=Client, grant=Grant, current_user=current_user)
+    bind_sqlalchemy(oauth, db.session, user=User, token=Token,
+                    client=Client, grant=Grant, current_user=current_user)
 
     return oauth
 
