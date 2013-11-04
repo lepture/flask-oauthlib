@@ -6,6 +6,18 @@ Changelog
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
 
+Version 0.4.0
+-------------
+
+Release date to be decided.
+
+- Redesign contrib library.
+- A new way for lazy loading configuration via `#51`_.
+- Some bugfixes.
+
+.. _`#51`: https://github.com/lepture/flask-oauthlib/issues/51
+
+
 Version 0.3.4
 -------------
 
