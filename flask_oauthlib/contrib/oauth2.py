@@ -1,22 +1,16 @@
 # coding: utf-8
 """
-    flask_oauthlib.contrib.bindings
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    flask_oauthlib.contrib.oauth2
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     SQLAlchemy and Grant-Caching for OAuth2 provider.
 
     contributed by: Randy Topliffe
 """
 
-from datetime import datetime, timedelta
-from werkzeug.contrib.cache import (
-    NullCache,
-    SimpleCache,
-    MemcachedCache,
-    RedisCache,
-    FileSystemCache
-)
 import logging
+from datetime import datetime, timedelta
+from .cache import Cache
 
 
 __all__ = ('GrantCacheBinding', 'SQLAlchemyBinding')
@@ -60,11 +54,7 @@ class Grant(object):
     @property
     def key(self):
         """The string used as the key for the cache"""
-        key = '{code}{client_id}'.format(
-            code=self.code,
-            client_id=self.client_id
-        )
-        return key
+        return '%s%s' % (self.code, self.client_id)
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -73,187 +63,35 @@ class Grant(object):
         return ['client_id', 'code', 'redirect_uri', 'scopes', 'user']
 
 
-class GrantCacheBinding(object):
-    """Configures an :class:`OAuth2Provider` instance to use various caching
-    systems to get and set the grant token. This removes the need to
-    register :func:`grantgetter` and :func:`grantsetter` yourself.
+def grant_cache_binding(app, provider, current_user):
+    cache = Cache(app, 'OAUTH2')
 
-    :param app: Flask application instance
-    :param provider: :class:`OAuth2Provider` instance
-    :param current_user: function that returns an :class:`User` object
-    :param config: Additional configuration
-
-    A usage example::
-
-        oauth = OAuth2Provider(app)
-        config = {'OAUTH2_CACHE_TYPE': 'redis'}
-
-        GrantCacheBinding(app, oauth, current_user, config=config)
-
-    You can define which cache system you would like to use by setting the
-    following configuration option::
-
-        OAUTH2_CACHE_TYPE = 'null' // memcache, simple, redis, filesystem
-
-    For more information on the supported cache systems please visit:
-    `Cache <http://werkzeug.pocoo.org/docs/contrib/cache/>`_
-
-    """
-
-    def __init__(self, app, provider, current_user, config=None):
-
-        if config is None:
-            config = app.config
-        else:
-            from itertools import chain
-            config = dict(chain(app.config.items(), config.items()))
-
-        self.current_user = current_user
-
-        settings = (
-            {
-                'flask_oauthlib_key': 'OAUTH2_CACHE_DEFAULT_TIMEOUT',
-                'flask_cache_key': 'CACHE_DEFAULT_TIMEOUT',
-                'default_value': 100
-            },
-            {
-                'flask_oauthlib_key': 'OAUTH2_CACHE_THRESHOLD',
-                'flask_cache_key': 'CACHE_THRESHOLD',
-                'default_value': 500
-            },
-            {
-                'flask_oauthlib_key': 'OAUTH2_CACHE_KEY_PREFIX',
-                'flask_cache_key': 'CACHE_KEY_PREFIX',
-                'default_value': None
-            },
-            {
-                'flask_oauthlib_key': 'OAUTH2_CACHE_MEMCACHED_SERVERS',
-                'flask_cache_key': 'CACHE_MEMCACHED_SERVERS',
-                'default_value': None
-            },
-            {
-                'flask_oauthlib_key': 'OAUTH2_CACHE_REDIS_HOST',
-                'flask_cache_key': 'CACHE_REDIS_HOST',
-                'default_value': 'localhost'
-            },
-            {
-                'flask_oauthlib_key': 'OAUTH2_CACHE_REDIS_PORT',
-                'flask_cache_key': 'CACHE_REDIS_PORT',
-                'default_value': 6379
-            },
-            {
-                'flask_oauthlib_key': 'OAUTH2_CACHE_REDIS_PASSWORD',
-                'flask_cache_key': 'CACHE_REDIS_PASSWORD',
-                'default_value': None
-            },
-            {
-                'flask_oauthlib_key': 'OAUTH2_CACHE_REDIS_DB',
-                'flask_cache_key': 'CACHE_REDIS_DB',
-                'default_value': 0
-            },
-            {
-                'flask_oauthlib_key': 'OAUTH2_CACHE_DIR',
-                'flask_cache_key': 'CACHE_DIR',
-                'default_value': None
-            },
-            {
-                'flask_oauthlib_key': 'OAUTH2_CACHE_MODE',
-                'flask_cache_key': 'CACHE_MODE',
-                'default_value': '0600'
-            },
-            {
-                'flask_oauthlib_key': 'OAUTH2_CACHE_TYPE',
-                'flask_cache_key': 'CACHE_TYPE',
-                'default_value': 'null'
-            },
-        )
-
-        for setting in settings:
-            flask_oauthlib_key = setting['flask_oauthlib_key']
-            flask_cache_key = setting['flask_cache_key']
-            if flask_cache_key in config and flask_oauthlib_key not in config:
-                config[flask_oauthlib_key] = config[flask_cache_key]
-            else:
-                config.setdefault(flask_oauthlib_key, setting['default_value'])
-
-        self.config = config
-        kwargs = dict(default_timeout=config['OAUTH2_CACHE_DEFAULT_TIMEOUT'])
-        cache_type = '_{0}'.format(config['OAUTH2_CACHE_TYPE'])
-
-        try:
-            self.cache = getattr(self, cache_type)(kwargs)
-        except AttributeError:
-            raise AttributeError(
-                '`{0}` is not a valid cache type!'.format(cache_type))
-
-        provider.grantgetter(self.get)
-        provider.grantsetter(self.set)
-
-    def _null(self, kwargs):
-        """Returns a :class:`NullCache` instance"""
-        return NullCache()
-
-    def _simple(self, kwargs):
-        """Returns a :class:`SimpleCache` instance
-
-        .. warning::
-
-            This cache system might not be thread safe. Use with caution.
-
-        """
-        kwargs.update(dict(threshold=self.config['OAUTH2_CACHE_THRESHOLD']))
-        return SimpleCache(**kwargs)
-
-    def _memcache(self, kwargs):
-        """Returns a :class:`MemcachedCache` instance"""
-        kwargs.update(dict(
-            servers=self.config['OAUTH2_CACHE_MEMCACHED_SERVERS'],
-            key_prefix=self.config['OAUTH2_CACHE_KEY_PREFIX']
-        ))
-        return MemcachedCache(**kwargs)
-
-    def _redis(self, kwargs):
-        """Returns a :class:`RedisCache` instance"""
-        kwargs.update(dict(
-            host=self.config['OAUTH2_CACHE_REDIS_HOST'],
-            port=self.config['OAUTH2_CACHE_REDIS_PORT'],
-            password=self.config['OAUTH2_CACHE_REDIS_PASSWORD'],
-            db=self.config['OAUTH2_CACHE_REDIS_DB'],
-            key_prefix=self.config['OAUTH2_CACHE_KEY_PREFIX']
-        ))
-        return RedisCache(**kwargs)
-
-    def _filesystem(self, kwargs):
-        """Returns a :class:`FileSystemCache` instance"""
-        kwargs.update(dict(
-            threshold=self.config['OAUTH2_CACHE_THRESHOLD']
-        ))
-        return FileSystemCache(self.config['OAUTH2_CACHE_DIR'], **kwargs)
-
-    def set(self, client_id, code, request, *args, **kwargs):
+    @provider.grantsetter
+    def create_grant(client_id, code, request, *args, **kwargs):
         """Sets the grant token with the configured cache system"""
         grant = Grant(
-            self.cache,
-            client_id=request.client.client_id,
+            cache,
+            client_id=client_id,
             code=code['code'],
             redirect_uri=request.redirect_uri,
             scopes=request.scopes,
-            user=self.current_user()
+            user=current_user()
         )
         log.debug("Set Grant Token with key {0}".format(grant.key))
-        self.cache.set(grant.key, dict(grant))
+        cache.set(grant.key, dict(grant))
 
-    def get(self, client_id, code):
+    @provider.grantgetter
+    def get(client_id, code):
         """Gets the grant token with the configured cache system"""
-        grant = Grant(self.cache, client_id=client_id, code=code)
-        kwargs = self.cache.get(grant.key)
-        if kwargs:
-            log.debug("Grant Token found with key {0}".format(grant.key))
-            for k, v in kwargs.items():
-                setattr(grant, k, v)
-            return grant
-        log.debug("Grant Token not found with key {0}".format(grant.key))
-        return None
+        grant = Grant(cache, client_id=client_id, code=code)
+        ret = cache.get(grant.key)
+        if not ret:
+            log.debug("Grant Token not found with key %s" % grant.key)
+            return None
+        log.debug("Grant Token found with key %s" % grant.key)
+        for k, v in ret.items():
+            setattr(grant, k, v)
+        return grant
 
 
 class SQLAlchemyBinding(object):

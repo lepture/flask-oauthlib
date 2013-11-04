@@ -10,8 +10,8 @@ class Cache(object):
         self.config = app.config
 
         cache_type = '_%s' % self._config('type')
-        kwargs = kwargs.update(dict(
-            default_timeout=self._config('DEFAULT_TIMEOUT')
+        kwargs.update(dict(
+            default_timeout=self._config('DEFAULT_TIMEOUT', 100)
         ))
 
         try:
@@ -30,7 +30,7 @@ class Cache(object):
             except AttributeError:
                 raise AttributeError('No such attribute: %s' % key)
 
-    def _config(self, key):
+    def _config(self, key, default='error'):
         key = key.upper()
         prior = '%s_CACHE_%s' % (self.config_prefix, key)
         if prior in self.config:
@@ -38,9 +38,11 @@ class Cache(object):
         fallback = 'CACHE_%s' % key
         if fallback in self.config:
             return self.config[fallback]
-        raise RuntimeError('%s is missing.' % prior)
+        if default == 'error':
+            raise RuntimeError('%s is missing.' % prior)
+        return default
 
-    def _null(self, kwargs):
+    def _null(self, **kwargs):
         """Returns a :class:`NullCache` instance"""
         return NullCache()
 
@@ -51,31 +53,31 @@ class Cache(object):
 
             This cache system might not be thread safe. Use with caution.
         """
-        kwargs.update(dict(threshold=self._config('threshold')))
+        kwargs.update(dict(threshold=self._config('threshold', 500)))
         return SimpleCache(**kwargs)
 
     def _memcache(self, **kwargs):
         """Returns a :class:`MemcachedCache` instance"""
         kwargs.update(dict(
-            servers=self._config('servers'),
-            key_prefix=self._config('key_prefix'),
+            servers=self._config('MEMCACHED_SERVERS', None),
+            key_prefix=self._config('key_prefix', None),
         ))
         return MemcachedCache(**kwargs)
 
     def _redis(self, **kwargs):
         """Returns a :class:`RedisCache` instance"""
         kwargs.update(dict(
-            host=self._config('REDIS_HOST'),
-            port=self._config('REDIS_PORT'),
-            password=self._config('REDIS_PASSWORD'),
-            db=self._config('REDIS_DB'),
-            key_prefix=self._config('KEY_PREFIX'),
+            host=self._config('REDIS_HOST', 'localhost'),
+            port=self._config('REDIS_PORT', 6379),
+            password=self._config('REDIS_PASSWORD', None),
+            db=self._config('REDIS_DB', 0),
+            key_prefix=self._config('KEY_PREFIX', None),
         ))
         return RedisCache(**kwargs)
 
     def _filesystem(self, **kwargs):
         """Returns a :class:`FileSystemCache` instance"""
         kwargs.update(dict(
-            threshold=self._config('threshold'),
+            threshold=self._config('threshold', 500),
         ))
-        return FileSystemCache(self._config('dir'), **kwargs)
+        return FileSystemCache(self._config('dir', None), **kwargs)
