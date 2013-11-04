@@ -51,10 +51,8 @@ Contrib Reference
 
 Here are APIs provided by contributors.
 
-.. module:: flask_oauthlib.contrib.bindings
+.. module:: flask_oauthlib.contrib.oauth2
 
-.. autoclass:: SQLAlchemyBinding
-   :members:
+.. autofunction:: bind_sqlalchemy
 
-.. autoclass:: GrantCacheBinding
-   :members:
+.. autofunction:: bind_cache_grant
