@@ -459,7 +459,7 @@ class OAuth2RequestValidator(RequestValidator):
 
         .. _`Section 3.2.1`: http://tools.ietf.org/html/rfc6749#section-3.2.1
         """
-        auth = request.headers.get('Http-Authorization', None)
+        auth = request.headers.get('Authorization', None)
         log.debug('Authenticate client %r', auth)
         if auth:
             try:
