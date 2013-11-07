@@ -17,8 +17,6 @@ def extract_params():
         del headers['wsgi.input']
     if 'wsgi.errors' in headers:
         del headers['wsgi.errors']
-    if 'Http-Authorization' in headers:
-        headers['Authorization'] = headers['Http-Authorization']
 
     body = request.form.to_dict()
     return uri, http_method, body, headers
