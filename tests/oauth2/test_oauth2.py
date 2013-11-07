@@ -159,7 +159,7 @@ class TestPasswordAuth(OAuthSuite):
         url = ('/oauth/token?grant_type=password&state=foo'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
-            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+            'Authorization': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
         assert b'access_token' in rv.data
         assert b'state' in rv.data
@@ -168,7 +168,7 @@ class TestPasswordAuth(OAuthSuite):
         url = ('/oauth/token?grant_type=password&state=foo'
                '&scope=email+address&username=fake&password=admin')
         rv = self.client.get(url, headers={
-            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+            'Authorization': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
 
         assert b'Invalid credentials given' in rv.data
@@ -195,7 +195,7 @@ class TestRefreshToken(OAuthSuite):
         url = ('/oauth/token?grant_type=password'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
-            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+            'Authorization': 'Basic %s' % auth_code,
         })
         assert b'access_token' in rv.data
         data = json.loads(u(rv.data))
@@ -206,7 +206,7 @@ class TestRefreshToken(OAuthSuite):
                '&scope=%s&refresh_token=%s&username=admin')
         url = url % args
         rv = self.client.get(url, headers={
-            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+            'Authorization': 'Basic %s' % auth_code,
         })
         assert b'access_token' in rv.data
 
@@ -232,7 +232,7 @@ class TestCredentialAuth(OAuthSuite):
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
-            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+            'Authorization': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
         assert b'access_token' in rv.data
 
@@ -240,7 +240,7 @@ class TestCredentialAuth(OAuthSuite):
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
-            'HTTP_AUTHORIZATION': 'Basic foobar'
+            'Authorization': 'Basic foobar'
         }, data={'confirm': 'yes'})
         assert b'invalid_client' in rv.data
 
@@ -249,7 +249,7 @@ class TestCredentialAuth(OAuthSuite):
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
-            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+            'Authorization': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
         assert b'invalid_client' in rv.data
 
@@ -258,7 +258,7 @@ class TestCredentialAuth(OAuthSuite):
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
-            'HTTP_AUTHORIZATION': 'Basic %s' % auth_code,
+            'Authorization': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
         assert b'invalid_client' in rv.data
 
