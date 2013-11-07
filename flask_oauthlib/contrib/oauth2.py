@@ -45,9 +45,9 @@ class Grant(object):
 
         Note: This is required by the oauthlib
         """
-        log.debug("Deleting grant")
-        log.debug("Code: {0}".format(self.code))
-        log.debug("Client id: {0}".format(self.client_id))
+        log.debug(
+            "Deleting grant %s for client %s" % (self.code, self.client_id)
+        )
         self._cache.delete(self.key)
         return None
 
@@ -101,7 +101,7 @@ def bind_cache_grant(app, provider, current_user, config_prefix='OAUTH2'):
             scopes=request.scopes,
             user=current_user(),
         )
-        log.debug("Set Grant Token with key {0}".format(grant.key))
+        log.debug("Set Grant Token with key %s" % grant.key)
         cache.set(grant.key, dict(grant))
 
     @provider.grantgetter
