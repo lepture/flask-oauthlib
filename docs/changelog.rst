@@ -9,7 +9,7 @@ Here you can see the full list of changes between each Flask-OAuthlib release.
 Version 0.4.0
 -------------
 
-Release date to be decided.
+Released on Nov 12, 2013
 
 - Redesign contrib library.
 - A new way for lazy loading configuration via `#51`_.
@@ -21,6 +21,8 @@ Release date to be decided.
 Version 0.3.4
 -------------
 
+Released on Oct 31, 2013
+
 - Bugfix for client missing a string placeholder via `#49`_.
 - Bugfix for client property getter via `#48`_.
 
@@ -30,7 +32,7 @@ Version 0.3.4
 Version 0.3.3
 -------------
 
-Release on Oct 4, 2013
+Released on Oct 4, 2013
 
 - Support for token generator in OAuth2 Provider via `#42`_.
 - Improve client part, improve test cases.
@@ -42,7 +44,7 @@ Release on Oct 4, 2013
 Version 0.3.2
 -------------
 
-Release on Sep 13, 2013
+Released on Sep 13, 2013
 
 - Upgrade oauthlib to 0.6
 - A quick bugfix for request token params via `#40`_.
@@ -52,7 +54,7 @@ Release on Sep 13, 2013
 Version 0.3.1
 -------------
 
-Release on Aug 22, 2013
+Released on Aug 22, 2013
 
 - Add contrib module via `#15`_. We are still working on it,
   take your own risk.
@@ -68,7 +70,7 @@ Release on Aug 22, 2013
 Version 0.3.0
 -------------
 
-Release on July 10, 2013.
+Released on July 10, 2013.
 
 - OAuth1 Provider available. Documentation at :doc:`oauth1`. :)
 - Add ``before_request`` and ``after_request`` via `#22`_.
@@ -81,7 +83,7 @@ Release on July 10, 2013.
 Version 0.2.0
 -------------
 
-Release on June 19, 2013.
+Released on June 19, 2013.
 
 - OAuth2 Provider available. Documentation at :doc:`oauth2`. :)
 - Make client part testable.

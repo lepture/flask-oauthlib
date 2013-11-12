@@ -65,6 +65,8 @@ Flask config by the key ``TWITTER``, the configuration looks like::
 
     oauth.init_app(app)
 
+.. versionadded:: 0.4.0
+
 Or looks like that::
 
     app.config['TWITTER_CONSUMER_KEY'] = 'a random string key'
