@@ -9,6 +9,7 @@
 """
 
 import os
+import logging
 import datetime
 from functools import wraps
 from flask import request, url_for
@@ -18,9 +19,11 @@ from werkzeug.utils import import_string
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
 from oauthlib.common import to_unicode
-from ..utils import extract_params, log, decode_base64, create_response
+from ..utils import extract_params, decode_base64, create_response
 
 __all__ = ('OAuth2Provider', 'OAuth2RequestValidator')
+
+log = logging.getLogger('flask_oauthlib')
 
 
 class OAuth2Provider(object):

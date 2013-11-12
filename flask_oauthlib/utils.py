@@ -1,11 +1,8 @@
 # coding: utf-8
 
-import logging
 import base64
 from flask import request, Response
 from oauthlib.common import to_unicode, bytes_type
-
-log = logging.getLogger('flask_oauthlib')
 
 
 def extract_params():

@@ -8,6 +8,7 @@
     :copyright: (c) 2013 by Hsiaoming Yang.
 """
 
+import logging
 from functools import wraps
 from werkzeug import cached_property
 from flask import request, redirect, url_for
@@ -17,11 +18,13 @@ from oauthlib.oauth1 import WebApplicationServer as Server
 from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
 from oauthlib.common import to_unicode, add_params_to_uri
 from oauthlib.oauth1.rfc5849 import errors
-from ..utils import log, extract_params, create_response
+from ..utils import extract_params, create_response
 
 SIGNATURE_METHODS = (SIGNATURE_HMAC, SIGNATURE_RSA)
 
 __all__ = ('OAuth1Provider', 'OAuth1RequestValidator')
+
+log = logging.getLogger('flask_oauthlib')
 
 
 class OAuth1Provider(object):

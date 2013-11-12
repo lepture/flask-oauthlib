@@ -8,6 +8,7 @@
     :copyright: (c) 2013 by Hsiaoming Yang.
 """
 
+import logging
 import oauthlib.oauth1
 import oauthlib.oauth2
 from functools import wraps
@@ -21,7 +22,7 @@ try:
 except ImportError:
     from urllib import request as http
     from urllib.parse import urljoin, urlparse
-from .utils import log
+log = logging.getLogger('flask_oauthlib')
 
 
 __all__ = ('OAuth', 'OAuthRemoteApp', 'OAuthResponse', 'OAuthException')
