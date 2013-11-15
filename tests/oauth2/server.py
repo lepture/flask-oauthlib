@@ -255,6 +255,11 @@ def create_server(app, oauth):
     def email_api(oauth):
         return jsonify(email='me@oauth.net', username=oauth.user.username)
 
+    @app.route('/api/client')
+    @oauth.require_oauth()
+    def client_api(oauth):
+        return jsonify(client=oauth.client.name)
+
     @app.route('/api/address/<city>')
     @oauth.require_oauth('address')
     def address_api(oauth, city):
