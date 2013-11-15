@@ -642,6 +642,7 @@ class OAuth2RequestValidator(RequestValidator):
             return False
 
         request.user = tok.user
+        request.client = tok.client
         request.scopes = scopes
         return True
 

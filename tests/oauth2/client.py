@@ -45,6 +45,13 @@ def create_client(app):
             return jsonify(resp)
         return str(resp)
 
+    @app.route('/client')
+    def client_method():
+        ret = remote.get("client")
+        if ret.status not in (200,201):
+            return abort(ret.status)
+        return ret.raw_data
+
     @app.route('/address')
     def address():
         ret = remote.get('address/hangzhou')

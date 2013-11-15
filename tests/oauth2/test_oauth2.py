@@ -117,6 +117,12 @@ class TestWebAuth(OAuthSuite):
         rv = self.client.get('/method/delete')
         assert b'DELETE' in rv.data
 
+    def test_get_client(self):
+        rv = self.client.post(authorize_url, data={'confirm': 'yes'})
+        rv = self.client.get(clean_url(rv.location))
+        rv = self.client.get("/client")
+        assert b'dev' in rv.data
+
     def test_invalid_client_id(self):
         authorize_url = (
             '/oauth/authorize?response_type=code&client_id=confidential'
