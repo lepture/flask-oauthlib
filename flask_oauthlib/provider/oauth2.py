@@ -641,9 +641,14 @@ class OAuth2RequestValidator(RequestValidator):
             log.debug('Bearer token scope not valid.')
             return False
 
+        request.access_token = tok
         request.user = tok.user
-        request.client = tok.client
         request.scopes = scopes
+
+        if hasattr(tok, 'client'):
+            request.client = tok.client
+        elif hasattr(tok, 'client_id'):
+            request.client = self._clientgetter(tok.client_id)
         return True
 
     def validate_client_id(self, client_id, request, *args, **kwargs):
