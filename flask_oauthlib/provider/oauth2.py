@@ -643,6 +643,7 @@ class OAuth2RequestValidator(RequestValidator):
 
         request.access_token = tok
         request.user = tok.user
+        request.client = tok.client
         request.scopes = scopes
 
         if hasattr(tok, 'client'):
