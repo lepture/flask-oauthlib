@@ -12,16 +12,16 @@ import logging
 import oauthlib.oauth1
 import oauthlib.oauth2
 from functools import wraps
-from oauthlib.common import to_unicode, PY3
+from oauthlib.common import to_unicode, PY3, add_params_to_uri
 from flask import request, redirect, json, session, current_app
 from werkzeug import url_quote, url_decode, url_encode
 from werkzeug import parse_options_header, cached_property
 try:
-    from urlparse import urljoin, urlparse
+    from urlparse import urljoin
     import urllib2 as http
 except ImportError:
     from urllib import request as http
-    from urllib.parse import urljoin, urlparse
+    from urllib.parse import urljoin
 log = logging.getLogger('flask_oauthlib')
 
 
@@ -102,8 +102,12 @@ def get_etree():
 
 
 def parse_response(resp, content, strict=False, content_type=None):
-    """
-    Parse the response returned by :meth:`OAuthRemoteApp.http_request`.
+    """Parse the response returned by :meth:`OAuthRemoteApp.http_request`.
+
+    :param resp: response of http_request
+    :param content: content of the response
+    :param strict: strict mode for form urlencoded content
+    :param content_type: assign a content type manually
     """
     if not content_type:
         content_type = resp.headers.get('content-type', 'application/json')
@@ -122,6 +126,7 @@ def parse_response(resp, content, strict=False, content_type=None):
 
 
 def prepare_request(uri, headers=None, data=None, method=None):
+    """Make request parameters right."""
     if headers is None:
         headers = {}
 
@@ -131,16 +136,10 @@ def prepare_request(uri, headers=None, data=None, method=None):
         method = 'GET'
 
     if method == 'GET' and data:
-        uri = add_query(uri, data)
+        uri = add_params_to_uri(uri, data)
         data = None
 
     return uri, headers, data, method
-
-
-def add_query(url, args):
-    if not args:
-        return url
-    return url + ('?' in url and '&' or '?') + url_encode(args)
 
 
 def encode_request_data(data, format):
@@ -408,7 +407,7 @@ class OAuthRemoteApp(object):
         if method == 'GET':
             assert format == 'urlencoded'
             if data:
-                url = add_query(url, data)
+                url = add_params_to_uri(url, data)
                 data = None
         else:
             if content_type is None:
