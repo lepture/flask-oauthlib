@@ -1,6 +1,6 @@
 from flask import Flask
 from nose.tools import raises
-from flask_oauthlib.client import encode_request_data, add_query
+from flask_oauthlib.client import encode_request_data
 from flask_oauthlib.client import OAuthRemoteApp, OAuth
 from flask_oauthlib.client import parse_response
 
@@ -46,12 +46,6 @@ def test_encode_request_data():
     data, f = encode_request_data(None, 'urlencoded')
     assert data == ''
     assert f == 'application/x-www-form-urlencoded'
-
-
-def test_add_query():
-    assert 'path' == add_query('path', None)
-    assert 'path?foo=foo' == add_query('path', {'foo': 'foo'})
-    assert '?path&foo=foo' == add_query('?path', {'foo': 'foo'})
 
 
 def test_app():
