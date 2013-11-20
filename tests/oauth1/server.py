@@ -1,7 +1,6 @@
 # coding: utf-8
 from flask import g, render_template, request, jsonify
-from flask.ext.sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import relationship
+from flask_sqlalchemy import SQLAlchemy
 from flask_oauthlib.provider import OAuth1Provider
 
 
@@ -60,13 +59,13 @@ class Grant(db.Model):
     user_id = db.Column(
         db.Integer, db.ForeignKey('user.id', ondelete='CASCADE')
     )
-    user = relationship('User')
+    user = db.relationship('User')
 
     client_key = db.Column(
         db.String(40), db.ForeignKey('client.client_key'),
         nullable=False,
     )
-    client = relationship('Client')
+    client = db.relationship('Client')
 
     token = db.Column(db.String(255), index=True, unique=True)
     secret = db.Column(db.String(255), nullable=False)
@@ -95,12 +94,12 @@ class Token(db.Model):
         db.String(40), db.ForeignKey('client.client_key'),
         nullable=False,
     )
-    client = relationship('Client')
+    client = db.relationship('Client')
 
     user_id = db.Column(
         db.Integer, db.ForeignKey('user.id'),
     )
-    user = relationship('User')
+    user = db.relationship('User')
 
     token = db.Column(db.String(255))
     secret = db.Column(db.String(255))

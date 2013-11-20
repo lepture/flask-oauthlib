@@ -76,7 +76,6 @@ def create_client(app, oauth=None):
 
 
 if __name__ == '__main__':
-    # DEBUG=1 python oauth2_client.py
     app = Flask(__name__)
     app.debug = True
     app.secret_key = 'development'
