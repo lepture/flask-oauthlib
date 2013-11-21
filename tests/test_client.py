@@ -93,6 +93,7 @@ class TestOAuthRemoteApp(object):
         app = Flask(__name__)
         app.config.update({
             'twitter': dict(
+                request_token_params={'realms': 'email'},
                 consumer_key='twitter key',
                 consumer_secret='twitter secret',
                 request_token_url='request url',
@@ -107,6 +108,7 @@ class TestOAuthRemoteApp(object):
         assert twitter.access_token_url == 'token url'
         assert twitter.authorize_url == 'auth url'
         assert twitter.content_type is None
+        assert 'realms' in twitter.request_token_params
 
     def test_lazy_load_with_plain_text_config(self):
         oauth = OAuth()
