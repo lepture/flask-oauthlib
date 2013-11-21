@@ -239,8 +239,8 @@ class OAuthRemoteApp(object):
         self._authorize_url = authorize_url
         self._consumer_key = consumer_key
         self._consumer_secret = consumer_secret
-        self._request_token_params = request_token_params or {}
-        self._access_token_params = access_token_params or {}
+        self._request_token_params = request_token_params
+        self._access_token_params = access_token_params
         self._access_token_method = access_token_method
         self._content_type = content_type
         self._tokengetter = None
