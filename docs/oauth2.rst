@@ -299,10 +299,15 @@ and accessing resource flow. Implemented with decorators::
         expires_in = token.pop('expires_in')
         expires = datetime.utcnow() + timedelta(seconds=expires_in)
 
-        tok = Token(**token)
-        tok.expires = expires
-        tok.client_id = request.client.client_id
-        tok.user_id = request.user.id
+        tok = Token(
+            access_token=token['access_token'],
+            refresh_token=token['refresh_token'],
+            token_type=token['token_type'],
+            _scopes=token['scope'],
+            expires=expires,
+            client_id=request.client.client_id,
+            user_id=request.user.id,
+        )
         db.session.add(tok)
         db.session.commit()
         return tok
