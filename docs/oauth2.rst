@@ -82,7 +82,7 @@ An example of the data model in SQLAlchemy (SQLAlchemy is not required)::
         @property
         def redirect_uris(self):
             if self._redirect_uris:
-                return self._redirect_uris.split()
+                return self._redirect_uris.split(",")
             return []
 
         @property
@@ -92,7 +92,7 @@ An example of the data model in SQLAlchemy (SQLAlchemy is not required)::
         @property
         def default_scopes(self):
             if self._default_scopes:
-                return self._default_scopes.split()
+                return self._default_scopes.split(",")
             return []
 
 
@@ -144,7 +144,7 @@ Also in SQLAlchemy model (would be better if it is in a cache)::
         @property
         def scopes(self):
             if self._scopes:
-                return self._scopes.split()
+                return self._scopes.split(",")
             return []
 
 Bearer Token
