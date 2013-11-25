@@ -12,7 +12,6 @@ try:
 except ImportError:
     from distutils.core import setup
 
-import imp
 from email.utils import parseaddr
 import flask_oauthlib
 

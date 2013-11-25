@@ -6,6 +6,18 @@ Changelog
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
 
+Version 0.4.1
+-------------
+
+Released on Nov 25, 2013
+
+- Add access_token on request object via `#53`_.
+- Bugfix for lazy loading configuration via `#55`_.
+
+.. _`#53`: https://github.com/lepture/flask-oauthlib/issues/53
+.. _`#55`: https://github.com/lepture/flask-oauthlib/issues/55
+
+
 Version 0.4.0
 -------------
 
