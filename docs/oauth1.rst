@@ -51,22 +51,22 @@ An example of the data model in SQLAlchemy (SQLAlchemy is not required)::
 
     class Client(db.Model):
         # human readable name, not required
-        name = db.Column(db.Unicode(40))
+        name = db.Column(db.String(40))
 
         # human readable description, not required
-        description = db.Column(db.Unicode(400))
+        description = db.Column(db.String(400))
 
         # creator of the client, not required
         user_id = db.Column(db.ForeignKey('user.id'))
         # required if you need to support client credential
         user = relationship('User')
 
-        client_key = db.Column(db.Unicode(40), primary_key=True)
-        client_secret = db.Column(db.Unicode(55), unique=True, index=True,
+        client_key = db.Column(db.String(40), primary_key=True)
+        client_secret = db.Column(db.String(55), unique=True, index=True,
                                   nullable=False)
 
-        _realms = db.Column(db.UnicodeText)
-        _redirect_uris = db.Column(db.UnicodeText)
+        _realms = db.Column(db.Text)
+        _redirect_uris = db.Column(db.Text)
 
         @property
         def redirect_uris(self):
@@ -115,18 +115,18 @@ And the all in one token example::
         user = relationship('User')
 
         client_key = db.Column(
-            db.Unicode(40), db.ForeignKey('client.client_key'),
+            db.String(40), db.ForeignKey('client.client_key'),
             nullable=False,
         )
         client = relationship('Client')
 
-        token = db.Column(db.Unicode(255), index=True, unique=True)
-        secret = db.Column(db.Unicode(255), nullable=False)
+        token = db.Column(db.String(255), index=True, unique=True)
+        secret = db.Column(db.String(255), nullable=False)
 
-        verifier = db.Column(db.Unicode(255))
+        verifier = db.Column(db.String(255))
 
-        redirect_uri = db.Column(db.UnicodeText)
-        _realms = db.Column(db.UnicodeText)
+        redirect_uri = db.Column(db.Text)
+        _realms = db.Column(db.Text)
 
         @property
         def realms(self):
@@ -157,14 +157,14 @@ Here is an example in SQLAlchemy::
         id = db.Column(db.Integer, primary_key=True)
 
         timestamp = db.Column(db.Integer)
-        nonce = db.Column(db.Unicode(40))
+        nonce = db.Column(db.String(40))
         client_key = db.Column(
-            db.Unicode(40), db.ForeignKey('client.client_key'),
+            db.String(40), db.ForeignKey('client.client_key'),
             nullable=False,
         )
         client = relationship('Client')
-        request_token = db.Column(db.Unicode(50))
-        access_token = db.Column(db.Unicode(50))
+        request_token = db.Column(db.String(50))
+        access_token = db.Column(db.String(50))
 
 
 Access Token
@@ -186,7 +186,7 @@ The implementation in SQLAlchemy::
     class AccessToken(db.Model):
         id = db.Column(db.Integer, primary_key=True)
         client_key = db.Column(
-            db.Unicode(40), db.ForeignKey('client.client_key'),
+            db.String(40), db.ForeignKey('client.client_key'),
             nullable=False,
         )
         client = relationship('Client')
@@ -196,10 +196,10 @@ The implementation in SQLAlchemy::
         )
         user = relationship('User')
 
-        token = db.Column(db.Unicode(255))
-        secret = db.Column(db.Unicode(255))
+        token = db.Column(db.String(255))
+        secret = db.Column(db.String(255))
 
-        _realms = db.Column(db.UnicodeText)
+        _realms = db.Column(db.Text)
 
         @property
         def realms(self):

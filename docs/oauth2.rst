@@ -60,25 +60,25 @@ An example of the data model in SQLAlchemy (SQLAlchemy is not required)::
 
     class Client(db.Model):
         # human readable name, not required
-        name = db.Column(db.Unicode(40))
+        name = db.Column(db.String(40))
 
         # human readable description, not required
-        description = db.Column(db.Unicode(400))
+        description = db.Column(db.String(400))
 
         # creator of the client, not required
         user_id = db.Column(db.ForeignKey('user.id'))
         # required if you need to support client credential
         user = relationship('User')
 
-        client_id = db.Column(db.Unicode(40), primary_key=True)
-        client_secret = db.Column(db.Unicode(55), unique=True, index=True,
+        client_id = db.Column(db.String(40), primary_key=True)
+        client_secret = db.Column(db.String(55), unique=True, index=True,
                                   nullable=False)
 
         # public or confidential
         is_confidential = db.Column(db.Boolean)
 
-        _redirect_uris = db.Column(db.UnicodeText)
-        _default_scopes = db.Column(db.UnicodeText)
+        _redirect_uris = db.Column(db.Text)
+        _default_scopes = db.Column(db.Text)
 
         @property
         def client_type(self):
@@ -131,17 +131,17 @@ Also in SQLAlchemy model (would be better if it is in a cache)::
         user = relationship('User')
 
         client_id = db.Column(
-            db.Unicode(40), db.ForeignKey('client.client_id'),
+            db.String(40), db.ForeignKey('client.client_id'),
             nullable=False,
         )
         client = relationship('Client')
 
-        code = db.Column(db.Unicode(255), index=True, nullable=False)
+        code = db.Column(db.String(255), index=True, nullable=False)
 
-        redirect_uri = db.Column(db.Unicode(255))
+        redirect_uri = db.Column(db.String(255))
         expires = db.Column(db.DateTime)
 
-        _scopes = db.Column(db.UnicodeText)
+        _scopes = db.Column(db.Text)
 
         def delete(self):
             db.session.delete(self)
@@ -175,7 +175,7 @@ An example of the data model in SQLAlchemy::
     class Token(db.Model):
         id = db.Column(db.Integer, primary_key=True)
         client_id = db.Column(
-            db.Unicode(40), db.ForeignKey('client.client_id'),
+            db.String(40), db.ForeignKey('client.client_id'),
             nullable=False,
         )
         client = relationship('Client')
@@ -186,12 +186,12 @@ An example of the data model in SQLAlchemy::
         user = relationship('User')
 
         # currently only bearer is supported
-        token_type = db.Column(db.Unicode(40))
+        token_type = db.Column(db.String(40))
 
-        access_token = db.Column(db.Unicode(255), unique=True)
-        refresh_token = db.Column(db.Unicode(255), unique=True)
+        access_token = db.Column(db.String(255), unique=True)
+        refresh_token = db.Column(db.String(255), unique=True)
         expires = db.Column(db.DateTime)
-        _scopes = db.Column(db.UnicodeText)
+        _scopes = db.Column(db.Text)
 
         @property
         def scopes(self):
@@ -301,7 +301,8 @@ and accessing resource flow. Implemented with decorators::
         toks = Token.query.filter_by(client_id=request.client.client_id,
                                      user_id=request.user.id)
         # make sure that every client has only one token connected to a user
-        db.session.delete(toks)
+        for t in toks:
+            db.session.delete(t)
 
         expires_in = token.pop('expires_in')
         expires = datetime.utcnow() + timedelta(seconds=expires_in)
