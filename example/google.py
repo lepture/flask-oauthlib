@@ -1,9 +1,17 @@
+"""
+    google example
+    ~~~~~~~~~~~~~~
+
+    This example is contributed by Bruno Rocha
+
+    GitHub: https://github.com/rochacbruno
+"""
 from flask import Flask, redirect, url_for, session, request, jsonify
 from flask_oauthlib.client import OAuth
 
 
 app = Flask(__name__)
-app.config['GOOGLE_ID'] = "cloud.google.com/console  and get your ID"
+app.config['GOOGLE_ID'] = "cloud.google.com/console and get your ID"
 app.config['GOOGLE_SECRET'] = "cloud.google.com/console and get the secret"
 app.debug = True
 app.secret_key = 'development'
