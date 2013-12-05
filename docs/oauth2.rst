@@ -49,6 +49,13 @@ But it could be better, if you implemented:
 - allowed_response_types: A list of response types
 - validate_scopes: A function to validate scopes
 
+.. note::
+
+    The value of the scope parameter is expressed as a list of space-
+    delimited, case-sensitive strings.
+
+    via: http://tools.ietf.org/html/rfc6749#section-3.3
+
 An example of the data model in SQLAlchemy (SQLAlchemy is not required)::
 
     class Client(db.Model):
