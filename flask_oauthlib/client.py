@@ -437,10 +437,13 @@ class OAuthRemoteApp(object):
         )
         return OAuthResponse(resp, content, self.content_type)
 
-    def authorize(self, callback=None):
+    def authorize(self, callback=None, state=None):
         """
         Returns a redirect response to the remote authorization URL with
         the signed callback given.
+
+        :param state: an optional value to embed in the OAuth request. Use this
+        if you want to pass around application state (e.g. CSRF tokens).
         """
         if self.request_token_url:
             token = self.generate_request_token(callback)[0]
@@ -467,6 +470,7 @@ class OAuthRemoteApp(object):
                 self.expand_url(self.authorize_url),
                 redirect_uri=callback,
                 scope=scope,
+                state=state,
                 **params
             )
         return redirect(url)
