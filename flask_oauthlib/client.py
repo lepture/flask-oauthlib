@@ -462,11 +462,19 @@ class OAuthRemoteApp(object):
                 # oauthlib need unicode
                 scope = _encode(scope, self.encoding)
 
+            if 'state' in params:
+                state = params.pop('state')
+                if callable(state):
+                    state = state()
+            else:
+                state = None
+
             session['%s_oauthredir' % self.name] = callback
             url = client.prepare_request_uri(
                 self.expand_url(self.authorize_url),
                 redirect_uri=callback,
                 scope=scope,
+                state=state,
                 **params
             )
         return redirect(url)
