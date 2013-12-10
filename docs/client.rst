@@ -28,6 +28,19 @@ Find the OAuth2 client example at `github.py`_.
 
 .. _`github.py`: https://github.com/lepture/flask-oauthlib/blob/master/example/github.py
 
+.. versionadded:: 0.4.2
+
+Request state parameters in authorization can be a function::
+
+    from werkzeug import security
+
+    remote = oauth.remote_app(
+        request_token_params={
+            'state': lambda: security.gen_salt(10)
+        }
+    )
+
+
 .. _lazy-configuration:
 
 Lazy Configuration
