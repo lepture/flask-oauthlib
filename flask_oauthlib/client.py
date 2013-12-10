@@ -442,8 +442,10 @@ class OAuthRemoteApp(object):
         Returns a redirect response to the remote authorization URL with
         the signed callback given.
 
-        :param state: an optional value to embed in the OAuth request. Use this
-        if you want to pass around application state (e.g. CSRF tokens).
+        :param callback: a redirect url for the callback
+        :param state: an optional value to embed in the OAuth request.
+                      Use this if you want to pass around application
+                      state (e.g. CSRF tokens).
         """
         if self.request_token_url:
             token = self.generate_request_token(callback)[0]
@@ -466,11 +468,15 @@ class OAuthRemoteApp(object):
                 scope = _encode(scope, self.encoding)
 
             if 'state' in params:
-                state = params.pop('state')
-                if callable(state):
-                    state = state()
-            else:
-                state = None
+                if not state:
+                    state = params.pop('state')
+                else:
+                    # remove state in params
+                    params.pop('state')
+
+            if callable(state):
+                # state can be function for generate a random string
+                state = state()
 
             session['%s_oauthredir' % self.name] = callback
             url = client.prepare_request_uri(
