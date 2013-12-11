@@ -6,7 +6,7 @@
 Flask-OAuthlib
 ==============
 
-Flask-OAuthlib is desinged as a replacement for Flask-OAuth. It depends
+Flask-OAuthlib is designed as a replacement for Flask-OAuth. It depends
 on the oauthlib module.
 
 The client part of Flask-OAuthlib shares the same API as Flask-OAuth,
@@ -17,7 +17,7 @@ Features
 --------
 
 - Support for OAuth 1.0a, 1.0, 1.1, OAuth2 client
-- Friendly API (same with Flask-OAuth)
+- Friendly API (same as Flask-OAuth)
 - Direct integration with Flask
 - Basic support for remote method invocation of RESTful APIs
 - Support OAuth1 provider with HMAC and RSA signature
