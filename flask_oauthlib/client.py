@@ -16,6 +16,7 @@ from oauthlib.common import to_unicode, PY3, add_params_to_uri
 from flask import request, redirect, json, session, current_app
 from werkzeug import url_quote, url_decode, url_encode
 from werkzeug import parse_options_header, cached_property
+from .utils import to_bytes
 try:
     from urlparse import urljoin
     import urllib2 as http
@@ -433,7 +434,7 @@ class OAuthRemoteApp(object):
             uri, headers, body = self.pre_request(uri, headers, body)
 
         resp, content = self.http_request(
-            uri, headers, data=body, method=method
+            uri, headers, data=to_bytes(body, self.encoding), method=method
         )
         return OAuthResponse(resp, content, self.content_type)
 
@@ -550,7 +551,9 @@ class OAuthRemoteApp(object):
             _encode(self.access_token_method)
         )
 
-        resp, content = self.http_request(uri, headers, data)
+        resp, content = self.http_request(
+            uri, headers, to_bytes(data, self.encoding)
+        )
         data = parse_response(resp, content)
         if resp.code not in (200, 201):
             raise OAuthException(
@@ -574,7 +577,7 @@ class OAuthRemoteApp(object):
             body = client.prepare_request_body(**remote_args)
             resp, content = self.http_request(
                 self.expand_url(self.access_token_url),
-                data=body,
+                data=to_bytes(body, self.encoding),
                 method=self.access_token_method,
             )
         elif self.access_token_method == 'GET':
