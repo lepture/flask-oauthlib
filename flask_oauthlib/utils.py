@@ -19,12 +19,17 @@ def extract_params():
     return uri, http_method, body, headers
 
 
-def decode_base64(text):
-    """Decode base64 string."""
-    # make sure it is bytes
+def to_bytes(text, encoding='utf-8'):
+    """Make sure text is bytes type."""
     if not isinstance(text, bytes_type):
-        text = text.encode('utf-8')
-    return to_unicode(base64.b64decode(text), 'utf-8')
+        text = text.encode(encoding)
+    return text
+
+
+def decode_base64(text, encoding='utf-8'):
+    """Decode base64 string."""
+    text = to_bytes(text, encoding)
+    return to_unicode(base64.b64decode(text), encoding)
 
 
 def create_response(headers, body, status):
