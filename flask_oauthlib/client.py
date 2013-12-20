@@ -572,6 +572,8 @@ class OAuthRemoteApp(object):
         remote_args.update(self.access_token_params)
         if self.access_token_method == 'POST':
             body = client.prepare_request_body(**remote_args)
+            if PY3:
+                body = body.encode('utf-8')
             resp, content = self.http_request(
                 self.expand_url(self.access_token_url),
                 data=body,
