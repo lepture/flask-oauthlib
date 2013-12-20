@@ -21,6 +21,8 @@ def extract_params():
 
 def to_bytes(text, encoding='utf-8'):
     """Make sure text is bytes type."""
+    if not text:
+        return text
     if not isinstance(text, bytes_type):
         text = text.encode(encoding)
     return text
