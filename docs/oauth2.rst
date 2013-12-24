@@ -476,3 +476,11 @@ rename it to other names, for exmaple::
     def me(data):
         user = data.user
         return jsonify(email=user.email, username=user.username)
+
+
+Example for OAuth 2
+-------------------
+
+Here is an example of OAuth 2 server: https://github.com/lepture/example-oauth2-server
+
+Also read this article http://lepture.com/en/2013/create-oauth-server.

@@ -21,7 +21,6 @@ Like any other Flask extensions, we can pass the application later::
 
 To implemente the oauthorization flow, we need to understand the data model.
 
-
 User (Resource Owner)
 ---------------------
 
@@ -473,3 +472,11 @@ rename it to other names, for exmaple::
     def me(data):
         user = data.user
         return jsonify(email=user.email, username=user.username)
+
+
+Example for OAuth 1
+-------------------
+
+Here is an example of OAuth 1 server: https://github.com/lepture/example-oauth1-server
+
+Also read this article http://lepture.com/en/2013/create-oauth-server.
