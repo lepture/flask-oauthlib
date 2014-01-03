@@ -5,6 +5,18 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.4.2
+-------------
+
+Released on Jan 3, 2014
+
+Happy New Year!
+
+- Add param ``state`` in authorize method via `#63`_.
+- Bugfix for encoding error in Python 3 via `#65`_.
+
+.. _`#63`: https://github.com/lepture/flask-oauthlib/issues/63
+.. _`#65`: https://github.com/lepture/flask-oauthlib/issues/65
 
 Version 0.4.1
 -------------
