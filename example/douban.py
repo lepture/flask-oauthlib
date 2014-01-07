@@ -17,8 +17,6 @@ douban = oauth.remote_app(
     access_token_url='https://www.douban.com/service/auth2/token',
     authorize_url='https://www.douban.com/service/auth2/auth',
     access_token_method='POST',
-    # douban's API is a shit too!!!! we need to force parse the response
-    content_type='application/json',
 )
 
 
