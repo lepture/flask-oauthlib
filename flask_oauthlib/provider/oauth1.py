@@ -5,7 +5,7 @@
 
     Implemnts OAuth1 provider support for Flask.
 
-    :copyright: (c) 2013 by Hsiaoming Yang.
+    :copyright: (c) 2013 - 2014 by Hsiaoming Yang.
 """
 
 import logging

@@ -5,5 +5,5 @@
 
     Contributions for Flask OAuthlib.
 
-    :copyright: (c) 2013 by Hsiaoming Yang.
+    :copyright: (c) 2013 - 2014 by Hsiaoming Yang.
 """

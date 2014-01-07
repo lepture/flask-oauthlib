@@ -46,7 +46,7 @@ master_doc = 'index'
 project = u'Flask-OAuthlib'
 
 import datetime
-copyright = u'%i, <a href="http://lepture.com/">Hsiaoming Yang</a>' % datetime.datetime.utcnow().year
+copyright = u'2013 - %i, <a href="http://lepture.com/">Hsiaoming Yang</a>' % datetime.datetime.utcnow().year
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
