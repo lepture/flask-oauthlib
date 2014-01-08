@@ -151,6 +151,7 @@ class OAuth1Provider(object):
                 track_request(client)
         """
         self._before_request_funcs.append(f)
+        return f
 
     def after_request(self, f):
         """Register functions to be invoked after accessing the resource.
@@ -165,6 +166,7 @@ class OAuth1Provider(object):
                 return valid, oauth
         """
         self._after_request_funcs.append(f)
+        return f
 
     def clientgetter(self, f):
         """Register a function as the client getter.
@@ -190,6 +192,7 @@ class OAuth1Provider(object):
                 return client
         """
         self._clientgetter = f
+        return f
 
     def tokengetter(self, f):
         """Register a function as the access token getter.
@@ -210,6 +213,7 @@ class OAuth1Provider(object):
                 return AccessToken.get(client_key=client_key, token=token)
         """
         self._tokengetter = f
+        return f
 
     def tokensetter(self, f):
         """Register a function as the access token setter.
@@ -243,6 +247,7 @@ class OAuth1Provider(object):
             - request_token: Requst token for exchanging this access token
         """
         self._tokensetter = f
+        return f
 
     def grantgetter(self, f):
         """Register a function as the request token getter.
@@ -263,6 +268,7 @@ class OAuth1Provider(object):
                 return RequestToken.get(token=token)
         """
         self._grantgetter = f
+        return f
 
     def grantsetter(self, f):
         """Register a function as the request token setter.
@@ -281,6 +287,7 @@ class OAuth1Provider(object):
                 return data.save()
         """
         self._grantsetter = f
+        return f
 
     def noncegetter(self, f):
         """Register a function as the nonce and timestamp getter.
@@ -301,6 +308,7 @@ class OAuth1Provider(object):
                 return Nonce.get("...")
         """
         self._noncegetter = f
+        return f
 
     def noncesetter(self, f):
         """Register a function as the nonce and timestamp setter.
@@ -317,6 +325,7 @@ class OAuth1Provider(object):
         if you put timestamp and nonce object in a cache.
         """
         self._noncesetter = f
+        return f
 
     def verifiergetter(self, f):
         """Register a function as the verifier getter.
@@ -335,6 +344,7 @@ class OAuth1Provider(object):
                 return data
         """
         self._verifiergetter = f
+        return f
 
     def verifiersetter(self, f):
         """Register a function as the verifier setter.
@@ -356,6 +366,7 @@ class OAuth1Provider(object):
                 return data.save()
         """
         self._verifiersetter = f
+        return f
 
     def authorize_handler(self, f):
         """Authorization handler decorator.
