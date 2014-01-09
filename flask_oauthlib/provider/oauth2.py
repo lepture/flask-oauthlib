@@ -182,6 +182,7 @@ class OAuth2Provider(object):
                 track_request(client)
         """
         self._before_request_funcs.append(f)
+        return f
 
     def after_request(self, f):
         """Register functions to be invoked after accessing the resource.
@@ -196,6 +197,7 @@ class OAuth2Provider(object):
                 return valid, oauth
         """
         self._after_request_funcs.append(f)
+        return f
 
     def clientgetter(self, f):
         """Register a function as the client getter.
@@ -225,6 +227,7 @@ class OAuth2Provider(object):
                 return client
         """
         self._clientgetter = f
+        return f
 
     def usergetter(self, f):
         """Register a function as the user getter.
@@ -238,6 +241,7 @@ class OAuth2Provider(object):
                 return get_user_by_username(username, password)
         """
         self._usergetter = f
+        return f
 
     def tokengetter(self, f):
         """Register a function as the token getter.
@@ -264,6 +268,7 @@ class OAuth2Provider(object):
                 return None
         """
         self._tokengetter = f
+        return f
 
     def tokensetter(self, f):
         """Register a function to save the bearer token.
@@ -288,6 +293,7 @@ class OAuth2Provider(object):
         client object.
         """
         self._tokensetter = f
+        return f
 
     def grantgetter(self, f):
         """Register a function as the grant getter.
@@ -303,6 +309,7 @@ class OAuth2Provider(object):
             - delete: A function to delete itself
         """
         self._grantgetter = f
+        return f
 
     def grantsetter(self, f):
         """Register a function to save the grant code.
@@ -314,6 +321,7 @@ class OAuth2Provider(object):
                 save_grant(client_id, code, request.user, request.scopes)
         """
         self._grantsetter = f
+        return f
 
     def authorize_handler(self, f):
         """Authorization handler decorator.
