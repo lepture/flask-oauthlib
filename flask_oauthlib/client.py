@@ -115,6 +115,8 @@ def parse_response(resp, content, strict=False, content_type=None):
     ct, options = parse_options_header(content_type)
 
     if ct in ('application/json', 'text/javascript'):
+        if content == '':
+            return ''
         return json.loads(content)
 
     if ct in ('application/xml', 'text/xml'):
