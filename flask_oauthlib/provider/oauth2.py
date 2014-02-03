@@ -775,7 +775,7 @@ class OAuth2RequestValidator(RequestValidator):
             return True
         if hasattr(client, 'validate_scopes'):
             return client.validate_scopes(scopes)
-        return True
+        return False
 
     def validate_user(self, username, password, client, request,
                       *args, **kwargs):
