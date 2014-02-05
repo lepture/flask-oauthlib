@@ -29,7 +29,7 @@ class Client(db.Model):
                               nullable=False)
     client_type = db.Column(db.String(20), default='public')
     _redirect_uris = db.Column(db.Text)
-    default_scope = db.Column(db.Text)
+    default_scope = db.Column(db.Text, default='email address')
 
     @property
     def user(self):
