@@ -763,11 +763,9 @@ class OAuth2RequestValidator(RequestValidator):
     def validate_scopes(self, client_id, scopes, client, request,
                         *args, **kwargs):
         """Ensure the client is authorized access to requested scopes."""
-        if set(client.default_scopes).issuperset(set(scopes)):
-            return True
         if hasattr(client, 'validate_scopes'):
             return client.validate_scopes(scopes)
-        return True
+        return set(client.default_scopes).issuperset(set(scopes))
 
     def validate_user(self, username, password, client, request,
                       *args, **kwargs):
