@@ -5,6 +5,18 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.4.3
+-------------
+
+Release date to be decided.
+
+- OAuthlib released 0.6.1, which caused a bug in oauth2 provider.
+- Validation for scopes on oauth2 right via `#72`_.
+- Handle empty response for application/json via `#69`_.
+
+.. _`#69`: https://github.com/lepture/flask-oauthlib/issues/69
+.. _`#72`: https://github.com/lepture/flask-oauthlib/issues/72
+
 Version 0.4.2
 -------------
 
