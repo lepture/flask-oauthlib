@@ -463,6 +463,9 @@ class OAuth2RequestValidator(RequestValidator):
         self._grantgetter = grantgetter
         self._grantsetter = grantsetter
 
+    def client_authentication_required(self, request, *args, **kwargs):
+        return request.grant_type in ('password', 'refresh_token')
+
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
 
