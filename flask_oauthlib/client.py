@@ -440,7 +440,7 @@ class OAuthRemoteApp(object):
         )
         return OAuthResponse(resp, content, self.content_type)
 
-    def authorize(self, callback=None, state=None):
+    def authorize(self, callback=None, state=None, **kwargs):
         """
         Returns a redirect response to the remote authorization URL with
         the signed callback given.
@@ -449,6 +449,7 @@ class OAuthRemoteApp(object):
         :param state: an optional value to embed in the OAuth request.
                       Use this if you want to pass around application
                       state (e.g. CSRF tokens).
+		:param kwargs: add optional key/value pairs to the query string
         """
         if self.request_token_url:
             token = self.generate_request_token(callback)[0]
@@ -459,6 +460,8 @@ class OAuthRemoteApp(object):
             assert callback is not None, 'Callback is required OAuth2'
 
             params = dict(self.request_token_params) or {}
+            params.update(**kwargs)
+
             client = self.make_client()
 
             if 'scope' in params:
