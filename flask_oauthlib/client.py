@@ -449,7 +449,7 @@ class OAuthRemoteApp(object):
         :param state: an optional value to embed in the OAuth request.
                       Use this if you want to pass around application
                       state (e.g. CSRF tokens).
-		:param kwargs: add optional key/value pairs to the query string
+        :param kwargs: add optional key/value pairs to the query string
         """
         if self.request_token_url:
             token = self.generate_request_token(callback)[0]
