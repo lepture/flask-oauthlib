@@ -518,12 +518,6 @@ class OAuth2RequestValidator(RequestValidator):
 
         # attach client on request for convenience
         request.client = client
-
-        # authenticate non-confidential client_type only
-        # most of the clients are of public client_type
-        if client.client_type == 'confidential':
-            log.debug('Authenticate client failed, confidential client.')
-            return False
         return True
 
     def confirm_redirect_uri(self, client_id, code, redirect_uri, client,
