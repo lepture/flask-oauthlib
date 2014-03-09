@@ -557,7 +557,8 @@ class OAuthRemoteApp(object):
         )
 
         resp, content = self.http_request(
-            uri, headers, to_bytes(data, self.encoding)
+            uri, headers, to_bytes(data, self.encoding),
+            method=self.access_token_method
         )
         data = parse_response(resp, content)
         if resp.code not in (200, 201):
