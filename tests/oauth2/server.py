@@ -51,6 +51,11 @@ class Client(db.Model):
             return self.default_scope.split()
         return []
 
+    @property
+    def allowed_grant_types(self):
+        return ['authorization_code', 'password', 'client_credentials',
+                'refresh_token']
+
 
 class Grant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
