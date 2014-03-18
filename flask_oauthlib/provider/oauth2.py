@@ -701,20 +701,23 @@ class OAuth2RequestValidator(RequestValidator):
             log.debug('Password credential authorization is disabled.')
             return False
 
-        if grant_type not in ('authorization_code', 'password',
-                              'client_credentials', 'refresh_token'):
+        default_grant_types = (
+            'authorization_code', 'password',
+            'client_credentials', 'refresh_token',
+        )
+
+        if grant_type not in default_grant_types:
             return False
 
-        if (hasattr(client, 'allowed_grant_types') and
-                grant_type not in client.allowed_grant_types):
+        if hasattr(client, 'allowed_grant_types') and \
+           grant_type not in client.allowed_grant_types:
             return False
 
         if grant_type == 'client_credentials':
-            if hasattr(client, 'user'):
-                request.user = client.user
-            else:
+            if not hasattr(client, 'user'):
                 log.debug('Client should have a user property')
                 return False
+            request.user = client.user
 
         return True
 
