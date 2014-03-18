@@ -705,15 +705,16 @@ class OAuth2RequestValidator(RequestValidator):
                               'client_credentials', 'refresh_token'):
             return False
 
-        if hasattr(client, 'allowed_grant_types'):
-            return grant_type in client.allowed_grant_types
+        if (hasattr(client, 'allowed_grant_types') and
+                grant_type not in client.allowed_grant_types):
+            return False
 
         if grant_type == 'client_credentials':
             if hasattr(client, 'user'):
                 request.user = client.user
-                return True
-            log.debug('Client should has a user property')
-            return False
+            else:
+                log.debug('Client should have a user property')
+                return False
 
         return True
 
