@@ -65,8 +65,8 @@ class OAuth2Provider(object):
 
         @app.route('/api/user')
         @oauth.require_oauth('email', 'username')
-        def user(oauth):
-            return jsonify(oauth.user)
+        def user():
+            return jsonify(request.oauth.user)
     """
 
     def __init__(self, app=None):
@@ -440,7 +440,8 @@ class OAuth2Provider(object):
 
                 if not valid:
                     return abort(403)
-                return f(*((req,) + args), **kwargs)
+                request.oauth = req
+                return f(*args, **kwargs)
             return decorated
         return wrapper
 

@@ -257,22 +257,25 @@ def create_server(app, oauth):
 
     @app.route('/api/email')
     @oauth.require_oauth('email')
-    def email_api(oauth):
+    def email_api():
+        oauth = request.oauth
         return jsonify(email='me@oauth.net', username=oauth.user.username)
 
     @app.route('/api/client')
     @oauth.require_oauth()
-    def client_api(oauth):
+    def client_api():
+        oauth = request.oauth
         return jsonify(client=oauth.client.name)
 
     @app.route('/api/address/<city>')
     @oauth.require_oauth('address')
-    def address_api(oauth, city):
+    def address_api(city):
+        oauth = request.oauth
         return jsonify(address=city, username=oauth.user.username)
 
     @app.route('/api/method', methods=['GET', 'POST', 'PUT', 'DELETE'])
     @oauth.require_oauth()
-    def method_api(oauth):
+    def method_api():
         return jsonify(method=request.method)
 
     return app
