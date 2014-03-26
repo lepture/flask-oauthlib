@@ -491,6 +491,9 @@ class OAuth1Provider(object):
                 for func in self._before_request_funcs:
                     func()
 
+                if hasattr(request, 'oauth') and request.oauth:
+                    return f(*args, **kwargs)
+
                 server = self.server
                 uri, http_method, body, headers = extract_params()
                 valid, req = server.validate_protected_resource_request(
