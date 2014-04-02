@@ -1,5 +1,5 @@
 from flask import Flask, redirect, url_for, session, request
-from flask_oauthlib.client import OAuth
+from flask_oauthlib.client import OAuth, OAuthException
 
 
 FACEBOOK_APP_ID = '188477911223606'
@@ -30,9 +30,12 @@ def index():
 
 @app.route('/login')
 def login():
-    return facebook.authorize(callback=url_for('facebook_authorized',
+    callback = url_for(
+        'facebook_authorized',
         next=request.args.get('next') or request.referrer or None,
-        _external=True))
+        _external=True
+    )
+    return facebook.authorize(callback=callback)
 
 
 @app.route('/login/authorized')
@@ -43,6 +46,9 @@ def facebook_authorized(resp):
             request.args['error_reason'],
             request.args['error_description']
         )
+    if isinstance(resp, OAuthException):
+        return 'Access denied: %s' % resp.message
+
     session['oauth_token'] = (resp['access_token'], '')
     me = facebook.get('/me')
     return 'Logged in as id=%s name=%s redirect=%s' % \
