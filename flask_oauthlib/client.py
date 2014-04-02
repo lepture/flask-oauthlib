@@ -550,6 +550,11 @@ class OAuthRemoteApp(object):
         client = self.make_client()
         client.verifier = request.args.get('oauth_verifier')
         tup = session.get('%s_oauthtok' % self.name)
+        if not tup:
+            raise OAuthException(
+                'Token not found, maybe you disabled cookie',
+                type='token_not_found'
+            )
         client.resource_owner_key = tup[0]
         client.resource_owner_secret = tup[1]
 
