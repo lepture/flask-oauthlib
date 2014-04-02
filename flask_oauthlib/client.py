@@ -451,16 +451,18 @@ class OAuthRemoteApp(object):
                       state (e.g. CSRF tokens).
         :param kwargs: add optional key/value pairs to the query string
         """
+        params = dict(self.request_token_params) or {}
+        params.update(**kwargs)
+
         if self.request_token_url:
             token = self.generate_request_token(callback)[0]
             url = '%s?oauth_token=%s' % (
                 self.expand_url(self.authorize_url), url_quote(token)
             )
+            if params:
+                url += '&' + url_encode(params)
         else:
             assert callback is not None, 'Callback is required OAuth2'
-
-            params = dict(self.request_token_params) or {}
-            params.update(**kwargs)
 
             client = self.make_client()
 
