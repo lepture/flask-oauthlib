@@ -516,6 +516,10 @@ class OAuth2RequestValidator(RequestValidator):
             log.debug('Authenticate failed, client not found.')
             return False
 
+        if client.client_secret != request.client_secret:
+            log.debug('Authenticate client failed, secret not match.')
+            return False
+
         # attach client on request for convenience
         request.client = client
         return True
