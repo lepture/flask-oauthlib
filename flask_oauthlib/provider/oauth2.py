@@ -464,7 +464,24 @@ class OAuth2RequestValidator(RequestValidator):
         self._grantsetter = grantsetter
 
     def client_authentication_required(self, request, *args, **kwargs):
-        return request.grant_type in ('password', 'refresh_token')
+        """Determine if client authentication is required for current request.
+
+        According to the rfc6749, client authentication is required in the
+        following cases:
+
+        Resource Owner Password Credentials Grant: see `Section 4.3.2`_.
+        Authorization Code Grant: see `Section 4.1.3`_.
+        Refresh Token Grant: see `Section 6`_.
+
+        .. _`Section 4.3.2`: http://tools.ietf.org/html/rfc6749#section-4.3.2
+        .. _`Section 4.1.3`: http://tools.ietf.org/html/rfc6749#section-4.1.3
+        .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
+        """
+        if request.grant_type == 'password':
+            return True
+        auth_required = ('authorization_code', 'refresh_token')
+        return 'Authorization' in request.headers and\
+                request.grant_type in auth_required
 
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
@@ -494,6 +511,7 @@ class OAuth2RequestValidator(RequestValidator):
             return False
 
         request.client = client
+
         if client.client_secret != client_secret:
             log.debug('Authenticate client failed, secret not match.')
             return False
@@ -533,9 +551,10 @@ class OAuth2RequestValidator(RequestValidator):
         add a `validate_redirect_uri` function on grant for a customized
         validation.
         """
+        client = client or self._clientgetter(client_id)
         log.debug('Confirm redirect uri for client %r and code %r.',
-                  client_id, code)
-        grant = self._grantgetter(client_id=client_id, code=code)
+                  client.client_id, code)
+        grant = self._grantgetter(client_id=client.client_id, code=code)
         if not grant:
             log.debug('Grant not found.')
             return False
@@ -672,10 +691,11 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_code(self, client_id, code, client, request, *args, **kwargs):
         """Ensure the grant code is valid."""
+        client = client or self._clientgetter(client_id)
         log.debug(
-            'Validate code for client %r and code %r', client_id, code
+            'Validate code for client %r and code %r', client.client_id, code
         )
-        grant = self._grantgetter(client_id=client_id, code=code)
+        grant = self._grantgetter(client_id=client.client_id, code=code)
         if not grant:
             log.debug('Grant not found.')
             return False

@@ -217,10 +217,17 @@ def prepare_app(app):
 
     user = User(username='admin')
 
+    temp_grant = Grant(
+        user_id=1, client_id='confidential',
+        code='12345', scope='email',
+        expires=datetime.utcnow() + timedelta(seconds=100)
+    )
+
     try:
         db.session.add(client1)
         db.session.add(client2)
         db.session.add(user)
+        db.session.add(temp_grant)
         db.session.commit()
     except:
         db.session.rollback()
