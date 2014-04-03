@@ -297,3 +297,33 @@ class TestTokenGenerator(OAuthSuite):
         data = json.loads(u(rv.data))
         assert data['access_token'] == 'foobar'
         assert data['refresh_token'] == 'foobar'
+
+
+class TestConfidentialClient(OAuthSuite):
+
+    def create_oauth_provider(self, app):
+        return default_provider(app)
+
+    def test_get_access_token(self):
+        url = ('/oauth/token?grant_type=authorization_code&code=12345'
+               '&scope=email')
+        rv = self.client.get(url, headers={
+            'Authorization': 'Basic %s' % auth_code
+        }, data={'confirm': 'yes'})
+        assert b'access_token' in rv.data
+
+    def test_invalid_grant(self):
+        url = ('/oauth/token?grant_type=authorization_code&code=54321'
+               '&scope=email')
+        rv = self.client.get(url, headers={
+            'Authorization': 'Basic %s' % auth_code
+        }, data={'confirm': 'yes'})
+        assert b'invalid_grant' in rv.data
+
+    def test_invalid_client(self):
+        url = ('/oauth/token?grant_type=authorization_code&code=12345'
+               '&scope=email')
+        rv = self.client.get(url, headers={
+            'Authorization': 'Basic %s' % ('foo')
+        }, data={'confirm': 'yes'})
+        assert b'invalid_client' in rv.data
