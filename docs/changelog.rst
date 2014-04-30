@@ -5,6 +5,11 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.5.0
+-------------
+
+Release date to be decided.
+
 Version 0.4.3
 -------------
 
