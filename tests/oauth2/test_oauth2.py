@@ -106,7 +106,7 @@ class TestWebAuth(OAuthSuite):
         assert b'username' in rv.data
 
         rv = self.client.get('/address')
-        assert rv.status_code == 403
+        assert rv.status_code == 401
 
         rv = self.client.get('/method/post')
         assert b'POST' in rv.data
