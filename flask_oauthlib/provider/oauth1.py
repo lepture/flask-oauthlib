@@ -504,7 +504,7 @@ class OAuth1Provider(object):
                     valid, req = func(valid, req)
 
                 if not valid:
-                    return abort(403)
+                    return abort(401)
                 # alias user for convenience
                 req.user = req.access_token.user
                 request.oauth = req

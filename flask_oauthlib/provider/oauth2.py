@@ -442,7 +442,7 @@ class OAuth2Provider(object):
                     valid, req = func(valid, req)
 
                 if not valid:
-                    return abort(403)
+                    return abort(401)
                 request.oauth = req
                 return f(*args, **kwargs)
             return decorated
