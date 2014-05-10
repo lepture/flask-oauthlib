@@ -2,7 +2,7 @@ import unittest
 
 from flask import Flask
 from flask_oauthlib.client import OAuth
-from flask_oauthlib.contrib.apps import douban
+from flask_oauthlib.contrib.apps import douban, linkedin
 from nose.tools import assert_raises
 
 
@@ -37,3 +37,18 @@ class RemoteAppFactorySuite(unittest.TestCase):
             c2.consumer_key
         self.app.config['DOUDOU_CONSUMER_KEY'] = 'douban2 key'
         assert c2.consumer_key == 'douban2 key'
+
+    def test_linkedin(self):
+        c1 = linkedin.create(self.oauth)
+        assert c1.name == 'linkedin'
+        assert c1.request_token_params == {
+            'state': 'RandomString',
+            'scope': 'r_basicprofile',
+        }
+
+        c2 = linkedin.register_to(self.oauth, name='l2', scope=['c', 'd'])
+        assert c2.name == 'l2'
+        assert c2.request_token_params == {
+            'state': 'RandomString',
+            'scope': 'c,d',
+        }, c2.request_token_params
