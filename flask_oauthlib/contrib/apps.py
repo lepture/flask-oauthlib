@@ -1,4 +1,34 @@
+"""
+    flask_oauthlib.contrib.apps
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    The bundle of remote app factories for famous third platforms.
+
+    Usage::
+
+        from flask import Flask
+        from flask_oauthlib.client import OAuth
+        from flask_oauthlib.contrib.apps import twitter
+
+        app = Flask(__name__)
+        oauth = OAuth(app)
+
+        twitter.register_to(oauth, scope=['myscope'])
+        twitter.register_to(oauth, name='twitter2')
+
+    Of course, it requires consumer keys in your config::
+
+        TWITTER_CONSUMER_KEY = ''
+        TWITTER_CONSUMER_SECRET = ''
+        TWITTER2_CONSUMER_KEY = ''
+        TWITTER2_CONSUMER_SECRET = ''
+"""
+
 import copy
+
+
+__all__ = ['douban', 'dropbox', 'facebook', 'github', 'google', 'linkedin',
+           'twitter', 'weibo']
 
 
 class RemoteAppFactory(object):
@@ -67,7 +97,7 @@ douban = RemoteAppFactory('douban', {
 }, """
 The OAuth app for douban.com API.
 
-:param scope: optional. default: ['douban_basic_common'].
+:param scope: optional. default: ``['douban_basic_common']``.
               see also: http://developers.douban.com/wiki/?title=oauth2
 """)
 douban.kwargs_processor(make_scope_processor('douban_basic_common'))
@@ -92,7 +122,7 @@ facebook = RemoteAppFactory('facebook', {
 }, """
 The OAuth app for Facebook API.
 
-:param scope: optional. default: ['email'].
+:param scope: optional. default: ``['email']``.
 """)
 facebook.kwargs_processor(make_scope_processor('email'))
 
@@ -106,7 +136,7 @@ github = RemoteAppFactory('github', {
 }, """
 The OAuth app for GitHub API.
 
-:param scope: optional. default: ['user:email'].
+:param scope: optional. default: ``['user:email']``.
 """)
 github.kwargs_processor(make_scope_processor('user:email'))
 
@@ -121,7 +151,7 @@ google = RemoteAppFactory('google', {
 The OAuth app for Google API.
 
 :param scope: optional.
-              default: ['https://www.googleapis.com/auth/userinfo.email'].
+              default: ``['https://www.googleapis.com/auth/userinfo.email']``.
 """)
 google.kwargs_processor(make_scope_processor(
     'https://www.googleapis.com/auth/userinfo.email'))
@@ -146,7 +176,7 @@ weibo = RemoteAppFactory('weibo', {
 }, """
 The OAuth app for weibo.com API.
 
-:param scope: optional. default: ['email']
+:param scope: optional. default: ``['email']``
 """)
 weibo.kwargs_processor(make_scope_processor('email'))
 
@@ -161,6 +191,6 @@ linkedin = RemoteAppFactory('linkedin', {
 }, """
 The OAuth app for LinkedIn API.
 
-:param scope: optional. default: ['r_basicprofile']
+:param scope: optional. default: ``['r_basicprofile']``
 """)
 linkedin.kwargs_processor(make_scope_processor('r_basicprofile'))
