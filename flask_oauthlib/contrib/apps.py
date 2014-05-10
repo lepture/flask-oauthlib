@@ -26,6 +26,8 @@
 
 import copy
 
+from oauthlib.common import unicode_type, bytes_type
+
 
 __all__ = ['douban', 'dropbox', 'facebook', 'github', 'google', 'linkedin',
            'twitter', 'weibo']
@@ -80,7 +82,7 @@ def make_scope_processor(default_scope):
     def processor(**kwargs):
         # request_token_params
         scope = kwargs.pop('scope', [default_scope])  # default scope
-        if not isinstance(scope, basestring):
+        if not isinstance(scope, (unicode_type, bytes_type)):
             scope = ','.join(scope)  # allows list-style scope
         request_token_params = kwargs.setdefault('request_token_params', {})
         request_token_params.setdefault('scope', scope)  # doesn't override
