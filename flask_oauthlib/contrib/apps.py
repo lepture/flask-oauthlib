@@ -1,3 +1,6 @@
+import copy
+
+
 class RemoteAppFactory(object):
     """The factory to create remote app and bind it to given extension.
 
@@ -32,9 +35,9 @@ class RemoteAppFactory(object):
         return fn
 
     def _process_kwargs(self, **kwargs):
-        final_kwargs = dict(self.kwargs)
+        final_kwargs = copy.deepcopy(self.kwargs)
         # merges with pre-defined kwargs
-        final_kwargs.update(kwargs)
+        final_kwargs.update(copy.deepcopy(kwargs))
         # use name as app key
         final_kwargs.setdefault('app_key', final_kwargs['name'].upper())
         # processes by pre-defined function
