@@ -56,3 +56,15 @@ Here are APIs provided by contributors.
 .. autofunction:: bind_sqlalchemy
 
 .. autofunction:: bind_cache_grant
+
+
+.. automodule:: flask_oauthlib.contrib.apps
+
+   .. autofunction:: douban
+   .. autofunction:: dropbox
+   .. autofunction:: facebook
+   .. autofunction:: github
+   .. autofunction:: google
+   .. autofunction:: linkedin
+   .. autofunction:: twitter
+   .. autofunction:: weibo
