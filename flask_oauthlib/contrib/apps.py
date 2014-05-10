@@ -106,3 +106,58 @@ The OAuth app for GitHub API.
 :param scope: optional. default: ['user:email'].
 """)
 github.kwargs_processor(make_scope_processor('user:email'))
+
+
+google = RemoteAppFactory('google', {
+    'base_url': 'https://www.googleapis.com/oauth2/v1/',
+    'request_token_url': None,
+    'access_token_method': 'POST',
+    'access_token_url': 'https://accounts.google.com/o/oauth2/token',
+    'authorize_url': 'https://accounts.google.com/o/oauth2/auth',
+}, """
+The OAuth app for Google API.
+
+:param scope: optional.
+              default: ['https://www.googleapis.com/auth/userinfo.email'].
+""")
+google.kwargs_processor(make_scope_processor(
+    'https://www.googleapis.com/auth/userinfo.email'))
+
+
+twitter = RemoteAppFactory('twitter', {
+    'base_url': 'https://api.twitter.com/1.1/',
+    'request_token_url': 'https://api.twitter.com/oauth/request_token',
+    'access_token_url': 'https://api.twitter.com/oauth/access_token',
+    'authorize_url': 'https://api.twitter.com/oauth/authenticate',
+}, """The OAuth app for Twitter API.""")
+
+
+weibo = RemoteAppFactory('weibo', {
+    'base_url': 'https://api.weibo.com/2/',
+    'authorize_url': 'https://api.weibo.com/oauth2/authorize',
+    'request_token_url': None,
+    'access_token_method': 'POST',
+    'access_token_url': 'https://api.weibo.com/oauth2/access_token',
+    # since weibo's response is a shit, we need to force parse the content
+    'content_type': 'application/json',
+}, """
+The OAuth app for weibo.com API.
+
+:param scope: optional. default: ['email']
+""")
+weibo.kwargs_processor(make_scope_processor('email'))
+
+
+linkedin = RemoteAppFactory('linkedin', {
+    'request_token_params': {'state': 'RandomString'},
+    'base_url': 'https://api.linkedin.com/v1/',
+    'request_token_url': None,
+    'access_token_method': 'POST',
+    'access_token_url': 'https://www.linkedin.com/uas/oauth2/accessToken',
+    'authorize_url': 'https://www.linkedin.com/uas/oauth2/authorization',
+}, """
+The OAuth app for LinkedIn API.
+
+:param scope: optional. default: ['r_basicprofile']
+""")
+linkedin.kwargs_processor(make_scope_processor('r_basicprofile'))
