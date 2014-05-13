@@ -8,7 +8,50 @@ Here you can see the full list of changes between each Flask-OAuthlib release.
 Version 0.5.0
 -------------
 
-Release date to be decided.
+Released on May 13, 2014
+
+- Add ``contrib.apps`` module, thanks for tonyseek via `#94`_.
+- Status code changed to 401 for invalid access token via `#93`_.
+- **Security bug** for access token via `#92`_.
+- Fix for client part, request token params for OAuth1 via `#91`_.
+- **API change** for ``oauth.require_oauth`` via `#89`_.
+- Fix for OAuth2 provider, support client authentication for authorization-code grant type via `#86`_.
+- Fix client_credentials logic in validate_grant_type via `#85`_.
+- Fix for client part, pass access token method via `#83`_.
+- Fix for OAuth2 provider related to confidential client via `#82`_.
+
+Upgrade From 0.4.x to 0.5.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+API for OAuth providers ``oauth.require_oauth`` has changed.
+
+Before the change, you would write code like::
+
+    @app.route('/api/user')
+    @oauth.require_oauth('email'):
+    def user(req):
+        return jsonify(req.user)
+
+After the change, you would write code like::
+
+    from flask import request
+
+    @app.route('/api/user')
+    @oauth.require_oauth('email'):
+    def user():
+        return jsonify(request.oauth.user)
+
+.. _`#94`: https://github.com/lepture/flask-oauthlib/pull/94
+.. _`#93`: https://github.com/lepture/flask-oauthlib/issues/93
+.. _`#92`: https://github.com/lepture/flask-oauthlib/issues/92
+.. _`#91`: https://github.com/lepture/flask-oauthlib/issues/91
+.. _`#89`: https://github.com/lepture/flask-oauthlib/issues/89
+.. _`#86`: https://github.com/lepture/flask-oauthlib/pull/86
+.. _`#85`: https://github.com/lepture/flask-oauthlib/pull/85
+.. _`#83`: https://github.com/lepture/flask-oauthlib/pull/83
+.. _`#82`: https://github.com/lepture/flask-oauthlib/issues/82
+
+Thanks Stian Prestholdt and Jiangge Zhang.
 
 Version 0.4.3
 -------------
