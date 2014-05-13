@@ -22,6 +22,8 @@
         TWITTER_CONSUMER_SECRET = ''
         TWITTER2_CONSUMER_KEY = ''
         TWITTER2_CONSUMER_SECRET = ''
+
+    Contributed by: tonyseek
 """
 
 import copy
