@@ -28,7 +28,7 @@ API for OAuth providers ``oauth.require_oauth`` has changed.
 Before the change, you would write code like::
 
     @app.route('/api/user')
-    @oauth.require_oauth('email'):
+    @oauth.require_oauth('email')
     def user(req):
         return jsonify(req.user)
 
@@ -37,7 +37,7 @@ After the change, you would write code like::
     from flask import request
 
     @app.route('/api/user')
-    @oauth.require_oauth('email'):
+    @oauth.require_oauth('email')
     def user():
         return jsonify(request.oauth.user)
 
