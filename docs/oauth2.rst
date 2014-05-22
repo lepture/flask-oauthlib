@@ -68,7 +68,7 @@ An example of the data model in SQLAlchemy (SQLAlchemy is not required)::
         # creator of the client, not required
         user_id = db.Column(db.ForeignKey('user.id'))
         # required if you need to support client credential
-        user = relationship('User')
+        user = db.relationship('User')
 
         client_id = db.Column(db.String(40), primary_key=True)
         client_secret = db.Column(db.String(55), unique=True, index=True,
@@ -128,13 +128,13 @@ Also in SQLAlchemy model (would be better if it is in a cache)::
         user_id = db.Column(
             db.Integer, db.ForeignKey('user.id', ondelete='CASCADE')
         )
-        user = relationship('User')
+        user = db.relationship('User')
 
         client_id = db.Column(
             db.String(40), db.ForeignKey('client.client_id'),
             nullable=False,
         )
-        client = relationship('Client')
+        client = db.relationship('Client')
 
         code = db.Column(db.String(255), index=True, nullable=False)
 
@@ -178,12 +178,12 @@ An example of the data model in SQLAlchemy::
             db.String(40), db.ForeignKey('client.client_id'),
             nullable=False,
         )
-        client = relationship('Client')
+        client = db.relationship('Client')
 
         user_id = db.Column(
             db.Integer, db.ForeignKey('user.id')
         )
-        user = relationship('User')
+        user = db.relationship('User')
 
         # currently only bearer is supported
         token_type = db.Column(db.String(40))
