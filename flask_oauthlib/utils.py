@@ -38,7 +38,7 @@ def create_response(headers, body, status):
     """Create response class for Flask."""
     response = Response(body or '')
     for k, v in headers.items():
-        response.headers[k] = v
+        response.headers[str(k)] = v
 
     response.status_code = status
     return response
