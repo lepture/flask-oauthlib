@@ -442,36 +442,28 @@ Protect the resource of a user with ``require_oauth`` decorator now::
 
     @app.route('/api/me')
     @oauth.require_oauth('email')
-    def me(request):
-        user = request.user
+    def me():
+        user = request.oauth.user
         return jsonify(email=user.email, username=user.username)
 
     @app.route('/api/user/<username>')
     @oauth.require_oauth('email')
-    def user(request, username):
+    def user(username):
         user = User.query.filter_by(username=username).first()
         return jsonify(email=user.email, username=user.username)
 
 The decorator accepts a list of realms, only the clients with the given realms
 can access the defined resources.
 
-The handlers accepts an extended parameter ``request``, as we have explained
-above, it contains at least:
+.. versionchanged:: 0.5.0
+
+The ``request`` has an additional property ``oauth``, it contains at least:
 
 - client: client model object
 - realms: a list of scopes
 - user: user model object
 - headers: headers of the request
 - body: body content of the request
-
-You may find the name confused, since Flask has a ``request`` model, you can
-rename it to other names, for exmaple::
-
-    @app.route('/api/me')
-    @oauth.require_oauth('email', 'username')
-    def me(data):
-        user = data.user
-        return jsonify(email=user.email, username=user.username)
 
 
 Example for OAuth 1
