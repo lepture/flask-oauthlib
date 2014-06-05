@@ -185,6 +185,18 @@ The OAuth app for weibo.com API.
 weibo.kwargs_processor(make_scope_processor('email'))
 
 
+def change_weibo_header(uri, headers, body):
+    """Since weibo is a rubbish server, it does not follow the standard,
+    we need to change the authorization header for it."""
+    auth = headers.get('Authorization')
+    if auth:
+        auth = auth.replace('Bearer', 'OAuth2')
+        headers['Authorization'] = auth
+    return uri, headers, body
+
+weibo.pre_request = change_weibo_header
+
+
 linkedin = RemoteAppFactory('linkedin', {
     'request_token_params': {'state': 'RandomString'},
     'base_url': 'https://api.linkedin.com/v1/',
@@ -198,3 +210,17 @@ The OAuth app for LinkedIn API.
 :param scope: optional. default: ``['r_basicprofile']``
 """)
 linkedin.kwargs_processor(make_scope_processor('r_basicprofile'))
+
+
+def change_linkedin_query(uri, headers, body):
+    auth = headers.pop('Authorization')
+    headers['x-li-format'] = 'json'
+    if auth:
+        auth = auth.replace('Bearer', '').strip()
+        if '?' in uri:
+            uri += '&oauth2_access_token=' + auth
+        else:
+            uri += '?oauth2_access_token=' + auth
+    return uri, headers, body
+
+linkedin.pre_request = change_linkedin_query
