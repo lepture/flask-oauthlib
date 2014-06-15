@@ -3,7 +3,7 @@
 OAuth2 Server
 =============
 
-An OAuth2 server concerns how to grant the auothorization and how to protect
+An OAuth2 server concerns how to grant the authorization and how to protect
 the resource. Register an **OAuth** provider::
 
     from flask_oauthlib.provider import OAuth2Provider
@@ -20,12 +20,12 @@ Like any other Flask extensions, we can pass the application later::
         oauth.init_app(app)
         return app
 
-To implemente the oauthorization flow, we need to understand the data model.
+To implement the authorization flow, we need to understand the data model.
 
 User (Resource Owner)
 ---------------------
 
-A user, or resource owner, is usally the registered user on your site. You
+A user, or resource owner, is usually the registered user on your site. You
 design your own user model, there is not much to say.
 
 Client (Application)
