@@ -72,6 +72,7 @@ class OAuth2Provider(object):
     def __init__(self, app=None):
         self._before_request_funcs = []
         self._after_request_funcs = []
+        self._aborter = abort
         if app:
             self.init_app(app)
 
@@ -162,6 +163,21 @@ class OAuth2Provider(object):
                 token_generator=token_generator,
             )
         raise RuntimeError('application not bound to required getters')
+
+    def aborter(self, f):
+        """Register function to be used instead of a direct call to 
+        abort to raise an error. The function takes a single int argument
+        representing the HTTP error code. Currently the only code used is
+        401 for signalling permission denied. One possible use is to raise
+        a custom exception for us in an API::
+
+            @oauth.aborter
+            def my_abort(status_code):
+                raise MyException(status_code)
+
+        """
+        self._aborter = f
+        return f
 
     def before_request(self, f):
         """Register functions to be invoked before accessing the resource.
@@ -442,7 +458,7 @@ class OAuth2Provider(object):
                     valid, req = func(valid, req)
 
                 if not valid:
-                    return abort(401)
+                    return self._aborter(401)
                 request.oauth = req
                 return f(*args, **kwargs)
             return decorated
