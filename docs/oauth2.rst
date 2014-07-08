@@ -275,7 +275,7 @@ information:
 - client: client model object
 - scopes: a list of scopes
 - user: user model object
-- redirect_uri: rediret_uri parameter
+- redirect_uri: redirect_uri parameter
 - headers: headers of the request
 - body: body content of the request
 - state: state parameter
@@ -463,7 +463,7 @@ The ``request`` has an additional property ``oauth``, it contains at least:
 - client: client model object
 - scopes: a list of scopes
 - user: user model object
-- redirect_uri: rediret_uri parameter
+- redirect_uri: redirect_uri parameter
 - headers: headers of the request
 - body: body content of the request
 - state: state parameter
