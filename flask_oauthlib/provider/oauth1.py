@@ -56,6 +56,7 @@ class OAuth1Provider(object):
     def __init__(self, app=None):
         self._before_request_funcs = []
         self._after_request_funcs = []
+        self._aborter = abort
         if app:
             self.init_app(app)
 
@@ -132,6 +133,21 @@ class OAuth1Provider(object):
             'application not bound to required getters and setters'
         )
 
+    def aborter(self, f):
+        """Register function to be used instead of a direct call to
+        abort to raise an error. The function takes a single int argument
+        representing the HTTP error code. Currently the only code used is
+        401 for signalling permission denied. One possible use is to raise
+        a custom exception for us in an API::
+
+            @oauth.aborter
+            def my_abort(status_code):
+                raise MyException(status_code)
+
+        """
+        self._aborter = f
+        return f
+
     def before_request(self, f):
         """Register functions to be invoked before accessing the resource.
 
@@ -146,7 +162,7 @@ class OAuth1Provider(object):
                     return
                 client = Client.get(client_key)
                 if over_limit(client):
-                    return abort(403)
+                    return self._aborter(403)
 
                 track_request(client)
         """
