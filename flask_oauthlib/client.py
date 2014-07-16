@@ -15,7 +15,7 @@ from functools import wraps
 from oauthlib.common import to_unicode, PY3, add_params_to_uri
 from flask import request, redirect, json, session, current_app
 from werkzeug import url_quote, url_decode, url_encode
-from werkzeug import parse_options_header, cached_property
+from werkzeug import parse_options_header
 from .utils import to_bytes
 try:
     from urlparse import urljoin
@@ -251,43 +251,43 @@ class OAuthRemoteApp(object):
         self.app_key = app_key
         self.encoding = encoding
 
-    @cached_property
+    @property
     def base_url(self):
         return self._get_property('base_url')
 
-    @cached_property
+    @property
     def request_token_url(self):
         return self._get_property('request_token_url', None)
 
-    @cached_property
+    @property
     def access_token_url(self):
         return self._get_property('access_token_url')
 
-    @cached_property
+    @property
     def authorize_url(self):
         return self._get_property('authorize_url')
 
-    @cached_property
+    @property
     def consumer_key(self):
         return self._get_property('consumer_key')
 
-    @cached_property
+    @property
     def consumer_secret(self):
         return self._get_property('consumer_secret')
 
-    @cached_property
+    @property
     def request_token_params(self):
         return self._get_property('request_token_params', {})
 
-    @cached_property
+    @property
     def access_token_params(self):
         return self._get_property('access_token_params', {})
 
-    @cached_property
+    @property
     def access_token_method(self):
         return self._get_property('access_token_method', 'GET')
 
-    @cached_property
+    @property
     def content_type(self):
         return self._get_property('content_type', None)
 
