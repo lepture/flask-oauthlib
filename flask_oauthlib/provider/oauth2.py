@@ -72,6 +72,7 @@ class OAuth2Provider(object):
     def __init__(self, app=None):
         self._before_request_funcs = []
         self._after_request_funcs = []
+        self._invalid_response = None
         if app:
             self.init_app(app)
 
@@ -197,6 +198,22 @@ class OAuth2Provider(object):
                 return valid, oauth
         """
         self._after_request_funcs.append(f)
+        return f
+
+    def invalid_response(self, f):
+        """Register a function for responsing with invalid request.
+
+        When an invalid request proceeds to :meth:`require_oauth`, we can
+        handle the request with the registered function. The function
+        accepts one parameter, which is an oauthlib Request object::
+
+            @oauth.invalid_response
+            def invalid_require_oauth(req):
+                return jsonify(message=req.error_message), 401
+
+        If no function is registered, it will return with ``abort(401)``.
+        """
+        self._invalid_response = f
         return f
 
     def clientgetter(self, f):
@@ -442,6 +459,8 @@ class OAuth2Provider(object):
                     valid, req = func(valid, req)
 
                 if not valid:
+                    if self._invalid_response:
+                        return self._invalid_response(req)
                     return abort(401)
                 request.oauth = req
                 return f(*args, **kwargs)
