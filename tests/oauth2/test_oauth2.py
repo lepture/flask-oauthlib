@@ -234,6 +234,20 @@ class TestRefreshToken(OAuthSuite):
         })
         assert b'access_token' in rv.data
 
+    def test_refresh_token_in_authorization_code(self):
+        rv = self.client.post(authorize_url, data={'confirm': 'yes'})
+        rv = self.client.get(clean_url(rv.location))
+        data = json.loads(u(rv.data))
+
+        args = (data.get('scope').replace(' ', '+'),
+                data.get('refresh_token'), 'dev', 'dev')
+        url = ('/oauth/token?grant_type=refresh_token'
+               '&scope=%s&refresh_token=%s'
+               '&client_id=%s&client_secret=%s')
+        url = url % args
+        rv = self.client.get(url)
+        assert b'access_token' in rv.data
+
 
 class TestRefreshTokenCached(TestRefreshToken):
 
