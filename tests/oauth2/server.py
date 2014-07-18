@@ -234,7 +234,10 @@ def prepare_app(app):
     return app
 
 
-def create_server(app, oauth):
+def create_server(app, oauth=None):
+    if not oauth:
+        oauth = default_provider(app)
+
     app = prepare_app(app)
 
     @app.before_request
@@ -284,6 +287,10 @@ def create_server(app, oauth):
     @oauth.require_oauth()
     def method_api():
         return jsonify(method=request.method)
+
+    @oauth.invalid_response
+    def require_oauth_invalid(req):
+        return jsonify(message=req.error_message), 401
 
     return app
 

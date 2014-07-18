@@ -107,6 +107,7 @@ class TestWebAuth(OAuthSuite):
 
         rv = self.client.get('/address')
         assert rv.status_code == 401
+        assert b'message' in rv.data
 
         rv = self.client.get('/method/post')
         assert b'POST' in rv.data
