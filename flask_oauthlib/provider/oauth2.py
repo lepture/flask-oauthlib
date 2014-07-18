@@ -567,7 +567,8 @@ class OAuth2RequestValidator(RequestValidator):
         log.debug('Compare redirect uri for grant %r and %r.',
                   grant.redirect_uri, redirect_uri)
 
-        if os.environ.get('DEBUG') and redirect_uri is None:
+        testing = 'OAUTHLIB_INSECURE_TRANSPORT' in os.environ
+        if testing and redirect_uri is None:
             # For testing
             return True
 

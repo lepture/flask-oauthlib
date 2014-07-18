@@ -17,7 +17,9 @@ else:
     python_version = 2
     string_type = unicode
 
-os.environ['DEBUG'] = 'true'
+# os.environ['DEBUG'] = 'true'
+# for oauthlib 0.6.3
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = 'true'
 
 
 class BaseSuite(unittest.TestCase):
