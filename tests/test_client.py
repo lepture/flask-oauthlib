@@ -110,6 +110,69 @@ class TestOAuthRemoteApp(object):
         assert twitter.content_type is None
         assert 'realms' in twitter.request_token_params
 
+    def test_lazy_config_change(self):
+        """
+        Test propagation of config changes for 'lazy' loading.
+
+        Configuration values in Flask should be changeable.
+        """
+
+        # Setup app
+        oauth = OAuth()
+        twitter = oauth.remote_app(
+            'twitter',
+            app_key='twitter'
+        )
+
+        app = Flask(__name__)
+
+        # Initial configuration
+        app.config.update({
+            'twitter': dict(
+                base_url='https://api.twitter.com/1/',
+                request_token_params={'realms': 'email'},
+                consumer_key='twitter key',
+                consumer_secret='twitter secret',
+                request_token_url='request url',
+                access_token_url='token url',
+                authorize_url='auth url',
+            )
+        })
+        oauth.init_app(app)
+
+        # Make sure any eventual cache is populated
+        assert twitter.base_url == 'https://api.twitter.com/1/'
+        assert twitter.consumer_key == 'twitter key'
+        assert twitter.consumer_secret == 'twitter secret'
+        assert twitter.request_token_url == 'request url'
+        assert twitter.access_token_url == 'token url'
+        assert twitter.authorize_url == 'auth url'
+        assert twitter.content_type is None
+        assert 'realms' in twitter.request_token_params
+
+        # Updated configuration
+        app.config.update({
+            'twitter': dict(
+                base_url='https://api.twitter.com/2/',
+                request_token_params={'realms2': 'email'},
+                consumer_key='twitter key2',
+                consumer_secret='twitter secret2',
+                request_token_url='request url2',
+                access_token_url='token url2',
+                authorize_url='auth url2',
+            )
+        })
+
+        assert twitter.base_url == 'https://api.twitter.com/2/'
+        assert twitter.consumer_key == 'twitter key2'
+        assert twitter.consumer_secret == 'twitter secret2'
+        assert twitter.request_token_url == 'request url2'
+        assert twitter.access_token_url == 'token url2'
+        assert twitter.authorize_url == 'auth url2'
+        assert twitter.content_type is None
+        assert 'realms2' in twitter.request_token_params
+
+
     def test_lazy_load_with_plain_text_config(self):
         oauth = OAuth()
         twitter = oauth.remote_app('twitter', app_key='TWITTER')
