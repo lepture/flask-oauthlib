@@ -40,6 +40,7 @@ class OAuthSuite(BaseSuite):
         client.http_request = MagicMock(
             side_effect=self.patch_request(app)
         )
+        self.oauth_client = client
         return app
 
 
@@ -117,6 +118,22 @@ class TestWebAuth(OAuthSuite):
 
         rv = self.client.get('/method/delete')
         assert b'DELETE' in rv.data
+
+    def test_no_bear_token(self):
+        @self.oauth_client.tokengetter
+        def get_oauth_token():
+            return 'foo', ''
+
+        rv = self.client.get('/method/put')
+        assert b'token not found' in rv.data
+
+    def test_expires_bear_token(self):
+        @self.oauth_client.tokengetter
+        def get_oauth_token():
+            return 'expired', ''
+
+        rv = self.client.get('/method/put')
+        assert b'token is expired' in rv.data
 
     def test_get_client(self):
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})

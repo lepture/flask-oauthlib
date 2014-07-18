@@ -223,11 +223,16 @@ def prepare_app(app):
         expires=datetime.utcnow() + timedelta(seconds=100)
     )
 
+    access_token = Token(
+        user_id=1, client_id='dev', access_token='expired', expires_in=0
+    )
+
     try:
         db.session.add(client1)
         db.session.add(client2)
         db.session.add(user)
         db.session.add(temp_grant)
+        db.session.add(access_token)
         db.session.commit()
     except:
         db.session.rollback()
