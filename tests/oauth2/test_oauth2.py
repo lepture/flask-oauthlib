@@ -227,7 +227,7 @@ class TestRefreshToken(OAuthSuite):
         args = (data.get('scope').replace(' ', '+'),
                 data.get('refresh_token'))
         url = ('/oauth/token?grant_type=refresh_token'
-               '&scope=%s&refresh_token=%s&username=admin')
+               '&scope=%s&refresh_token=%s')
         url = url % args
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % auth_code,
