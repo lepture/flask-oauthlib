@@ -268,7 +268,7 @@ class TestCredentialAuth(OAuthSuite):
 
     def test_get_access_token(self):
         url = ('/oauth/token?grant_type=client_credentials'
-               '&scope=email+address&username=admin&password=admin')
+               '&scope=email+address')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
@@ -276,7 +276,7 @@ class TestCredentialAuth(OAuthSuite):
 
     def test_invalid_auth_header(self):
         url = ('/oauth/token?grant_type=client_credentials'
-               '&scope=email+address&username=admin&password=admin')
+               '&scope=email+address')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic foobar'
         }, data={'confirm': 'yes'})
@@ -285,7 +285,7 @@ class TestCredentialAuth(OAuthSuite):
     def test_no_client(self):
         auth_code = _base64('none:confidential')
         url = ('/oauth/token?grant_type=client_credentials'
-               '&scope=email+address&username=admin&password=admin')
+               '&scope=email+address')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
@@ -294,7 +294,7 @@ class TestCredentialAuth(OAuthSuite):
     def test_wrong_secret_client(self):
         auth_code = _base64('confidential:wrong')
         url = ('/oauth/token?grant_type=client_credentials'
-               '&scope=email+address&username=admin&password=admin')
+               '&scope=email+address')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % auth_code,
         }, data={'confirm': 'yes'})
