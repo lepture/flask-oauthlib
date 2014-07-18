@@ -661,17 +661,23 @@ class OAuth2RequestValidator(RequestValidator):
         log.debug('Validate bearer token %r', token)
         tok = self._tokengetter(access_token=token)
         if not tok:
-            log.debug('Bearer token not found.')
+            msg = 'Bearer token not found.'
+            request.error_message = msg
+            log.debug(msg)
             return False
 
         # validate expires
         if datetime.datetime.utcnow() > tok.expires:
-            log.debug('Bearer token is expired.')
+            msg = 'Bearer token is expired.'
+            request.error_message = msg
+            log.debug(msg)
             return False
 
         # validate scopes
         if not set(tok.scopes).issuperset(set(scopes)):
-            log.debug('Bearer token scope not valid.')
+            msg = 'Bearer token scope not valid.'
+            request.error_message = msg
+            log.debug(msg)
             return False
 
         request.access_token = tok
