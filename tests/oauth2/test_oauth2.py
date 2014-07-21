@@ -184,7 +184,7 @@ class TestPasswordAuth(OAuthSuite):
                '&scope=email+address&username=admin&password=admin')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % auth_code,
-        }, data={'confirm': 'yes'})
+        })
         assert b'access_token' in rv.data
         assert b'state' in rv.data
 
@@ -193,7 +193,7 @@ class TestPasswordAuth(OAuthSuite):
                '&scope=email+address&username=fake&password=admin')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % auth_code,
-        }, data={'confirm': 'yes'})
+        })
 
         assert b'Invalid credentials given' in rv.data
 
@@ -271,7 +271,7 @@ class TestCredentialAuth(OAuthSuite):
                '&scope=email+address')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % auth_code,
-        }, data={'confirm': 'yes'})
+        })
         assert b'access_token' in rv.data
 
     def test_invalid_auth_header(self):
@@ -279,7 +279,7 @@ class TestCredentialAuth(OAuthSuite):
                '&scope=email+address')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic foobar'
-        }, data={'confirm': 'yes'})
+        })
         assert b'invalid_client' in rv.data
 
     def test_no_client(self):
@@ -288,7 +288,7 @@ class TestCredentialAuth(OAuthSuite):
                '&scope=email+address')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % auth_code,
-        }, data={'confirm': 'yes'})
+        })
         assert b'invalid_client' in rv.data
 
     def test_wrong_secret_client(self):
@@ -297,7 +297,7 @@ class TestCredentialAuth(OAuthSuite):
                '&scope=email+address')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % auth_code,
-        }, data={'confirm': 'yes'})
+        })
         assert b'invalid_client' in rv.data
 
 
@@ -341,7 +341,7 @@ class TestConfidentialClient(OAuthSuite):
                '&scope=email')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % auth_code
-        }, data={'confirm': 'yes'})
+        })
         assert b'access_token' in rv.data
 
     def test_invalid_grant(self):
@@ -349,7 +349,7 @@ class TestConfidentialClient(OAuthSuite):
                '&scope=email')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % auth_code
-        }, data={'confirm': 'yes'})
+        })
         assert b'invalid_grant' in rv.data
 
     def test_invalid_client(self):
@@ -357,5 +357,5 @@ class TestConfidentialClient(OAuthSuite):
                '&scope=email')
         rv = self.client.get(url, headers={
             'Authorization': 'Basic %s' % ('foo')
-        }, data={'confirm': 'yes'})
+        })
         assert b'invalid_client' in rv.data
