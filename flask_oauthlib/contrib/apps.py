@@ -8,20 +8,23 @@
 
         from flask import Flask
         from flask_oauthlib.client import OAuth
-        from flask_oauthlib.contrib.apps import twitter
+        from flask_oauthlib.contrib.apps import github
 
         app = Flask(__name__)
         oauth = OAuth(app)
 
-        twitter.register_to(oauth, scope=['myscope'])
-        twitter.register_to(oauth, name='twitter2')
+        github.register_to(oauth, scope=['user:email'])
+        github.register_to(oauth, name='github2')
 
     Of course, it requires consumer keys in your config::
 
-        TWITTER_CONSUMER_KEY = ''
-        TWITTER_CONSUMER_SECRET = ''
-        TWITTER2_CONSUMER_KEY = ''
-        TWITTER2_CONSUMER_SECRET = ''
+        GITHUB_CONSUMER_KEY = ''
+        GITHUB_CONSUMER_SECRET = ''
+        GITHUB2_CONSUMER_KEY = ''
+        GITHUB2_CONSUMER_SECRET = ''
+
+    Some apps with OAuth 1.0a such as Twitter could not accept the ``scope``
+    argument.
 
     Contributed by: tonyseek
 """
