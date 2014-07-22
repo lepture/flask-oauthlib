@@ -372,18 +372,28 @@ class OAuth2Provider(object):
                     scopes, credentials = ret
                     kwargs['scopes'] = scopes
                     kwargs.update(credentials)
-                    return f(*args, **kwargs)
                 except oauth2.FatalClientError as e:
                     log.debug('Fatal client error %r', e)
                     return redirect(e.in_uri(self.error_uri))
 
-            if request.method == 'POST':
+            else:
                 redirect_uri = request.values.get('redirect_uri', None)
-                if not f(*args, **kwargs):
-                    # denied by user
-                    e = oauth2.AccessDeniedError()
-                    return redirect(e.in_uri(redirect_uri))
-                return self.confirm_authorization_request()
+
+            try:
+                rv = f(*args, **kwargs)
+            except oauth2.FatalClientError as e:
+                log.debug('Fatal client error %r', e)
+                return redirect(e.in_uri(self.error_uri))
+
+            if not isinstance(rv, bool):
+                # if is a response or redirect
+                return rv
+
+            if not rv:
+                # denied by user
+                e = oauth2.AccessDeniedError()
+                return redirect(e.in_uri(redirect_uri))
+            return self.confirm_authorization_request()
         return decorated
 
     def confirm_authorization_request(self):
