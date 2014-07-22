@@ -619,26 +619,31 @@ class OAuthRemoteApp(object):
         """Handles a unknown authorization response."""
         return None
 
+    def handle_response(self):
+        """Handles authorization response smartly."""
+        if 'oauth_verifier' in request.args:
+            try:
+                data = self.handle_oauth1_response()
+            except OAuthException as e:
+                data = e
+        elif 'code' in request.args:
+            try:
+                data = self.handle_oauth2_response()
+            except OAuthException as e:
+                data = e
+        else:
+            data = self.handle_unknown_response()
+
+        # free request token
+        session.pop('%s_oauthtok' % self.name, None)
+        session.pop('%s_oauthredir' % self.name, None)
+        return data
+
     def authorized_handler(self, f):
         """Handles an OAuth callback."""
         @wraps(f)
         def decorated(*args, **kwargs):
-            if 'oauth_verifier' in request.args:
-                try:
-                    data = self.handle_oauth1_response()
-                except OAuthException as e:
-                    data = e
-            elif 'code' in request.args:
-                try:
-                    data = self.handle_oauth2_response()
-                except OAuthException as e:
-                    data = e
-            else:
-                data = self.handle_unknown_response()
-
-            # free request token
-            session.pop('%s_oauthtok' % self.name, None)
-            session.pop('%s_oauthredir' % self.name, None)
+            data = self.handle_response()
             return f(*((data,) + args), **kwargs)
         return decorated
 
