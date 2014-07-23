@@ -13,3 +13,4 @@ docs/_build
 cover/
 venv/
 .tox
+*.egg
