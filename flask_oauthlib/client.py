@@ -541,8 +541,6 @@ class OAuthRemoteApp(object):
     def get_request_token(self):
         assert self._tokengetter is not None, 'missing tokengetter'
         rv = self._tokengetter()
-        if rv is None:
-            raise OAuthException('No token available', type='token_missing')
         return rv
 
     def handle_oauth1_response(self):

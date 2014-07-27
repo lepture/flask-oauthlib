@@ -237,6 +237,10 @@ def create_server(app):
     def access_token():
         return {}
 
+    @app.route('/api/about')
+    def about_api():
+        return jsonify(info='flask-oauthlib test server')
+
     @app.route('/api/email')
     @oauth.require_oauth('email')
     def email_api():
