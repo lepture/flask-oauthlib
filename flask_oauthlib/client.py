@@ -402,7 +402,7 @@ class OAuthRemoteApp(object):
         """
 
         headers = dict(headers or {})
-        if not token:
+        if token is None:
             token = self.get_request_token()
 
         client = self.make_client(token)
