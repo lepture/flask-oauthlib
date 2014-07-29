@@ -5,6 +5,15 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.6.0
+-------------
+
+Released on Jul 29, 2014
+
+- Compatible with OAuthLib 0.6.2 and 0.6.3
+- Add invalid_response decorator to handle invalid request
+- Add error_message for OAuthLib Request.
+
 Version 0.5.0
 -------------
 
