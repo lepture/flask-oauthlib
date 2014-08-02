@@ -249,13 +249,22 @@ class OAuth2Provider(object):
     def usergetter(self, f):
         """Register a function as the user getter.
 
-        This decorator is only required for password credential
+        This decorator is only required for **password credential**
         authorization::
 
             @oauth.usergetter
-            def get_user(username=username, password=password,
+            def get_user(username, password, client, request,
                          *args, **kwargs):
-                return get_user_by_username(username, password)
+                # client: current request client
+                if not client.has_password_credential_permission:
+                    return None
+                user = User.get_user_by_username(username)
+                if not user.validate_password(password):
+                    return None
+
+                # parameter `request` is an OAuthlib Request object.
+                # maybe you will need it somewhere
+                return user
         """
         self._usergetter = f
         return f
