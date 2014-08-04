@@ -7,7 +7,7 @@ the imports::
     from flask_oauthlib.client import OAuth
 
 .. attention:: If you are testing the provider and the client locally, do not
-   start they listening on the same address because they will
+   make them start listening on the same address because they will
    override the `session` of each other leading to strange bugs.
    eg: start the provider listening on `127.0.0.1:4000` and client
    listening on `localhost:4000` to avoid this problem.
