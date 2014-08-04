@@ -160,6 +160,16 @@ class TestOAuthRemoteApp(object):
             'http://example.com/', 404, 'Not Found', None, None
         )
         error.read = lambda: b'o'
+
+        class _Fake(object):
+            def close(self):
+                return 0
+
+        class _Faker(object):
+            _closer = _Fake()
+
+        error.file = _Faker()
+
         urlopen.side_effect = error
         resp, content = OAuthRemoteApp.http_request('http://example.com')
         assert resp.code == 404
