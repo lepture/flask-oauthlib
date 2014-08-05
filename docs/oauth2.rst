@@ -34,7 +34,7 @@ Client (Application)
 A client is the app which want to use the resource of a user. It is suggested
 that the client is registered by a user on your site, but it is not required.
 
-The client should contain at least these information:
+The client should contain at least these properties:
 
 - client_id: A random string
 - client_secret: A random string
@@ -216,15 +216,15 @@ config:
 ================================== ==========================================
 
 
-Implements
-----------
+Implementation
+--------------
 
-The implementings of authorization flow needs two handlers, one is authorize
-handler for user to confirm the grant, the other is token handler for client
-to exchange/refresh access token.
+The implementation of authorization flow needs two handlers, one is the authorization
+handler for the user to confirm the grant, the other is the token handler for the client
+to exchange/refresh access tokens.
 
 Before the implementing of authorize and token handler, we need to set up some
-getters and setter to communicate with the database.
+getters and setters to communicate with the database.
 
 Client getter
 `````````````
@@ -269,7 +269,7 @@ implemented with decorators::
 In the sample code, there is a ``get_current_user`` method, that will return
 the current user object, you should implement it yourself.
 
-The ``request`` object is defined by ``OAuthlib``, you can get at least these
+The ``request`` object is defined by ``OAuthlib``, you can get at least this much
 information:
 
 - client: client model object
@@ -284,8 +284,8 @@ information:
 Token getter and setter
 ```````````````````````
 
-Token getter and setters are required. They are used in the authorization flow
-and accessing resource flow. Implemented with decorators::
+Token getter and setter are required. They are used in the authorization flow
+and accessing resource flow. They are implemented with decorators as follows::
 
     @oauth.tokengetter
     def load_token(access_token=None, refresh_token=None):
@@ -378,8 +378,8 @@ kwargs are:
 - redirect_uri: redirect_uri parameter
 - response_type: response_type parameter
 
-The POST request needs to return a bool value that tells whether user grantted
-the access or not.
+The POST request needs to return a bool value that tells whether user granted
+access or not.
 
 There is a ``@require_login`` decorator in the sample code, you should
 implement it yourself.
@@ -388,7 +388,7 @@ implement it yourself.
 Token handler
 `````````````
 
-Token handler is a decorator for exchange/refresh access token. You don't need
+Token handler is a decorator for exchanging/refreshing access token. You don't need
 to do much::
 
     @app.route('/oauth/token')
@@ -425,7 +425,7 @@ Subclass way
 ````````````
 
 If you are not satisfied with the decorator way of getters and setters, you can
-implements them in the subclass way::
+implement them in the subclass way::
 
     class MyProvider(OAuth2Provider):
         def _clientgetter(self, client_id):
@@ -453,7 +453,7 @@ Protect the resource of a user with ``require_oauth`` decorator now::
         user = User.query.filter_by(username=username).first()
         return jsonify(email=user.email, username=user.username)
 
-The decorator accepts a list of scopes, only the clients with the given scopes
+The decorator accepts a list of scopes and only the clients with the given scopes
 can access the defined resources.
 
 .. versionchanged:: 0.5.0
