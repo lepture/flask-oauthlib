@@ -284,7 +284,7 @@ information:
 Token getter and setter
 ```````````````````````
 
-Token getter and setters are required. They are used in the authorization flow
+Token getter and setter are required. They are used in the authorization flow
 and accessing resource flow. Implemented with decorators::
 
     @oauth.tokengetter
