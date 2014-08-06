@@ -285,7 +285,7 @@ Token getter and setter
 ```````````````````````
 
 Token getter and setter are required. They are used in the authorization flow
-and accessing resource flow. Implemented with decorators::
+and accessing resource flow. They are implemented with decorators as follows::
 
     @oauth.tokengetter
     def load_token(access_token=None, refresh_token=None):
