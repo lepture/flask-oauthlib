@@ -224,7 +224,7 @@ handler for the user to confirm the grant, the other is the token handler for th
 to exchange/refresh access tokens.
 
 Before the implementing of authorize and token handler, we need to set up some
-getters and setter to communicate with the database.
+getters and setters to communicate with the database.
 
 Client getter
 `````````````
