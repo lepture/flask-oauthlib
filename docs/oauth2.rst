@@ -34,7 +34,7 @@ Client (Application)
 A client is the app which want to use the resource of a user. It is suggested
 that the client is registered by a user on your site, but it is not required.
 
-The client should contain at least these details:
+The client should contain at least these properties:
 
 - client_id: A random string
 - client_secret: A random string
