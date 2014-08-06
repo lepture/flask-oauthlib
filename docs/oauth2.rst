@@ -219,7 +219,7 @@ config:
 Implements
 ----------
 
-The implementings of authorization flow needs two handlers, one is authorize
+The implementation of authorization flow needs two handlers, one is authorize
 handler for user to confirm the grant, the other is token handler for client
 to exchange/refresh access token.
 
