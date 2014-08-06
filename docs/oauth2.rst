@@ -340,7 +340,7 @@ The ``request`` is an object like the one in grant setter.
 User getter
 ```````````
 
-User getter is optional. It is only required if you need password credential
+User getter is optional. It is only required if you need password-based credential
 authorization::
 
     @oauth.usergetter
@@ -378,8 +378,8 @@ kwargs are:
 - redirect_uri: redirect_uri parameter
 - response_type: response_type parameter
 
-The POST request needs to return a bool value that tells whether user grantted
-the access or not.
+The POST request needs to return a bool value that tells whether user granted
+access or not.
 
 There is a ``@require_login`` decorator in the sample code, you should
 implement it yourself.
@@ -388,7 +388,7 @@ implement it yourself.
 Token handler
 `````````````
 
-Token handler is a decorator for exchange/refresh access token. You don't need
+Token handler is a decorator for exchanging/refreshing access token. You don't need
 to do much::
 
     @app.route('/oauth/token')
@@ -425,7 +425,7 @@ Subclass way
 ````````````
 
 If you are not satisfied with the decorator way of getters and setters, you can
-implements them in the subclass way::
+implement them in the subclass way::
 
     class MyProvider(OAuth2Provider):
         def _clientgetter(self, client_id):
@@ -453,7 +453,7 @@ Protect the resource of a user with ``require_oauth`` decorator now::
         user = User.query.filter_by(username=username).first()
         return jsonify(email=user.email, username=user.username)
 
-The decorator accepts a list of scopes, only the clients with the given scopes
+The decorator accepts a list of scopes and only the clients with the given scopes
 can access the defined resources.
 
 .. versionchanged:: 0.5.0
