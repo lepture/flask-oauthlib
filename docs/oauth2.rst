@@ -269,7 +269,7 @@ implemented with decorators::
 In the sample code, there is a ``get_current_user`` method, that will return
 the current user object, you should implement it yourself.
 
-The ``request`` object is defined by ``OAuthlib``, you can get at least these
+The ``request`` object is defined by ``OAuthlib``, you can get at least this much
 information:
 
 - client: client model object
