@@ -340,7 +340,7 @@ The ``request`` is an object like the one in grant setter.
 User getter
 ```````````
 
-User getter is optional. It is only required if you need password-based credential
+User getter is optional. It is only required if you need password credential
 authorization::
 
     @oauth.usergetter
