@@ -18,7 +18,7 @@ from werkzeug import cached_property
 from werkzeug.utils import import_string
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
-from oauthlib.common import to_unicode
+from oauthlib.common import to_unicode, add_params_to_uri
 from ..utils import extract_params, decode_base64, create_response
 
 __all__ = ('OAuth2Provider', 'OAuth2RequestValidator')
@@ -384,6 +384,10 @@ class OAuth2Provider(object):
                 except oauth2.FatalClientError as e:
                     log.debug('Fatal client error %r', e)
                     return redirect(e.in_uri(self.error_uri))
+                except Exception as e:
+                    return redirect(add_params_to_uri(
+                        self.error_uri, {'error': e.message}
+                    ))
 
             else:
                 redirect_uri = request.values.get('redirect_uri', None)
@@ -393,6 +397,10 @@ class OAuth2Provider(object):
             except oauth2.FatalClientError as e:
                 log.debug('Fatal client error %r', e)
                 return redirect(e.in_uri(self.error_uri))
+            except Exception as e:
+                return redirect(add_params_to_uri(
+                    self.error_uri, {'error': e.message}
+                ))
 
             if not isinstance(rv, bool):
                 # if is a response or redirect
@@ -430,6 +438,10 @@ class OAuth2Provider(object):
             return redirect(e.in_uri(self.error_uri))
         except oauth2.OAuth2Error as e:
             return redirect(e.in_uri(redirect_uri))
+        except Exception as e:
+            return redirect(add_params_to_uri(
+                self.error_uri, {'error': e.message}
+            ))
 
     def token_handler(self, f):
         """Access/refresh token handler decorator.
