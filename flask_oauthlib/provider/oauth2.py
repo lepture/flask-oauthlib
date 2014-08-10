@@ -815,7 +815,7 @@ class OAuth2RequestValidator(RequestValidator):
         redirect_uris strictly, you can add a `validate_redirect_uri`
         function on grant for a customized validation.
         """
-        request.client = request.client = self._clientgetter(client_id)
+        request.client = request.client or self._clientgetter(client_id)
         client = request.client
         if hasattr(client, 'validate_redirect_uri'):
             return client.validate_redirect_uri(redirect_uri)
