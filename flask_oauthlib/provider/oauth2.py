@@ -535,7 +535,7 @@ class OAuth2RequestValidator(RequestValidator):
             return True
         auth_required = ('authorization_code', 'refresh_token')
         return 'Authorization' in request.headers and\
-                request.grant_type in auth_required
+            request.grant_type in auth_required
 
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
