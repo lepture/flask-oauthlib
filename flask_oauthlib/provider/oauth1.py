@@ -408,6 +408,10 @@ class OAuth1Provider(object):
                 return redirect(e.in_uri(self.error_uri))
             except errors.InvalidClientError as e:
                 return redirect(e.in_uri(self.error_uri))
+            except Exception as e:
+                return redirect(add_params_to_uri(
+                    self.error_uri, {'error': e.message}
+                ))
         return decorated
 
     def confirm_authorization_request(self):
@@ -428,6 +432,10 @@ class OAuth1Provider(object):
             return redirect(e.in_uri(self.error_uri))
         except errors.InvalidClientError as e:
             return redirect(e.in_uri(self.error_uri))
+        except Exception as e:
+            return redirect(add_params_to_uri(
+                self.error_uri, {'error': e.message}
+            ))
 
     def request_token_handler(self, f):
         """Request token handler decorator.
@@ -453,6 +461,10 @@ class OAuth1Provider(object):
                     uri, http_method, body, headers, credentials)
                 return create_response(*ret)
             except errors.OAuth1Error as e:
+                return _error_response(e)
+            except Exception as e:
+                e.urlencoded = 'error=%s' % e.message
+                e.status_code = 400
                 return _error_response(e)
         return decorated
 
@@ -480,6 +492,10 @@ class OAuth1Provider(object):
                     uri, http_method, body, headers, credentials)
                 return create_response(*ret)
             except errors.OAuth1Error as e:
+                return _error_response(e)
+            except Exception as e:
+                e.urlencoded = 'error=%s' % e.message
+                e.status_code = 400
                 return _error_response(e)
         return decorated
 
