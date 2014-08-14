@@ -512,10 +512,14 @@ class OAuth1Provider(object):
 
                 server = self.server
                 uri, http_method, body, headers = extract_params()
-                valid, req = server.validate_protected_resource_request(
-                    uri, http_method, body, headers, realms
-                )
-
+                try:
+                    valid, req = server.validate_protected_resource_request(
+                        uri, http_method, body, headers, realms
+                    )
+                except Exception as e:
+                    e.urlencoded = urlencode([('error', str(e))])
+                    e.status_code = 400
+                    return _error_response(e)
                 for func in self._after_request_funcs:
                     valid, req = func(valid, req)
 
