@@ -95,12 +95,6 @@ class TestWebAuth(OAuthSuite):
         })
         assert 'error' in rv.location
 
-    def test_invalid_urlencoded(self):
-        rv = self.client.get('/oauth/request_token?query=tam%20q')
-        assert b'non+urlencoded' in rv.data
-        rv = self.client.get('/oauth/access_token?query=tam%20q')
-        assert b'non+urlencoded' in rv.data
-
 
 auth_header = (
     u'OAuth realm="%(realm)s",'

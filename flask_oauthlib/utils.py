@@ -5,9 +5,22 @@ from flask import request, Response
 from oauthlib.common import to_unicode, bytes_type
 
 
+def _get_uri_from_request(request):
+    """
+    The uri returned from request.uri is not properly urlencoded
+    (sometimes it's partially urldecoded) This is a weird hack to get
+    werkzeug to return the proper urlencoded string uri
+    """
+    uri = request.base_url
+    if request.query_string:
+        uri += '?' + request.query_string.decode('utf-8')
+    return uri
+
+
 def extract_params():
     """Extract request params."""
-    uri = request.url
+
+    uri = _get_uri_from_request(request)
     http_method = request.method
     headers = dict(request.headers)
     if 'wsgi.input' in headers:
