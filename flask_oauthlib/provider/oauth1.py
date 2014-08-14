@@ -16,7 +16,7 @@ from flask import make_response, abort
 from oauthlib.oauth1 import RequestValidator
 from oauthlib.oauth1 import WebApplicationServer as Server
 from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
-from oauthlib.common import to_unicode, add_params_to_uri
+from oauthlib.common import to_unicode, add_params_to_uri, urlencode
 from oauthlib.oauth1.rfc5849 import errors
 from ..utils import extract_params, create_response
 
@@ -463,7 +463,7 @@ class OAuth1Provider(object):
             except errors.OAuth1Error as e:
                 return _error_response(e)
             except Exception as e:
-                e.urlencoded = 'error=%s' % e.message
+                e.urlencoded = urlencode([('error', str(e))])
                 e.status_code = 400
                 return _error_response(e)
         return decorated
@@ -494,7 +494,7 @@ class OAuth1Provider(object):
             except errors.OAuth1Error as e:
                 return _error_response(e)
             except Exception as e:
-                e.urlencoded = 'error=%s' % e.message
+                e.urlencoded = urlencode([('error', str(e))])
                 e.status_code = 400
                 return _error_response(e)
         return decorated
