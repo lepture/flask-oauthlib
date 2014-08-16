@@ -481,7 +481,7 @@ class OAuth2Provider(object):
             @app.route('/oauth/revoke', methods=['POST'])
             @oauth.revoke_handler
             def access_token(): pass
-            
+
         .. _`RFC7009`: http://tools.ietf.org/html/rfc7009
         """
         @wraps(f)
@@ -493,12 +493,12 @@ class OAuth2Provider(object):
             if token:
                 request.token = token
 
-            uri, http_method, body, headers = extract_params()                        
+            uri, http_method, body, headers = extract_params()
             ret = server.create_revocation_response(
                 uri, headers=headers, body=body, http_method=http_method)
             return create_response(*ret)
         return decorated
-    
+
     def require_oauth(self, *scopes):
         """Protect resource with specified scopes."""
         def wrapper(f):
@@ -921,11 +921,11 @@ class OAuth2RequestValidator(RequestValidator):
                 if tok: break
 
         if tok and tok.client_id == request.client.client_id:
-            request.client_id = token.client_id
-            request.user = token.user
+            request.client_id = tok.client_id
+            request.user = tok.user
             tok.delete()
             return True
-        
+
         msg = 'Invalid token supplied.'
         log.debug(msg)
         request.error_message = msg
