@@ -169,6 +169,7 @@ A bearer token requires at least these information:
 - scopes: A list of scopes
 - expires: A `datetime.datetime` object
 - user: The user object
+- delete: A function to delete itself
 
 An example of the data model in SQLAlchemy::
 
@@ -192,6 +193,11 @@ An example of the data model in SQLAlchemy::
         refresh_token = db.Column(db.String(255), unique=True)
         expires = db.Column(db.DateTime)
         _scopes = db.Column(db.Text)
+
+        def delete(self):
+            db.session.delete(self)
+            db.session.commit()
+            return self
 
         @property
         def scopes(self):
@@ -419,6 +425,18 @@ The authorization flow is finished, everything should be working now.
     This token endpoint is for access token and refresh token both. But please
     remember that refresh token is only available for confidential client,
     and only available in password credential.
+
+
+Revoke handler
+``````````````
+In some cases a user may wish to revoke access given to an application and the 
+revoke handler makes it possible for an application to programmaticaly revoke 
+the access given to it. Also here you don't need to do much, allowing POST only 
+is recommended::
+
+    @app.route('/oauth/revoke', methods=['POST'])
+    @oauth.revoke_handler
+    def revoke_token(): pass
 
 
 Subclass way
