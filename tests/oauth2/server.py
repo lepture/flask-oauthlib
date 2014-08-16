@@ -116,6 +116,10 @@ class Token(db.Model):
             return self.scope.split()
         return []
 
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+        return self
 
 def current_user():
     return g.user
@@ -269,6 +273,10 @@ def create_server(app, oauth=None):
     @oauth.token_handler
     def access_token():
         return {}
+
+    @app.route('/oauth/revoke', methods=['POST'])
+    @oauth.revoke_handler
+    def revoke_token(): pass
 
     @app.route('/api/email')
     @oauth.require_oauth('email')

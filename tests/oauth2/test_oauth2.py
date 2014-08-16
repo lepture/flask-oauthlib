@@ -10,6 +10,7 @@ from .server import (
     cache_provider,
     sqlalchemy_provider,
     default_provider,
+    Token
 )
 from .client import create_client
 from .._base import BaseSuite, clean_url
@@ -260,6 +261,62 @@ class TestRefreshTokenSQLAlchemy(TestRefreshToken):
     def create_oauth_provider(self, app):
         return sqlalchemy_provider(app)
 
+class TestRevokeToken(OAuthSuite):
+
+    def create_oauth_provider(self, app):
+        return default_provider(app)
+
+    def get_token(self):
+        url = ('/oauth/token?grant_type=password'
+               '&scope=email+address&username=admin&password=admin')
+        rv = self.client.get(url, headers={
+            'Authorization': 'Basic %s' % auth_code,
+        })
+        assert b'_token' in rv.data
+        return json.loads(u(rv.data))
+
+    def test_revoke_token(self):
+        data = self.get_token()
+        tok  = Token.query.filter_by(
+            refresh_token=data['refresh_token']).first()
+        assert tok.refresh_token == data['refresh_token']
+
+        revoke_url = '/oauth/revoke'
+        args = {'token': data['refresh_token']}
+        rv = self.client.post(revoke_url, data=args, headers={
+            'Authorization': 'Basic %s' % auth_code,
+        })
+
+        tok = Token.query.filter_by(
+            refresh_token=data['refresh_token']).first()
+        assert tok == None
+
+    def test_revoke_token_with_hint(self):
+        data = self.get_token()
+        tok  = Token.query.filter_by(
+            access_token=data['access_token']).first()
+        assert tok.access_token == data['access_token']
+
+        revoke_url = '/oauth/revoke'
+        args = {'token': data['access_token'],
+                'token_type_hint': 'access_token'}
+        rv = self.client.post(revoke_url, data=args, headers={
+            'Authorization': 'Basic %s' % auth_code,
+        })
+
+        tok = Token.query.filter_by(
+            access_token=data['access_token']).first()
+        assert tok == None
+
+class TestRevokeTokenCached(TestRefreshToken):
+
+    def create_oauth_provider(self, app):
+        return cache_provider(app)
+
+class TestRevokeTokenSQLAlchemy(TestRefreshToken):
+
+    def create_oauth_provider(self, app):
+        return sqlalchemy_provider(app)
 
 class TestCredentialAuth(OAuthSuite):
 
