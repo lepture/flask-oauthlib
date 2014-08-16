@@ -469,6 +469,36 @@ class OAuth2Provider(object):
             return create_response(*ret)
         return decorated
 
+    def revoke_handler(self, f):
+        """Access/refresh token revoke decorator.
+
+        Any return value by the decorated function will get discarded as defined
+        in [`RFC7009`_].
+
+        You can control the access method with the standard flask routing mechanism,
+        as per [`RFC7009`_] it is recommended to only allow the `POST` method::
+
+            @app.route('/oauth/revoke', methods=['POST'])
+            @oauth.revoke_handler
+            def access_token(): pass
+            
+        .. _`RFC7009`: http://tools.ietf.org/html/rfc7009
+        """
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            server = self.server
+
+            token = request.values.get('token')
+            request.token_type_hint = request.values.get('token_type_hint')
+            if token:
+                request.token = token
+
+            uri, http_method, body, headers = extract_params()                        
+            ret = server.create_revocation_response(
+                uri, headers=headers, body=body, http_method=http_method)
+            return create_response(*ret)
+        return decorated
+    
     def require_oauth(self, *scopes):
         """Protect resource with specified scopes."""
         def wrapper(f):
@@ -878,4 +908,22 @@ class OAuth2RequestValidator(RequestValidator):
                 return True
             return False
         log.debug('Password credential authorization is disabled.')
+        return False
+
+    def revoke_token(self, token, token_type_hint, request, *args, **kwargs):
+        """Revoke an access or refresh token.
+        """
+        if token_type_hint:
+            tok = self._tokengetter(**{token_type_hint: token})
+        else:
+            for token_type in ('access_token', 'refresh_token'):
+                tok = self._tokengetter(**{token_type: token})
+                if tok: break
+        if tok:
+            tok.delete()
+            return True
+        
+        msg = 'Invalid token supplied.'
+        log.debug(msg)
+        request.error_message = msg
         return False
