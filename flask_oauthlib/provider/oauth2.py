@@ -919,7 +919,10 @@ class OAuth2RequestValidator(RequestValidator):
             for token_type in ('access_token', 'refresh_token'):
                 tok = self._tokengetter(**{token_type: token})
                 if tok: break
-        if tok:
+
+        if tok and tok.client_id == request.client.client_id:
+            request.client_id = token.client_id
+            request.user = token.user
             tok.delete()
             return True
         
