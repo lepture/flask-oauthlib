@@ -644,7 +644,7 @@ class OAuthRemoteApp(object):
         @wraps(f)
         def decorated(*args, **kwargs):
             data = self.handle_response()
-            return f(*((data,) + args), **kwargs)
+            return f(*(args + (data,)), **kwargs)
         return decorated
 
 
