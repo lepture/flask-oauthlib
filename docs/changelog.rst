@@ -5,6 +5,21 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.7.0
+-------------
+
+Release date to be decided.
+
+.. module:: flask_oauthlib.client
+
+- Deprecated :meth:`OAuthRemoteApp.authorized_handler` in favor of
+  :meth:`OAuthRemoteApp.authorized_response`.
+- Add revocation endpoint via `#131`_.
+- Handle unknown exceptions in providers.
+
+.. _`#131`: https://github.com/lepture/flask-oauthlib/pull/131
+
+
 Version 0.6.0
 -------------
 
