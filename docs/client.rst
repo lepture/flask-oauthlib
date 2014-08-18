@@ -108,18 +108,16 @@ redirected back to. For example::
         return twitter.authorize(callback=url_for('oauth_authorized',
             next=request.args.get('next') or request.referrer or None))
 
-If the application redirects back, the remote application will have passed all
-relevant information to the `oauth_authorized` function: a special
-response object with all the data, or ``None`` if the user denied the
-request.  This function must be decorated as
-:meth:`~OAuthRemoteApp.authorized_handler`::
+If the application redirects back, the remote application will can fetch
+all relevant information in the `oauth_authorized` function with
+:meth:`~OAuthRemoteApp.authorized_response`::
 
     from flask import redirect
 
     @app.route('/oauth-authorized')
-    @twitter.authorized_handler
-    def oauth_authorized(resp):
+    def oauth_authorized():
         next_url = request.args.get('next') or url_for('index')
+        resp = twitter.authorized_response()
         if resp is None:
             flash(u'You denied the request to sign in.')
             return redirect(next_url)
