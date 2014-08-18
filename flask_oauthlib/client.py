@@ -619,7 +619,7 @@ class OAuthRemoteApp(object):
         """Handles a unknown authorization response."""
         return None
 
-    def handle_response(self):
+    def authorized_response(self):
         """Handles authorization response smartly."""
         if 'oauth_verifier' in request.args:
             try:
@@ -643,7 +643,7 @@ class OAuthRemoteApp(object):
         """Handles an OAuth callback."""
         @wraps(f)
         def decorated(*args, **kwargs):
-            data = self.handle_response()
+            data = self.authorized_response()
             return f(*((data,) + args), **kwargs)
         return decorated
 
