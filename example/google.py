@@ -52,8 +52,8 @@ def logout():
 
 
 @app.route('/login/authorized')
-@google.authorized_handler
-def authorized(resp):
+def authorized():
+    resp = google.authorized_response()
     if resp is None:
         return 'Access denied: reason=%s error=%s' % (
             request.args['error_reason'],

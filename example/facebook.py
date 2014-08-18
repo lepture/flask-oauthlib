@@ -39,8 +39,8 @@ def login():
 
 
 @app.route('/login/authorized')
-@facebook.authorized_handler
-def facebook_authorized(resp):
+def facebook_authorized():
+    resp = facebook.authorized_response()
     if resp is None:
         return 'Access denied: reason=%s error=%s' % (
             request.args['error_reason'],

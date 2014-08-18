@@ -40,8 +40,8 @@ def logout():
 
 
 @app.route('/login/authorized')
-@dropbox.authorized_handler
-def authorized(resp):
+def authorized():
+    resp = dropbox.authorized_response()
     if resp is None:
         return 'Access denied: reason=%s error=%s' % (
             request.args['error_reason'],

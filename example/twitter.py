@@ -81,8 +81,8 @@ def logout():
 
 
 @app.route('/oauthorized')
-@twitter.authorized_handler
-def oauthorized(resp):
+def oauthorized():
+    resp = twitter.authorized_response()
     if resp is None:
         flash('You denied the request to sign in.')
     else:
