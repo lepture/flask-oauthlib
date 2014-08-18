@@ -472,15 +472,17 @@ class OAuth2Provider(object):
     def revoke_handler(self, f):
         """Access/refresh token revoke decorator.
 
-        Any return value by the decorated function will get discarded as defined
-        in [`RFC7009`_].
+        Any return value by the decorated function will get discarded as
+        defined in [`RFC7009`_].
 
-        You can control the access method with the standard flask routing mechanism,
-        as per [`RFC7009`_] it is recommended to only allow the `POST` method::
+        You can control the access method with the standard flask routing
+        mechanism, as per [`RFC7009`_] it is recommended to only allow
+        the `POST` method::
 
             @app.route('/oauth/revoke', methods=['POST'])
             @oauth.revoke_handler
-            def access_token(): pass
+            def revoke_token():
+                pass
 
         .. _`RFC7009`: http://tools.ietf.org/html/rfc7009
         """
@@ -916,9 +918,9 @@ class OAuth2RequestValidator(RequestValidator):
         if token_type_hint:
             tok = self._tokengetter(**{token_type_hint: token})
         else:
-            for token_type in ('access_token', 'refresh_token'):
-                tok = self._tokengetter(**{token_type: token})
-                if tok: break
+            tok = self._tokengetter(access_token=token)
+            if not tok:
+                tok = self._tokengetter(refresh_token=token)
 
         if tok and tok.client_id == request.client.client_id:
             request.client_id = tok.client_id
