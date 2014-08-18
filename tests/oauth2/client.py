@@ -34,8 +34,8 @@ def create_client(app):
         return redirect(url_for('index'))
 
     @app.route('/authorized')
-    @remote.authorized_handler
-    def authorized(resp):
+    def authorized():
+        resp = remote.authorized_response()
         if resp is None:
             return 'Access denied: error=%s' % (
                 request.args['error']
