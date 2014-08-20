@@ -357,31 +357,38 @@ class OAuthRemoteApp(object):
             return resp, content
 
     def get(self, *args, **kwargs):
-        """Sends a ``GET`` request. Accepts the same paramters as
+        """Sends a ``GET`` request. Accepts the same parameters as
         :meth:`request`.
         """
         kwargs['method'] = 'GET'
         return self.request(*args, **kwargs)
 
     def post(self, *args, **kwargs):
-        """Sends a ``POST`` request. Accepts the same paramters as
+        """Sends a ``POST`` request. Accepts the same parameters as
         :meth:`request`.
         """
         kwargs['method'] = 'POST'
         return self.request(*args, **kwargs)
 
     def put(self, *args, **kwargs):
-        """Sends a ``PUT`` request. Accepts the same paramters as
+        """Sends a ``PUT`` request. Accepts the same parameters as
         :meth:`request`.
         """
         kwargs['method'] = 'PUT'
         return self.request(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        """Sends a ``DELETE`` request. Accepts the same paramters as
+        """Sends a ``DELETE`` request. Accepts the same parameters as
         :meth:`request`.
         """
         kwargs['method'] = 'DELETE'
+        return self.request(*args, **kwargs)
+
+    def patch(self, *args, **kwargs):
+        """Sends a ``PATCH`` request. Accepts the same parameters as
+        :meth:`post`.
+        """
+        kwargs['method'] = 'PATCH'
         return self.request(*args, **kwargs)
 
     def request(self, url, data=None, headers=None, format='urlencoded',
