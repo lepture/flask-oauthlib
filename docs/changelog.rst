@@ -16,8 +16,10 @@ Release date to be decided.
   :meth:`OAuthRemoteApp.authorized_response`.
 - Add revocation endpoint via `#131`_.
 - Handle unknown exceptions in providers.
+- Add PATCH method for client via `134`_.
 
 .. _`#131`: https://github.com/lepture/flask-oauthlib/pull/131
+.. _`#134`: https://github.com/lepture/flask-oauthlib/pull/134
 
 
 Version 0.6.0
