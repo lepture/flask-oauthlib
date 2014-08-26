@@ -384,7 +384,8 @@ class OAuth2Provider(object):
                 except oauth2.FatalClientError as e:
                     log.debug('Fatal client error %r', e)
                     return redirect(e.in_uri(self.error_uri))
-                except Exception:
+                except Exception as e:
+                    log.warn('Exception: %r', e)
                     return redirect(add_params_to_uri(
                         self.error_uri, {'error': 'unknown'}
                     ))
@@ -397,7 +398,8 @@ class OAuth2Provider(object):
             except oauth2.FatalClientError as e:
                 log.debug('Fatal client error %r', e)
                 return redirect(e.in_uri(self.error_uri))
-            except Exception:
+            except Exception as e:
+                log.warn('Exception: %r', e)
                 return redirect(add_params_to_uri(
                     self.error_uri, {'error': 'unknown'}
                 ))
@@ -438,7 +440,8 @@ class OAuth2Provider(object):
             return redirect(e.in_uri(self.error_uri))
         except oauth2.OAuth2Error as e:
             return redirect(e.in_uri(redirect_uri))
-        except Exception:
+        except Exception as e:
+            log.warn('Exception: %r', e)
             return redirect(add_params_to_uri(
                 self.error_uri, {'error': 'unknown'}
             ))

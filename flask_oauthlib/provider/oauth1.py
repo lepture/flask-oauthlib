@@ -408,7 +408,8 @@ class OAuth1Provider(object):
                 return redirect(e.in_uri(self.error_uri))
             except errors.InvalidClientError as e:
                 return redirect(e.in_uri(self.error_uri))
-            except Exception:
+            except Exception as e:
+                log.warn('Exception: %r', e)
                 return redirect(add_params_to_uri(
                     self.error_uri, {'error': 'unknown'}
                 ))
@@ -432,7 +433,8 @@ class OAuth1Provider(object):
             return redirect(e.in_uri(self.error_uri))
         except errors.InvalidClientError as e:
             return redirect(e.in_uri(self.error_uri))
-        except Exception:
+        except Exception as e:
+            log.warn('Exception: %r', e)
             return redirect(add_params_to_uri(
                 self.error_uri, {'error': 'unknown'}
             ))
@@ -463,6 +465,7 @@ class OAuth1Provider(object):
             except errors.OAuth1Error as e:
                 return _error_response(e)
             except Exception as e:
+                log.warn('Exception: %r', e)
                 e.urlencoded = urlencode([('error', 'unknown')])
                 e.status_code = 400
                 return _error_response(e)
@@ -494,6 +497,7 @@ class OAuth1Provider(object):
             except errors.OAuth1Error as e:
                 return _error_response(e)
             except Exception as e:
+                log.warn('Exception: %r', e)
                 e.urlencoded = urlencode([('error', 'unknown')])
                 e.status_code = 400
                 return _error_response(e)
@@ -517,6 +521,7 @@ class OAuth1Provider(object):
                         uri, http_method, body, headers, realms
                     )
                 except Exception as e:
+                    log.warn('Exception: %r', e)
                     e.urlencoded = urlencode([('error', 'unknown')])
                     e.status_code = 400
                     return _error_response(e)
