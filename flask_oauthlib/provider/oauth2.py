@@ -384,9 +384,9 @@ class OAuth2Provider(object):
                 except oauth2.FatalClientError as e:
                     log.debug('Fatal client error %r', e)
                     return redirect(e.in_uri(self.error_uri))
-                except Exception as e:
+                except Exception:
                     return redirect(add_params_to_uri(
-                        self.error_uri, {'error': e.message}
+                        self.error_uri, {'error': 'unknown'}
                     ))
 
             else:
@@ -397,9 +397,9 @@ class OAuth2Provider(object):
             except oauth2.FatalClientError as e:
                 log.debug('Fatal client error %r', e)
                 return redirect(e.in_uri(self.error_uri))
-            except Exception as e:
+            except Exception:
                 return redirect(add_params_to_uri(
-                    self.error_uri, {'error': e.message}
+                    self.error_uri, {'error': 'unknown'}
                 ))
 
             if not isinstance(rv, bool):
@@ -438,9 +438,9 @@ class OAuth2Provider(object):
             return redirect(e.in_uri(self.error_uri))
         except oauth2.OAuth2Error as e:
             return redirect(e.in_uri(redirect_uri))
-        except Exception as e:
+        except Exception:
             return redirect(add_params_to_uri(
-                self.error_uri, {'error': e.message}
+                self.error_uri, {'error': 'unknown'}
             ))
 
     def token_handler(self, f):

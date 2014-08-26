@@ -408,9 +408,9 @@ class OAuth1Provider(object):
                 return redirect(e.in_uri(self.error_uri))
             except errors.InvalidClientError as e:
                 return redirect(e.in_uri(self.error_uri))
-            except Exception as e:
+            except Exception:
                 return redirect(add_params_to_uri(
-                    self.error_uri, {'error': e.message}
+                    self.error_uri, {'error': 'unknown'}
                 ))
         return decorated
 
@@ -432,9 +432,9 @@ class OAuth1Provider(object):
             return redirect(e.in_uri(self.error_uri))
         except errors.InvalidClientError as e:
             return redirect(e.in_uri(self.error_uri))
-        except Exception as e:
+        except Exception:
             return redirect(add_params_to_uri(
-                self.error_uri, {'error': e.message}
+                self.error_uri, {'error': 'unknown'}
             ))
 
     def request_token_handler(self, f):
@@ -463,7 +463,7 @@ class OAuth1Provider(object):
             except errors.OAuth1Error as e:
                 return _error_response(e)
             except Exception as e:
-                e.urlencoded = urlencode([('error', str(e))])
+                e.urlencoded = urlencode([('error', 'unknown')])
                 e.status_code = 400
                 return _error_response(e)
         return decorated
@@ -494,7 +494,7 @@ class OAuth1Provider(object):
             except errors.OAuth1Error as e:
                 return _error_response(e)
             except Exception as e:
-                e.urlencoded = urlencode([('error', str(e))])
+                e.urlencoded = urlencode([('error', 'unknown')])
                 e.status_code = 400
                 return _error_response(e)
         return decorated
@@ -517,7 +517,7 @@ class OAuth1Provider(object):
                         uri, http_method, body, headers, realms
                     )
                 except Exception as e:
-                    e.urlencoded = urlencode([('error', str(e))])
+                    e.urlencoded = urlencode([('error', 'unknown')])
                     e.status_code = 400
                     return _error_response(e)
                 for func in self._after_request_funcs:
