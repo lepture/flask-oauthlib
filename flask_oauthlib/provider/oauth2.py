@@ -384,6 +384,9 @@ class OAuth2Provider(object):
                 except oauth2.FatalClientError as e:
                     log.debug('Fatal client error %r', e)
                     return redirect(e.in_uri(self.error_uri))
+                except oauth2.OAuth2Error as e:
+                    log.debug('OAuth2Error: %r', e)
+                    return redirect(e.in_uri(redirect_uri or self.error_uri))
                 except Exception as e:
                     log.warn('Exception: %r', e)
                     return redirect(add_params_to_uri(
@@ -398,6 +401,9 @@ class OAuth2Provider(object):
             except oauth2.FatalClientError as e:
                 log.debug('Fatal client error %r', e)
                 return redirect(e.in_uri(self.error_uri))
+            except oauth2.OAuth2Error as e:
+                log.debug('OAuth2Error: %r', e)
+                return redirect(e.in_uri(redirect_uri or self.error_uri))
             except Exception as e:
                 log.warn('Exception: %r', e)
                 return redirect(add_params_to_uri(
@@ -416,7 +422,7 @@ class OAuth2Provider(object):
         return decorated
 
     def confirm_authorization_request(self):
-        """When consumer confirm the authrozation."""
+        """When consumer confirm the authorization."""
         server = self.server
         scope = request.values.get('scope') or ''
         scopes = scope.split()
@@ -437,9 +443,11 @@ class OAuth2Provider(object):
             log.debug('Authorization successful.')
             return create_response(*ret)
         except oauth2.FatalClientError as e:
+            log.debug('Fatal client error %r', e)
             return redirect(e.in_uri(self.error_uri))
         except oauth2.OAuth2Error as e:
-            return redirect(e.in_uri(redirect_uri))
+            log.debug('OAuth2Error: %r', e)
+            return redirect(e.in_uri(redirect_uri or self.error_uri))
         except Exception as e:
             log.warn('Exception: %r', e)
             return redirect(add_params_to_uri(
