@@ -162,6 +162,17 @@ class TestWebAuth(OAuthSuite):
         rv = self.client.get(clean_url(rv.location))
         assert b'error' in rv.data
 
+    def test_invalid_scope(self):
+        authorize_url = (
+            '/oauth/authorize?response_type=code&client_id=dev'
+            '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized'
+            '&scope=invalid'
+        )
+        rv = self.client.get(authorize_url)
+        rv = self.client.get(clean_url(rv.location))
+        assert b'error' in rv.data
+        assert b'invalid_scope' in rv.data
+
 
 class TestWebAuthCached(TestWebAuth):
 
