@@ -24,7 +24,7 @@ class User(db.Model):
 
 
 class Client(db.Model):
-    #id = db.Column(db.Integer, primary_key=True)
+    # id = db.Column(db.Integer, primary_key=True)
     # human readable name
     client_key = db.Column(db.String(40), primary_key=True)
     client_secret = db.Column(db.String(55), unique=True, index=True,

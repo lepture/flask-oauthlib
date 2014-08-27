@@ -5,7 +5,6 @@ import mock
 import werkzeug.wrappers
 from flask_oauthlib.utils import extract_params
 from oauthlib.common import Request
-from flask import request
 
 
 @contextmanager
