@@ -272,6 +272,7 @@ class TestRefreshTokenSQLAlchemy(TestRefreshToken):
     def create_oauth_provider(self, app):
         return sqlalchemy_provider(app)
 
+
 class TestRevokeToken(OAuthSuite):
 
     def create_oauth_provider(self, app):
@@ -288,46 +289,49 @@ class TestRevokeToken(OAuthSuite):
 
     def test_revoke_token(self):
         data = self.get_token()
-        tok  = Token.query.filter_by(
+        tok = Token.query.filter_by(
             refresh_token=data['refresh_token']).first()
         assert tok.refresh_token == data['refresh_token']
 
         revoke_url = '/oauth/revoke'
         args = {'token': data['refresh_token']}
-        rv = self.client.post(revoke_url, data=args, headers={
+        self.client.post(revoke_url, data=args, headers={
             'Authorization': 'Basic %s' % auth_code,
         })
 
         tok = Token.query.filter_by(
             refresh_token=data['refresh_token']).first()
-        assert tok == None
+        assert tok is None
 
     def test_revoke_token_with_hint(self):
         data = self.get_token()
-        tok  = Token.query.filter_by(
+        tok = Token.query.filter_by(
             access_token=data['access_token']).first()
         assert tok.access_token == data['access_token']
 
         revoke_url = '/oauth/revoke'
         args = {'token': data['access_token'],
                 'token_type_hint': 'access_token'}
-        rv = self.client.post(revoke_url, data=args, headers={
+        self.client.post(revoke_url, data=args, headers={
             'Authorization': 'Basic %s' % auth_code,
         })
 
         tok = Token.query.filter_by(
             access_token=data['access_token']).first()
-        assert tok == None
+        assert tok is None
+
 
 class TestRevokeTokenCached(TestRefreshToken):
 
     def create_oauth_provider(self, app):
         return cache_provider(app)
 
+
 class TestRevokeTokenSQLAlchemy(TestRefreshToken):
 
     def create_oauth_provider(self, app):
         return sqlalchemy_provider(app)
+
 
 class TestCredentialAuth(OAuthSuite):
 

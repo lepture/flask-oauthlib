@@ -21,7 +21,7 @@ class User(db.Model):
 
 
 class Client(db.Model):
-    #id = db.Column(db.Integer, primary_key=True)
+    # id = db.Column(db.Integer, primary_key=True)
     # human readable name
     name = db.Column(db.String(40))
     client_id = db.Column(db.String(40), primary_key=True)
@@ -120,6 +120,7 @@ class Token(db.Model):
         db.session.delete(self)
         db.session.commit()
         return self
+
 
 def current_user():
     return g.user
@@ -276,7 +277,8 @@ def create_server(app, oauth=None):
 
     @app.route('/oauth/revoke', methods=['POST'])
     @oauth.revoke_handler
-    def revoke_token(): pass
+    def revoke_token():
+        pass
 
     @app.route('/api/email')
     @oauth.require_oauth('email')
