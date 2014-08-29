@@ -536,7 +536,7 @@ class OAuthRemoteApp(object):
                 type='token_generation_failed'
             )
         data = parse_response(resp, content)
-        if data is None:
+        if not data:
             raise OAuthException(
                 'Invalid token response from %s' % self.name,
                 type='token_generation_failed'
