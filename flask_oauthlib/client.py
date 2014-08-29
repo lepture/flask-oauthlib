@@ -529,7 +529,7 @@ class OAuthRemoteApp(object):
             self.expand_url(self.request_token_url), realm=realm
         )
         log.debug('Generate request token header %r', headers)
-        resp, content = self.http_request(uri, headers)
+        resp, content = self.http_request(uri, headers, method="POST")
         if resp.code not in (200, 201):
             raise OAuthException(
                 'Failed to generate request token',
