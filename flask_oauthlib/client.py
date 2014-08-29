@@ -7,8 +7,10 @@
 
     :copyright: (c) 2013 - 2014 by Hsiaoming Yang.
 """
+from __future__ import print_function
 
 import logging
+import sys
 import oauthlib.oauth1
 import oauthlib.oauth2
 from functools import wraps
@@ -529,8 +531,10 @@ class OAuthRemoteApp(object):
             self.expand_url(self.request_token_url), realm=realm
         )
         log.debug('Generate request token header %r', headers)
-        resp, content = self.http_request(uri, headers)
+        resp, content = self.http_request(uri, headers, method="POST")
         if resp.code not in (200, 201):
+            print(resp, file=sys.stderr)
+            print(content, file=sys.stderr)
             raise OAuthException(
                 'Failed to generate request token',
                 type='token_generation_failed'
