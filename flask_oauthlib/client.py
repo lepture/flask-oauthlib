@@ -530,16 +530,20 @@ class OAuthRemoteApp(object):
         )
         log.debug('Generate request token header %r', headers)
         resp, content = self.http_request(uri, headers)
-        if resp.code not in (200, 201):
-            raise OAuthException(
-                'Failed to generate request token',
-                type='token_generation_failed'
-            )
         data = parse_response(resp, content)
-        if data is None:
+        if not data:
             raise OAuthException(
                 'Invalid token response from %s' % self.name,
                 type='token_generation_failed'
+            )
+        if resp.code not in (200, 201):
+            message = 'Failed to generate request token'
+            if 'oauth_problem' in data:
+                message += ' (%s)' % data['oauth_problem']
+            raise OAuthException(
+                message,
+                type='token_generation_failed',
+                data=data,
             )
         tup = (data['oauth_token'], data['oauth_token_secret'])
         session['%s_oauthtok' % self.name] = tup
