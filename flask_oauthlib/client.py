@@ -315,20 +315,16 @@ class OAuthRemoteApp(object):
     def make_client(self, token=None):
         # request_token_url is for oauth1
         if self.request_token_url:
+            params = self.request_token_params or {}
+            if token and isinstance(token, (tuple, list)):
+                params["resource_owner_key"] = token[0]
+                params["resource_owner_secret"] = token[1]
+
             client = oauthlib.oauth1.Client(
-                self.consumer_key, self.consumer_secret
+                self.consumer_key, self.consumer_secret,
+                **params
             )
 
-            params = self.request_token_params or {}
-            if 'signature_method' in params:
-                client.signature_method = _encode(params['signature_method'])
-            if 'rsa_key' in params:
-                client.rsa_key = _encode(params['rsa_key'])
-            if 'signature_type' in params:
-                client.signature_type = _encode(params['signature_type'])
-
-            if token and isinstance(token, (tuple, list)):
-                client.resource_owner_key, client.resource_owner_secret = token
         else:
             if token and isinstance(token, (tuple, list)):
                 token = {'access_token': token[0]}
