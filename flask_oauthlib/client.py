@@ -529,7 +529,10 @@ class OAuthRemoteApp(object):
             self.expand_url(self.request_token_url), realm=realm
         )
         log.debug('Generate request token header %r', headers)
-        resp, content = self.http_request(uri, headers)
+        method = None
+        if client.signature_method == oauthlib.oauth1.SIGNATURE_RSA:
+            method = "POST"
+        resp, content = self.http_request(uri, headers, method=method)
         data = parse_response(resp, content)
         if not data:
             raise OAuthException(
