@@ -200,6 +200,8 @@ class OAuthRemoteApp(object):
                                  to forward to the request token url
                                  or authorize url depending on oauth
                                  version
+    :param request_token_method: the HTTP method that should be used for
+                                 the access_token_url. Default is ``GET``
     :param access_token_params: an optional dictionary of parameters to
                                 forward to the access token url
     :param access_token_method: the HTTP method that should be used for
@@ -222,6 +224,7 @@ class OAuthRemoteApp(object):
         consumer_key=None,
         consumer_secret=None,
         request_token_params=None,
+        request_token_method=None,
         access_token_params=None,
         access_token_method=None,
         content_type=None,
@@ -243,6 +246,7 @@ class OAuthRemoteApp(object):
         self._consumer_key = consumer_key
         self._consumer_secret = consumer_secret
         self._request_token_params = request_token_params
+        self._request_token_method = request_token_method
         self._access_token_params = access_token_params
         self._access_token_method = access_token_method
         self._content_type = content_type
@@ -278,6 +282,10 @@ class OAuthRemoteApp(object):
     @cached_property
     def request_token_params(self):
         return self._get_property('request_token_params', {})
+
+    @cached_property
+    def request_token_method(self):
+        return self._get_property('request_token_method', 'GET')
 
     @cached_property
     def access_token_params(self):
@@ -526,10 +534,14 @@ class OAuthRemoteApp(object):
         if not realm and realms:
             realm = ' '.join(realms)
         uri, headers, _ = client.sign(
-            self.expand_url(self.request_token_url), realm=realm
+            self.expand_url(self.request_token_url),
+            http_method=self.request_token_method,
+            realm=realm,
         )
         log.debug('Generate request token header %r', headers)
-        resp, content = self.http_request(uri, headers)
+        resp, content = self.http_request(
+            uri, headers, method=self.request_token_method,
+        )
         data = parse_response(resp, content)
         if not data:
             raise OAuthException(
