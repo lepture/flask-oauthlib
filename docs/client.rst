@@ -108,7 +108,7 @@ redirected back to. For example::
         return twitter.authorize(callback=url_for('oauth_authorized',
             next=request.args.get('next') or request.referrer or None))
 
-If the application redirects back, the remote application will can fetch
+If the application redirects back, the remote application can fetch
 all relevant information in the `oauth_authorized` function with
 :meth:`~OAuthRemoteApp.authorized_response`::
 
@@ -132,7 +132,7 @@ all relevant information in the `oauth_authorized` function with
         return redirect(next_url)
 
 We store the token and the associated secret in the session so that the
-tokengetter can return it.  Additionally we also store the Twitter username
+tokengetter can return it.  Additionally, we also store the Twitter username
 that was sent back to us so that we can later display it to the user.  In
 larger applications it is recommended to store satellite information in a
 database instead to ease debugging and more easily handle additional information
