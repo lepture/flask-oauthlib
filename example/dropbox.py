@@ -44,7 +44,7 @@ def authorized():
     resp = dropbox.authorized_response()
     if resp is None:
         return 'Access denied: reason=%s error=%s' % (
-            request.args['error_reason'],
+            request.args['error'],
             request.args['error_description']
         )
     session['dropbox_token'] = (resp['access_token'], '')
