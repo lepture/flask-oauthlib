@@ -575,10 +575,10 @@ class OAuth2RequestValidator(RequestValidator):
         .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
         """
 
-        
-        if(request.grant_type=='password'):
+        if request.grant_type == 'password':
             client = self._clientgetter(request.client_id)
-            if (not client) or client.client_type == 'confidential' or request.client_secret:
+            if (not client) or client.client_type == 'confidential' or\
+                    request.client_secret:
                 return True
             else:
                 return False
@@ -637,7 +637,6 @@ class OAuth2RequestValidator(RequestValidator):
         if not client:
             log.debug('Authenticate failed, client not found.')
             return False
-
 
         # attach client on request for convenience
         request.client = client
