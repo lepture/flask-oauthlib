@@ -574,7 +574,10 @@ class OAuth2RequestValidator(RequestValidator):
         .. _`Section 4.1.3`: http://tools.ietf.org/html/rfc6749#section-4.1.3
         .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
         """
-        if request.grant_type == 'password':
+
+        client = self._clientgetter(request.client_id)
+
+        if request.grant_type == 'password' and (client.client_type == 'confidential' or request.client_secret):
             return True
         auth_required = ('authorization_code', 'refresh_token')
         return 'Authorization' in request.headers and\
@@ -631,9 +634,6 @@ class OAuth2RequestValidator(RequestValidator):
             log.debug('Authenticate failed, client not found.')
             return False
 
-        if client.client_secret != request.client_secret:
-            log.debug('Authenticate client failed, secret not match.')
-            return False
 
         # attach client on request for convenience
         request.client = client
