@@ -577,11 +577,8 @@ class OAuth2RequestValidator(RequestValidator):
 
         if request.grant_type == 'password':
             client = self._clientgetter(request.client_id)
-            if (not client) or client.client_type == 'confidential' or\
-                    request.client_secret:
-                return True
-            else:
-                return False
+            return (not client) or client.client_type == 'confidential' or\
+                request.client_secret
 
         auth_required = ('authorization_code', 'refresh_token')
         return 'Authorization' in request.headers and\
