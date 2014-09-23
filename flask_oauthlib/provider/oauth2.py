@@ -131,11 +131,18 @@ class OAuth2Provider(object):
         if token_generator and not callable(token_generator):
             token_generator = import_string(token_generator)
 
+        refresh_token_generator = self.app.config.get(
+            'OAUTH2_PROVIDER_REFRESH_TOKEN_GENERATOR', None
+        )
+        if refresh_token_generator and not callable(refresh_token_generator):
+            refresh_token_generator = import_string(refresh_token_generator)
+
         if hasattr(self, '_validator'):
             return Server(
                 self._validator,
                 token_expires_in=expires_in,
                 token_generator=token_generator,
+                refresh_token_generator=refresh_token_generator,
             )
 
         if hasattr(self, '_clientgetter') and \
@@ -161,6 +168,7 @@ class OAuth2Provider(object):
                 validator,
                 token_expires_in=expires_in,
                 token_generator=token_generator,
+                refresh_token_generator=refresh_token_generator,
             )
         raise RuntimeError('application not bound to required getters')
 

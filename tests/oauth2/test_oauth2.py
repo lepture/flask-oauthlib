@@ -389,7 +389,7 @@ class TestTokenGenerator(OAuthSuite):
 
     def create_oauth_provider(self, app):
 
-        def generator(request, refresh_token=False):
+        def generator(request):
             return 'foobar'
 
         app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = generator
@@ -401,6 +401,28 @@ class TestTokenGenerator(OAuthSuite):
         data = json.loads(u(rv.data))
         assert data['access_token'] == 'foobar'
         assert data['refresh_token'] == 'foobar'
+
+
+class TestRefreshTokenGenerator(OAuthSuite):
+
+    def create_oauth_provider(self, app):
+
+        def at_generator(request):
+            return 'foobar'
+
+        def rt_generator(request):
+            return 'abracadabra'
+
+        app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = at_generator
+        app.config['OAUTH2_PROVIDER_REFRESH_TOKEN_GENERATOR'] = rt_generator
+        return default_provider(app)
+
+    def test_get_access_token(self):
+        rv = self.client.post(authorize_url, data={'confirm': 'yes'})
+        rv = self.client.get(clean_url(rv.location))
+        data = json.loads(u(rv.data))
+        assert data['access_token'] == 'foobar'
+        assert data['refresh_token'] == 'abracadabra'
 
 
 class TestConfidentialClient(OAuthSuite):
