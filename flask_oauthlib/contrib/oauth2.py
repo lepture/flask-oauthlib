@@ -267,7 +267,7 @@ class TokenBinding(BaseBinding):
                 self.session.delete(tk)
             self.session.commit()
 
-        expires_in = token.get('expires_in')
+        expires_in = token.pop('expires_in')
         expires = datetime.utcnow() + timedelta(seconds=expires_in)
 
         tok = self.model(**token)
