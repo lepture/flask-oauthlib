@@ -462,6 +462,23 @@ class OAuth2Provider(object):
                 self.error_uri, {'error': 'unknown'}
             ))
 
+    def verify_request(self, scopes):
+        """Verify current request, get the oauth data.
+
+        If you can't use the ``require_oauth`` decorator, you can fetch
+        the data in your request body::
+
+            def your_handler():
+                valid, req = oauth.verify_request(['email'])
+                if valid:
+                    return jsonify(user=req.user)
+                return jsonify(status='error')
+        """
+        uri, http_method, body, headers = extract_params()
+        return self.server.verify_request(
+            uri, http_method, body, headers, scopes
+        )
+
     def token_handler(self, f):
         """Access/refresh token handler decorator.
 
@@ -531,11 +548,7 @@ class OAuth2Provider(object):
                 if hasattr(request, 'oauth') and request.oauth:
                     return f(*args, **kwargs)
 
-                server = self.server
-                uri, http_method, body, headers = extract_params()
-                valid, req = server.verify_request(
-                    uri, http_method, body, headers, scopes
-                )
+                valid, req = self.verify_request(scopes)
 
                 for func in self._after_request_funcs:
                     valid, req = func(valid, req)
