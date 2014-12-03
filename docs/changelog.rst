@@ -5,10 +5,22 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.8.0
+-------------
+
+Released on Dec 3, 2014
+
+.. module:: flask_oauthlib.provider.oauth2
+
+- New feature for generating refresh tokens
+- Add new function :meth:`OAuth2Provider.verify_request` for non vanilla Flask projects
+- Some small bugfixes
+
+
 Version 0.7.0
 -------------
 
-Release date to be decided.
+Released on Aug 20, 2014
 
 .. module:: flask_oauthlib.client
 
