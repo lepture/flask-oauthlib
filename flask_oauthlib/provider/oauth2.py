@@ -931,8 +931,7 @@ class OAuth2RequestValidator(RequestValidator):
 
         Attach user object on request for later using.
         """
-        log.debug('Validating username %r and password %r',
-                  username, password)
+        log.debug('Validating username %r and its password', username)
         if self._usergetter is not None:
             user = self._usergetter(
                 username, password, client, request, *args, **kwargs
