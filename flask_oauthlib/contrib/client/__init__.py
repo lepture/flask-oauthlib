@@ -7,7 +7,15 @@ __all__ = ['OAuth', 'OAuth1Application', 'OAuth2Application']
 
 
 class OAuth(object):
-    """The extension to integrate OAuth 1.0a/2.0 to Flask applications."""
+    """The extension to integrate OAuth 1.0a/2.0 to Flask applications.
+
+        oauth = OAuth(app)
+
+    or::
+
+        oauth = OAuth()
+        oauth.init_app(app)
+    """
 
     state_key = 'oauthlib.contrib.client'
 
