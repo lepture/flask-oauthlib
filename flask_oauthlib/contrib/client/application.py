@@ -186,6 +186,7 @@ class OAuth2Application(BaseApplication):
     endpoint_url = OAuthProperty('endpoint_url', default='')
     access_token_url = OAuthProperty('access_token_url')
     authorization_url = OAuthProperty('authorization_url')
+    refresh_token_url = OAuthProperty('refresh_token_url', default='')
 
     client_id = OAuthProperty('client_id')
     client_secret = OAuthProperty('client_secret')
@@ -202,6 +203,18 @@ class OAuth2Application(BaseApplication):
         if token is None:
             raise AccessTokenNotFound
         return self.session_class(self.client_id, token=token)
+
+    def tokensaver(self, fn):
+        """A decorator to register a callback function for saving refreshed
+        token while the old token has expired and the ``refresh_token_url`` has
+        been specified.
+
+        It is necessary for using the automatic refresh mechanism.
+
+        :param fn: the callback function with ``token`` as its unique argument.
+        """
+        self._tokensaver = fn
+        return fn
 
     def authorize(self, callback_uri, code=302, **kwargs):
         oauth = self.make_oauth_session(redirect_uri=callback_uri)
@@ -233,6 +246,17 @@ class OAuth2Application(BaseApplication):
         kwargs.setdefault('scope', self.scope)
         if kwargs['scope']:
             kwargs['scope'] = u','.join(kwargs['scope'])
+
+        # configures automatic token refresh if possible
+        if self.refresh_token_url:
+            if not hasattr(self, '_tokensaver'):
+                raise RuntimeError('missing tokensaver')
+            kwargs.setdefault('auto_refresh_url', self.refresh_token_url)
+            kwargs.setdefault('auto_refresh_kwargs', {
+                'client_id': self.client_id,
+                'client_secret': self.client_secret,
+            })
+            kwargs.setdefault('token_updater', self._tokensaver)
 
         # creates session
         oauth = self.session_class(self.client_id, **kwargs)
