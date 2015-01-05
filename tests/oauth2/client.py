@@ -12,7 +12,7 @@ def create_client(app):
         request_token_params={'scope': 'email'},
         base_url='http://127.0.0.1:5000/api/',
         request_token_url=None,
-        access_token_method='GET',
+        access_token_method='POST',
         access_token_url='http://127.0.0.1:5000/oauth/token',
         authorize_url='http://127.0.0.1:5000/oauth/authorize'
     )

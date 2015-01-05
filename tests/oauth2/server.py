@@ -270,7 +270,7 @@ def create_server(app, oauth=None):
         confirm = request.form.get('confirm', 'no')
         return confirm == 'yes'
 
-    @app.route('/oauth/token')
+    @app.route('/oauth/token', methods=['POST', 'GET'])
     @oauth.token_handler
     def access_token():
         return {}
