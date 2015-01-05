@@ -625,6 +625,7 @@ class OAuthRemoteApp(object):
             body = client.prepare_request_body(**remote_args)
             resp, content = self.http_request(
                 self.expand_url(self.access_token_url),
+                headers={'Content-Type': 'application/x-www-form-urlencoded'},
                 data=to_bytes(body, self.encoding),
                 method=self.access_token_method,
             )
