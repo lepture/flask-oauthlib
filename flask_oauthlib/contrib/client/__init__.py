@@ -49,13 +49,18 @@ class OAuth(object):
         self.remote_apps[name] = remote_app
         return remote_app
 
-    def remote_app(self, name, version, **kwargs):
+    def remote_app(self, name, version=None, **kwargs):
         """Creates and adds new remote application.
 
         :param name: the remote application's name.
         :param version: '1' or '2', the version code of OAuth protocol.
         :param kwargs: the attributes of remote application.
         """
+        if version is None:
+            if 'request_token_url' in kwargs:
+                version = '1'
+            else:
+                version = '2'
         if version == '1':
             remote_app = OAuth1Application(name)
         elif version == '2':
