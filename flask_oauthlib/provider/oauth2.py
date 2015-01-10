@@ -379,7 +379,7 @@ class OAuth2Provider(object):
             server = self.server
             uri, http_method, body, headers = extract_params()
 
-            if request.method == 'GET':
+            if request.method in ('GET', 'HEAD'):
                 redirect_uri = request.args.get('redirect_uri', None)
                 log.debug('Found redirect_uri %s.', redirect_uri)
                 try:

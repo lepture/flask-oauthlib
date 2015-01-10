@@ -1,6 +1,6 @@
 # coding: utf-8
 from datetime import datetime, timedelta
-from flask import g, render_template, request, jsonify
+from flask import g, render_template, request, jsonify, make_response
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_oauthlib.provider import OAuth2Provider
@@ -266,6 +266,13 @@ def create_server(app, oauth=None):
         if request.method == 'GET':
             # render a page for user to confirm the authorization
             return render_template('confirm.html')
+
+        if request.method == 'HEAD':
+            # if HEAD is supported properly, request parameters like
+            # client_id should be validated the same way as for 'GET'
+            response = make_response('', 200)
+            response.headers['X-Client-ID'] = kwargs.get('client_id')
+            return response
 
         confirm = request.form.get('confirm', 'no')
         return confirm == 'yes'

@@ -94,6 +94,10 @@ class TestWebAuth(OAuthSuite):
         assert 'code=' in rv.location
         assert 'state' in rv.location
 
+    def test_http_head_oauth_authorize_valid_url(self):
+        rv = self.client.head(authorize_url)
+        assert rv.headers['X-Client-ID'] == 'dev'
+
     def test_get_access_token(self):
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         rv = self.client.get(clean_url(rv.location))
