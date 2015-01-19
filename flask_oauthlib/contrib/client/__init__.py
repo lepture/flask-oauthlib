@@ -71,3 +71,12 @@ class OAuth(object):
 
     def __getitem__(self, name):
         return self.remote_apps[name]
+
+    def __getattr__(self, key):
+        try:
+            return object.__getattribute__(self, key)
+        except AttributeError:
+            app = self.remote_apps.get(key)
+            if app:
+                return app
+            raise AttributeError('No such app: %s' % key)
