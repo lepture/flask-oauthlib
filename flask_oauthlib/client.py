@@ -38,7 +38,7 @@ class OAuth(object):
 
         oauth = OAuth(app)
     """
-    state_key = 'oauthlib.contrib.client'
+    state_key = 'oauthlib.client'
 
     def __init__(self, app=None):
         self.remote_apps = {}
