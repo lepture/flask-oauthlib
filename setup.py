@@ -33,6 +33,7 @@ setup(
         "flask_oauthlib",
         "flask_oauthlib.provider",
         "flask_oauthlib.contrib",
+        "flask_oauthlib.contrib.client",
     ],
     description="OAuthlib for Flask",
     zip_safe=False,
