@@ -99,10 +99,19 @@ def get_qq_oauth_token():
     return session.get('qq_token')
 
 
+def convert_keys_to_string(dictionary):
+    '''Recursively converts dictionary keys to strings.'''
+    if not isinstance(dictionary, dict):
+        return dictionary
+    return dict((str(k), convert_keys_to_string(v)) for k, v in dictionary.items())
+
+
 def change_qq_header(uri, headers, body):
-    '''QQ API don't need the authorization header, it will make a Bad Request'''
-    if 'Authorization' in headers:
-        headers.pop('Authorization', None)
+    '''On SAE platform, when headers' keys are unicode type, will raise
+    ``HTTP Error 400: Bad request``, so need convert keys from unicode to str.
+    Otherwise, ignored it.'''
+    # uncomment below line while deploy on SAE platform
+    # headers = convert_keys_to_string(headers)
     return uri, headers, body
 
 qq.pre_request = change_qq_header
