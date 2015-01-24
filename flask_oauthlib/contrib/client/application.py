@@ -27,13 +27,25 @@ __all__ = ['OAuth1Application', 'OAuth2Application']
 
 
 class BaseApplication(object):
-    """The base class of OAuth application."""
+    """The base class of OAuth application.
+
+    An application instance could be used in mupltiple context. It never stores
+    any session-scope state in the ``__dict__`` of itself.
+
+    :param name: the name of this application.
+    :param clients: optional. a reference to the cached clients dictionary.
+    """
 
     session_class = None
+    endpoint_url = OAuthProperty('endpoint_url', default='')
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, clients=None, **kwargs):
         # oauth property required
         self.name = name
+
+        if clients:
+            self.clients = clients
+
         # other descriptor assignable attributes
         for k, v in kwargs.items():
             if not hasattr(self.__class__, k):
@@ -49,6 +61,11 @@ class BaseApplication(object):
         return fn
 
     def obtain_token(self):
+        """Obtains the access token by calling ``tokengetter`` which was
+        defined by users.
+
+        :returns: token or ``None``.
+        """
         tokengetter = getattr(self, '_tokengetter', None)
         if tokengetter is None:
             raise RuntimeError('%r missing tokengetter' % self)
@@ -61,7 +78,24 @@ class BaseApplication(object):
 
         :returns: The OAuth session instance or ``None`` while token missing.
         """
-        raise NotImplementedError
+        token = self.obtain_token()
+        if token is None:
+            raise AccessTokenNotFound
+        return self._make_client_with_token()
+
+    def _make_client_with_token(self, token):
+        """Uses cached client or create new one with specific token."""
+        cached_clients = getattr(self, 'clients', None)
+        hashed_token = _hash_token(self, token)
+
+        if cached_clients and hashed_token in cached_clients:
+            return cached_clients[hashed_token]
+
+        client = self.make_client(token)  # implemented in subclasses
+        if cached_clients:
+            cached_clients[hashed_token] = client
+
+        return client
 
     def authorize(self, callback_uri, code=302):
         """Redirects to third-part URL and authorizes.
@@ -91,23 +125,29 @@ class BaseApplication(object):
         'patch',
     ])
 
+    def request(self, method, url, token=None, *args, **kwargs):
+        if token is None:
+            client = self.client
+        else:
+            client = self._make_client_with_token(token)
+        url = urljoin(self.endpoint_url, url)
+        return getattr(client, method)(url, *args, **kwargs)
+
     # magic: generate methods which forward to self.client
-    def _make_method(_method_name):
-        def _method(self, url, *args, **kwargs):
-            url = urljoin(self.endpoint_url, url)
-            return getattr(self.client, _method_name)(url, *args, **kwargs)
-        _method.func_name = _method.__name__ = _method_name
-        return _method
-    for _method_name in forward_methods:
-        locals()[_method_name] = _make_method(_method_name)
-    del _make_method
-    del _method_name
+    def make_request_shortcut(method):
+        def shortcut(self, url, token=None, *args, **kwargs):
+            return self.request(method, url, token, *args, **kwargs)
+        shortcut.func_name = shortcut.__name__ = method
+        return shortcut
+    for method in forward_methods:
+        locals()[method] = make_request_shortcut(method)
+    del method
+    del make_request_shortcut
 
 
 class OAuth1Application(BaseApplication):
     """The remote application for OAuth 1.0a."""
 
-    endpoint_url = OAuthProperty('endpoint_url', default='')
     request_token_url = OAuthProperty('request_token_url')
     access_token_url = OAuthProperty('access_token_url')
     authorization_url = OAuthProperty('authorization_url')
@@ -119,22 +159,19 @@ class OAuth1Application(BaseApplication):
 
     _session_request_token = WebSessionData('req_token')
 
-    @property
-    def client(self):
-        token = self.obtain_token()
-        if token is None:
-            raise AccessTokenNotFound
-        return self.make_client(token)
-
     def make_client(self, token):
         """Creates a client with specific access token pair.
 
-        :param token: a tuple of access token pair:
-                      ``(access_token, access_token_secret)``.
+        :param token: a tuple of access token pair ``(token, token_secret)``
+                      or a dictionary of access token response.
         :returns: a :class:`requests_oauthlib.oauth1_session.OAuth1Session`
                   object.
         """
-        access_token, access_token_secret = token
+        if isinstance(token, dict):
+            access_token = token['token']
+            access_token_secret = token['token_secret']
+        else:
+            access_token, access_token_secret = token
         return self.make_oauth_session(
             resource_owner_key=access_token,
             resource_owner_secret=access_token_secret)
@@ -191,7 +228,6 @@ class OAuth2Application(BaseApplication):
 
     session_class = OAuth2Session
 
-    endpoint_url = OAuthProperty('endpoint_url', default='')
     access_token_url = OAuthProperty('access_token_url')
     authorization_url = OAuthProperty('authorization_url')
     refresh_token_url = OAuthProperty('refresh_token_url', default='')
@@ -204,13 +240,6 @@ class OAuth2Application(BaseApplication):
 
     _session_state = WebSessionData('state')
     _session_redirect_url = WebSessionData('redir')
-
-    @property
-    def client(self):
-        token = self.obtain_token()
-        if token is None:
-            raise AccessTokenNotFound
-        return self.make_client(token)
 
     def make_client(self, token):
         """Creates a client with specific access token dictionary.
@@ -311,3 +340,17 @@ class OAuth2Application(BaseApplication):
                     ' It may put you in danger of the Man-in-the-middle attack'
                     ' while using OAuth 2.', RuntimeWarning)
             yield
+
+
+def _hash_token(application, token):
+    """Creates a hashable object for given token then we could use it as a
+    dictionary key.
+    """
+    if isinstance(token, dict):
+        hashed_token = tuple(sorted(token.items()))
+    elif isinstance(token, tuple):
+        hashed_token = token
+    else:
+        raise TypeError('%r is unknown type of token' % token)
+
+    return (application.__class__.__name__, application.name, hashed_token)
