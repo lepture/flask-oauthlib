@@ -96,13 +96,11 @@ class BaseApplication(object):
         def _method(self, url, *args, **kwargs):
             url = urljoin(self.endpoint_url, url)
             return getattr(self.client, _method_name)(url, *args, **kwargs)
+        _method.func_name = _method.__name__ = _method_name
         return _method
     for _method_name in forward_methods:
-        _method = _make_method(_method_name)
-        _method.func_name = _method.__name__ = _method_name
-        locals()[_method_name] = _method
+        locals()[_method_name] = _make_method(_method_name)
     del _make_method
-    del _method
     del _method_name
 
 
