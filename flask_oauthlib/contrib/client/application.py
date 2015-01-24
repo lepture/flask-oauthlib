@@ -124,6 +124,16 @@ class OAuth1Application(BaseApplication):
         token = self.obtain_token()
         if token is None:
             raise AccessTokenNotFound
+        return self.make_client(token)
+
+    def make_client(self, token):
+        """Creates a client with specific access token pair.
+
+        :param token: a tuple of access token pair:
+                      ``(access_token, access_token_secret)``.
+        :returns: a :class:`requests_oauthlib.oauth1_session.OAuth1Session`
+                  object.
+        """
         access_token, access_token_secret = token
         return self.make_oauth_session(
             resource_owner_key=access_token,
@@ -200,6 +210,15 @@ class OAuth2Application(BaseApplication):
         token = self.obtain_token()
         if token is None:
             raise AccessTokenNotFound
+        return self.make_client(token)
+
+    def make_client(self, token):
+        """Creates a client with specific access token dictionary.
+
+        :param token: a dictionary of access token response.
+        :returns: a :class:`requests_oauthlib.oauth2_session.OAuth2Session`
+                  object.
+        """
         return self.session_class(self.client_id, token=token)
 
     def tokensaver(self, fn):
