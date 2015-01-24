@@ -1,5 +1,8 @@
 import copy
 
+from flask import current_app
+from werkzeug.local import LocalProxy
+
 from .application import OAuth1Application, OAuth2Application
 
 
@@ -26,7 +29,7 @@ class OAuth(object):
 
     def init_app(self, app):
         app.extensions = getattr(app, 'extensions', {})
-        app.extensions[self.state_key] = self
+        app.extensions[self.state_key] = OAuthState()
 
     def add_remote_app(self, remote_app, name=None, **kwargs):
         """Adds remote application and applies custom attributes on it.
@@ -46,6 +49,8 @@ class OAuth(object):
             remote_app = copy.copy(remote_app)
             remote_app.name = name
             vars(remote_app).update(kwargs)
+        if not hasattr(remote_app, 'clients'):
+            remote_app.clients = cached_clients
         self.remote_apps[name] = remote_app
         return remote_app
 
@@ -62,9 +67,9 @@ class OAuth(object):
             else:
                 version = '2'
         if version == '1':
-            remote_app = OAuth1Application(name)
+            remote_app = OAuth1Application(name, clients=cached_clients)
         elif version == '2':
-            remote_app = OAuth2Application(name)
+            remote_app = OAuth2Application(name, clients=cached_clients)
         else:
             raise ValueError('unkonwn version %r' % version)
         return self.add_remote_app(remote_app, **kwargs)
@@ -80,3 +85,20 @@ class OAuth(object):
             if app:
                 return app
             raise AttributeError('No such app: %s' % key)
+
+
+class OAuthState(object):
+
+    def __init__(self):
+        self.cached_clients = {}
+
+
+def get_cached_clients():
+    """Gets the cached clients dictionary in current context."""
+    if OAuth.state_key not in current_app.extensions:
+        raise RuntimeError('%r is not initialized.' % current_app)
+    state = current_app.extensions[OAuth.state_key]
+    return state.cached_clients
+
+
+cached_clients = LocalProxy(get_cached_clients)
