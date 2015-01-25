@@ -8,6 +8,7 @@
 import os
 import contextlib
 import warnings
+import functools
 try:
     from urllib.parse import urljoin
 except ImportError:
@@ -133,16 +134,23 @@ class BaseApplication(object):
         url = urljoin(self.endpoint_url, url)
         return getattr(client, method)(url, *args, **kwargs)
 
-    # magic: generate methods which forward to self.client
-    def make_request_shortcut(method):
-        def shortcut(self, url, token=None, *args, **kwargs):
-            return self.request(method, url, token, *args, **kwargs)
-        shortcut.func_name = shortcut.__name__ = method
-        return shortcut
-    for method in forward_methods:
-        locals()[method] = make_request_shortcut(method)
-    del method
-    del make_request_shortcut
+    def head(self, *args, **kwargs):
+        return self.request('head', *args, **kwargs)
+
+    def get(self, *args, **kwargs):
+        return self.request('get', *args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        return self.request('post', *args, **kwargs)
+
+    def put(self, *args, **kwargs):
+        return self.request('put', *args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        return self.request('delete', *args, **kwargs)
+
+    def patch(self, *args, **kwargs):
+        return self.request('patch', *args, **kwargs)
 
 
 class OAuth1Application(BaseApplication):
