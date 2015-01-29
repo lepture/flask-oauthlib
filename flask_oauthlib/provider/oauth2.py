@@ -395,11 +395,6 @@ class OAuth2Provider(object):
                 except oauth2.OAuth2Error as e:
                     log.debug('OAuth2Error: %r', e)
                     return redirect(e.in_uri(redirect_uri or self.error_uri))
-                except Exception as e:
-                    log.warn('Exception: %r', e)
-                    return redirect(add_params_to_uri(
-                        self.error_uri, {'error': 'unknown'}
-                    ))
 
             else:
                 redirect_uri = request.values.get('redirect_uri', None)
@@ -412,11 +407,6 @@ class OAuth2Provider(object):
             except oauth2.OAuth2Error as e:
                 log.debug('OAuth2Error: %r', e)
                 return redirect(e.in_uri(redirect_uri or self.error_uri))
-            except Exception as e:
-                log.warn('Exception: %r', e)
-                return redirect(add_params_to_uri(
-                    self.error_uri, {'error': 'unknown'}
-                ))
 
             if not isinstance(rv, bool):
                 # if is a response or redirect
@@ -456,11 +446,6 @@ class OAuth2Provider(object):
         except oauth2.OAuth2Error as e:
             log.debug('OAuth2Error: %r', e)
             return redirect(e.in_uri(redirect_uri or self.error_uri))
-        except Exception as e:
-            log.warn('Exception: %r', e)
-            return redirect(add_params_to_uri(
-                self.error_uri, {'error': 'unknown'}
-            ))
 
     def verify_request(self, scopes):
         """Verify current request, get the oauth data.
