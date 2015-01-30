@@ -11,6 +11,7 @@
 import logging
 import oauthlib.oauth1
 import oauthlib.oauth2
+from copy import copy
 from functools import wraps
 from oauthlib.common import to_unicode, PY3, add_params_to_uri
 from flask import request, redirect, json, session, current_app
@@ -339,7 +340,7 @@ class OAuthRemoteApp(object):
     def make_client(self, token=None):
         # request_token_url is for oauth1
         if self.request_token_url:
-            params = self.request_token_params or {}
+            params = copy(self.request_token_params) or {}
             if token and isinstance(token, (tuple, list)):
                 params["resource_owner_key"] = token[0]
                 params["resource_owner_secret"] = token[1]
