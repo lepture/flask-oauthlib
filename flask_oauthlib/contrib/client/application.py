@@ -8,7 +8,6 @@
 import os
 import contextlib
 import warnings
-import functools
 try:
     from urllib.parse import urljoin
 except ImportError:
@@ -82,7 +81,7 @@ class BaseApplication(object):
         token = self.obtain_token()
         if token is None:
             raise AccessTokenNotFound
-        return self._make_client_with_token()
+        return self._make_client_with_token(token)
 
     def _make_client_with_token(self, token):
         """Uses cached client or create new one with specific token."""
@@ -116,15 +115,6 @@ class BaseApplication(object):
                   or ``None`` if the authorization has been denied.
         """
         raise NotImplementedError
-
-    forward_methods = frozenset([
-        'head',
-        'get',
-        'post',
-        'put',
-        'delete',
-        'patch',
-    ])
 
     def request(self, method, url, token=None, *args, **kwargs):
         if token is None:
