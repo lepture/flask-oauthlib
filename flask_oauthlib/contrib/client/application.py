@@ -116,15 +116,6 @@ class BaseApplication(object):
         """
         raise NotImplementedError
 
-    forward_methods = frozenset([
-        'head',
-        'get',
-        'post',
-        'put',
-        'delete',
-        'patch',
-    ])
-
     def request(self, method, url, token=None, *args, **kwargs):
         if token is None:
             client = self.client
