@@ -246,7 +246,7 @@ class OAuth2Application(BaseApplication):
         :returns: a :class:`requests_oauthlib.oauth2_session.OAuth2Session`
                   object.
         """
-        return self.session_class(self.client_id, token=token)
+        return self.make_oauth_session(token=token)
 
     def tokensaver(self, fn):
         """A decorator to register a callback function for saving refreshed
