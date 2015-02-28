@@ -643,6 +643,11 @@ class OAuth2RequestValidator(RequestValidator):
             log.debug('Authenticate failed, client not found.')
             return False
 
+        if request.grant_type == 'authorization_code' and \
+           client.client_secret != request.client_secret:
+            log.debug('Authenticate client failed, secret not match.')
+            return False
+
         # attach client on request for convenience
         request.client = client
         return True
