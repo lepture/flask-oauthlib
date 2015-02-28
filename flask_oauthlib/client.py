@@ -310,7 +310,7 @@ class OAuthRemoteApp(object):
 
     @cached_property
     def access_token_method(self):
-        return self._get_property('access_token_method', 'GET')
+        return self._get_property('access_token_method', 'POST')
 
     @cached_property
     def content_type(self):
