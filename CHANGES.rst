@@ -4,6 +4,14 @@ Changelog
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
 
+Version 0.9.1
+-------------
+
+Released on Mar 9, 2015
+
+- Improve on security.
+- Fix on contrib client.
+
 Version 0.9.0
 -------------
 
