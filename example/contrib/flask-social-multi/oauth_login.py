@@ -1,9 +1,7 @@
-import logging
-
-from flask import Flask, redirect, url_for, session, request, jsonify, flash, current_app
+from flask import redirect, url_for, request, jsonify, flash, current_app
 from flask_oauthlib.client import OAuth, OAuthException
 
-from flask.ext.login import login_user, logout_user, login_required, current_user, session
+from flask.ext.login import login_user, session
 
 from . import auth
 from ...models import User
@@ -16,10 +14,11 @@ See:
 http://blog.miguelgrinberg.com/post/oauth-authentication-with-flask
 https://github.com/miguelgrinberg/flask-oauth-example/blob/master/oauth.py
 
-This RemoteAppMgr uses oauthlib, via flask_oauthlib, integrated within the
-same
+This RemoteAppMgr uses oauthlib, via flask_oauthlib.
 
 '''
+
+
 
 class RemoteAppMgr(object):
     oauth = None
@@ -40,7 +39,6 @@ class RemoteAppMgr(object):
     def logout(self):
         pass
 
-
     @classmethod
     def get_remote_app(self, provider_name):
         if self.oauth is None:
@@ -49,6 +47,7 @@ class RemoteAppMgr(object):
             self.remote_apps = {}
             for provider_class in self.__subclasses__():
                 provider = provider_class()
+                provider.remote_app.tokengetter(provider.get_oauth_token)
                 self.remote_apps[provider.provider_name] = provider
         return self.remote_apps[provider_name]
 
@@ -71,21 +70,19 @@ class GoogleRemoteApp(RemoteAppMgr):
             access_token_url='https://accounts.google.com/o/oauth2/token',
             authorize_url='https://accounts.google.com/o/oauth2/auth',
         )
-        self.remote_app._tokengetter = self.get_oauth_token
+        # self.remote_app.tokengetter(self.get_oauth_token)
 
 
     def index(self):
-        print "Google / Index"
         if 'google_token' in session:
             oauth_provider = self.remote_app.name            # or "google"
-            userinfo = self.remote_app.get('userinfo')
-            oauth_id = "google$" + userinfo.data.get('id')
-            email = userinfo.data.get('email')
+            userinfo = self.remote_app.get('userinfo').data
+            oauth_id = userinfo.get('id')
+            email = userinfo.get('email')
             return oauth_login_user(oauth_provider, oauth_id, email, userinfo)
         return redirect(url_for('.oauth_login', provider=self.remote_app.name))
 
     def login(self):
-        print "Google / Login"
         return self.remote_app.authorize(callback=url_for('.oauth_callback', provider=self.remote_app.name, _external=True))
 
     def logout(self):
@@ -93,7 +90,6 @@ class GoogleRemoteApp(RemoteAppMgr):
         return redirect('/')
 
     def authorized(self):
-        print "Google / Authorized"
         resp = self.remote_app.authorized_response()
         if resp is None:
             return 'Access denied: reason=%s error=%s' % (
@@ -129,14 +125,18 @@ class TwitterRemoteApp(RemoteAppMgr):
             access_token_url='https://api.twitter.com/oauth/access_token',
             authorize_url='https://api.twitter.com/oauth/authenticate',
         )
-        self.remote_app._tokengetter = self.get_oauth_token
+        # self.remote_app._tokengetter = self.get_oauth_token
 
 
     def index(self):
-        if 'google_token' in session:
-            me = self.remote_app.get('userinfo')
-            return jsonify({"data": me.data})
-        return redirect(url_for('.oauth_login', provider=self.remote_app.name))  # provider='google'
+        if 'twitter_oauth' in session:
+            oauth_provider = self.remote_app.name
+            userinfo = self.remote_app.get('account/verify_credentials.json').data
+            oauth_id = userinfo.get('id')
+            email = userinfo.get('email')
+            return oauth_login_user(oauth_provider, oauth_id, email, userinfo)
+
+        return redirect(url_for('.oauth_login', provider=self.remote_app.name))
 
     def login(self):
         return self.remote_app.authorize(callback=url_for('.oauth_callback', provider=self.remote_app.name, _external=True))
@@ -158,7 +158,7 @@ class TwitterRemoteApp(RemoteAppMgr):
 
         oauth_provider = "twitter"
         oauth_id = userinfo.get('id')
-        email = userinfo.get('email')
+        email = userinfo.get('email')   # Actually email will be None for Twitter, it's for you to accept or not
 
         return oauth_login_user(oauth_provider, oauth_id, email, userinfo)
 
@@ -186,13 +186,17 @@ class FacebookRemoteApp(RemoteAppMgr):
             access_token_url='/oauth/access_token',
             authorize_url='https://www.facebook.com/dialog/oauth'
         )
-        self.remote_app._tokengetter = self.get_oauth_token
+        # self.remote_app._tokengetter = self.get_oauth_token
 
 
     def index(self):
-        if 'google_token' in session:
-            me = self.remote_app.get('userinfo')
-            return jsonify({"data": me.data})
+        if 'oauth_token' in session:
+            userinfo = self.remote_app.get('/me').data
+            oauth_provider = "facebook"
+            oauth_id = userinfo.get('id')
+            email = userinfo.get('email')
+            return oauth_login_user(oauth_provider, oauth_id, email, userinfo)
+
         return redirect(url_for('.oauth_login', provider=self.remote_app.name))  # provider='google'
 
 
@@ -281,8 +285,7 @@ def oauth_login_user(oauth_provider, oauth_id, email, userinfo):
         flash('Your social id was added to your profile: ' + oauth_provider + '/' + oauth_id)
         return redirect('/')
 
-    # Create new User.
-    # TODO:  consider showing form for user to complete and validate, particularly for Twitter, which does not return email.
+    # Create new User.    TODO:  consider showing form for user to complete and validate
     user = User(email=userinfo.get('email'),
                 oauth_provider=oauth_provider,
                 oauth_id=oauth_id,
