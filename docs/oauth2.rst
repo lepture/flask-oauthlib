@@ -157,7 +157,7 @@ Also in SQLAlchemy model (would be better if it is in a cache)::
 Bearer Token
 ------------
 
-A bearer token is the final token that could be use by the client. There
+A bearer token is the final token that could be used by the client. There
 are other token types, but bearer token is widely used. Flask-OAuthlib only
 comes with bearer token.
 
@@ -429,9 +429,9 @@ The authorization flow is finished, everything should be working now.
 
 Revoke handler
 ``````````````
-In some cases a user may wish to revoke access given to an application and the 
-revoke handler makes it possible for an application to programmaticaly revoke 
-the access given to it. Also here you don't need to do much, allowing POST only 
+In some cases a user may wish to revoke access given to an application and the
+revoke handler makes it possible for an application to programmaticaly revoke
+the access given to it. Also here you don't need to do much, allowing POST only
 is recommended::
 
     @app.route('/oauth/revoke', methods=['POST'])
