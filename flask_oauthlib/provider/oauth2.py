@@ -626,9 +626,6 @@ class OAuth2RequestValidator(RequestValidator):
             log.debug('Authenticate client failed, secret not match.')
             return False
 
-        if client.client_type != 'confidential':
-            log.debug('Authenticate client failed, not confidential.')
-            return False
         log.debug('Authenticate client success.')
         return True
 
