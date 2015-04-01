@@ -583,11 +583,12 @@ class OAuth2RequestValidator(RequestValidator):
         .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
         """
 
-        client = self._clientgetter(request.client_id)
         if request.grant_type == 'password':
+            client = self._clientgetter(request.client_id)
             return (not client) or client.client_type == 'confidential' \
                     or client.client_secret
         elif request.grant_type == 'authorization_code':
+            client = self._clientgetter(request.client_id)
             return (not client) or client.client_type == 'confidential'
         return 'Authorization' in request.headers \
                 and request.grant_type == 'refresh_token'
