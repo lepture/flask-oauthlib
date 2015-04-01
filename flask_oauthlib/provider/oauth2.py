@@ -583,14 +583,14 @@ class OAuth2RequestValidator(RequestValidator):
         .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
         """
 
+        client = self._clientgetter(request.client_id)
         if request.grant_type == 'password':
-            client = self._clientgetter(request.client_id)
-            return (not client) or client.client_type == 'confidential' or\
-                request.client_secret
-
-        auth_required = ('authorization_code', 'refresh_token')
-        return 'Authorization' in request.headers and\
-            request.grant_type in auth_required
+            return (not client) or client.client_type == 'confidential' \
+                    or client.client_secret
+        elif request.grant_type == 'authorization_code':
+            return (not client) or client.client_type == 'confidential'
+        return 'Authorization' in request.headers \
+                and request.grant_type == 'refresh_token'
 
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
