@@ -6,7 +6,7 @@ from .base import create_server, sqlalchemy_provider, cache_provider
 from .base import db, Client, User, Grant
 
 
-class TestCodeDefaultProvider(TestCase):
+class TestDefaultProvider(TestCase):
     def create_server(self):
         create_server(self.app)
 
@@ -94,12 +94,12 @@ class TestCodeDefaultProvider(TestCase):
         assert b'access_token' in rv.data
 
 
-class TestCodeSQLAlchemyProvider(TestCodeDefaultProvider):
+class TestSQLAlchemyProvider(TestDefaultProvider):
     def create_server(self):
         create_server(self.app, sqlalchemy_provider(self.app))
 
 
-class TestCodeCacheProvider(TestCodeDefaultProvider):
+class TestCacheProvider(TestDefaultProvider):
     def create_server(self):
         create_server(self.app, cache_provider(self.app))
 
@@ -119,22 +119,3 @@ class TestCodeCacheProvider(TestCodeDefaultProvider):
         url += '&client_secret=' + self.oauth_client.client_secret
         rv = self.client.get(url)
         assert b'access_token' in rv.data
-
-
-class TestCodeConfidential(TestCodeDefaultProvider):
-    def prepare_data(self):
-        self.create_server()
-
-        oauth_client = Client(
-            name='ios', client_id='code-client', client_secret='code-secret',
-            is_confidential=True,
-            _redirect_uris='http://localhost/authorized',
-        )
-
-        db.session.add(User(username='foo'))
-        db.session.add(oauth_client)
-
-        self.oauth_client = oauth_client
-        self.authorize_url = (
-            '/oauth/authorize?response_type=code&client_id=%s'
-        ) % oauth_client.client_id

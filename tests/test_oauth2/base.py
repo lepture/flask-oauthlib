@@ -22,7 +22,7 @@ class User(db.Model):
                          nullable=False)
 
     def check_password(self, password):
-        return True
+        return password != 'wrong'
 
 
 class Client(db.Model):
@@ -32,15 +32,8 @@ class Client(db.Model):
     client_id = db.Column(db.String(40), primary_key=True)
     client_secret = db.Column(db.String(55), unique=True, index=True,
                               nullable=False)
-    is_confidential = db.Column(db.Boolean, default=False)
     _redirect_uris = db.Column(db.Text)
     default_scope = db.Column(db.Text, default='email address')
-
-    @property
-    def client_type(self):
-        if self.is_confidential:
-            return 'confidential'
-        return 'public'
 
     @property
     def user(self):
@@ -204,7 +197,10 @@ def default_provider(app):
     def get_user(username, password, *args, **kwargs):
         # This is optional, if you don't need password credential
         # there is no need to implement this method
-        return User.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            return user
+        return None
 
     return oauth
 
