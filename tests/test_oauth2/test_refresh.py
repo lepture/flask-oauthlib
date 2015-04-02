@@ -39,6 +39,13 @@ class TestDefaultProvider(TestCase):
             'grant_type': 'refresh_token',
             'refresh_token': token.refresh_token,
             'client_id': self.oauth_client.client_id,
+        })
+        assert b'error' in rv.data
+
+        rv = self.client.post('/oauth/token', data={
+            'grant_type': 'refresh_token',
+            'refresh_token': token.refresh_token,
+            'client_id': self.oauth_client.client_id,
             'client_secret': self.oauth_client.client_secret,
         })
         assert b'access_token' in rv.data

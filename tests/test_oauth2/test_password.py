@@ -19,6 +19,7 @@ class TestDefaultProvider(TestCase):
 
         db.session.add(User(username='foo'))
         db.session.add(oauth_client)
+        db.session.commit()
 
         self.oauth_client = oauth_client
 
