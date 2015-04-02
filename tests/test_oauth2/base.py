@@ -34,6 +34,7 @@ class Client(db.Model):
                               nullable=False)
     _redirect_uris = db.Column(db.Text)
     default_scope = db.Column(db.Text, default='email address')
+    disallow_grant_type = db.Column(db.String(20))
 
     @property
     def user(self):
@@ -57,8 +58,13 @@ class Client(db.Model):
 
     @property
     def allowed_grant_types(self):
-        return ['authorization_code', 'password', 'client_credentials',
-                'refresh_token']
+        types = [
+            'authorization_code', 'password',
+            'client_credentials', 'refresh_token',
+        ]
+        if self.disallow_grant_type:
+            types.remove(self.disallow_grant_type)
+        return types
 
 
 class Grant(db.Model):

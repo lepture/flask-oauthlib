@@ -70,6 +70,20 @@ class TestDefaultProvider(TestCase):
         }, headers={'Authorization': 'Basic %s' % auth})
         assert b'access_token' in rv.data
 
+    def test_disallow_grant_type(self):
+        self.oauth_client.disallow_grant_type = 'password'
+        db.session.add(self.oauth_client)
+        db.session.commit()
+
+        rv = self.client.post('/oauth/token', data={
+            'grant_type': 'password',
+            'username': 'foo',
+            'password': 'right',
+            'client_id': self.oauth_client.client_id,
+            'client_secret': self.oauth_client.client_secret,
+        })
+        assert b'error' in rv.data
+
 
 class TestSQLAlchemyProvider(TestDefaultProvider):
     def create_server(self):
