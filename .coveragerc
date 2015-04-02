@@ -1,0 +1,2 @@
+[report]
+omit = flask_oauthlib/contrib/client/*
