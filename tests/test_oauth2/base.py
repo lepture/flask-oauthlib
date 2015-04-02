@@ -140,7 +140,7 @@ def cache_provider(app):
     oauth = OAuth2Provider(app)
 
     bind_sqlalchemy(oauth, db.session, user=User,
-                    token=Token, client=Client)
+                    token=Token, client=Client, current_user=current_user)
 
     app.config.update({'OAUTH2_CACHE_TYPE': 'simple'})
     bind_cache_grant(app, oauth, current_user)
@@ -194,7 +194,10 @@ def default_provider(app):
         # In real project, a token is unique bound to user and client.
         # Which means, you don't need to create a token every time.
         tok = Token(**token)
-        tok.user_id = request.user.id
+        if request.response_type == 'token':
+            tok.user_id = g.user.id
+        else:
+            tok.user_id = request.user.id
         tok.client_id = request.client.client_id
         db.session.add(tok)
         db.session.commit()
