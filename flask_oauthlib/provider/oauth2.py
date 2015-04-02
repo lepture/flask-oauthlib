@@ -232,7 +232,6 @@ class OAuth2Provider(object):
 
             - client_id: A random string
             - client_secret: A random string
-            - client_type: A string represents if it is `confidential`
             - redirect_uris: A list of redirect uris
             - default_redirect_uri: One of the redirect uris
             - default_scopes: Default scopes of the client
@@ -582,24 +581,10 @@ class OAuth2RequestValidator(RequestValidator):
         .. _`Section 4.1.3`: http://tools.ietf.org/html/rfc6749#section-4.1.3
         .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
         """
-
-        if request.grant_type == 'password':
-            client = self._clientgetter(request.client_id)
-            return (not client) or client.client_type == 'confidential' \
-                    or client.client_secret
-        elif request.grant_type == 'authorization_code':
-            client = self._clientgetter(request.client_id)
-            return (not client) or client.client_type == 'confidential'
-        return 'Authorization' in request.headers \
-                and request.grant_type == 'refresh_token'
+        grant_types = ('password', 'authorization_code', 'refresh_token')
+        return request.grant_type in grant_types
 
     def authenticate_client(self, request, *args, **kwargs):
-        """Authenticate itself in other means.
-
-        Other means means is described in `Section 3.2.1`_.
-
-        .. _`Section 3.2.1`: http://tools.ietf.org/html/rfc6749#section-3.2.1
-        """
         auth = request.headers.get('Authorization', None)
         log.debug('Authenticate client %r', auth)
         if auth:
@@ -617,15 +602,13 @@ class OAuth2RequestValidator(RequestValidator):
 
         client = self._clientgetter(client_id)
         if not client:
-            log.debug('Authenticate client failed, client not found.')
             return False
-
-        request.client = client
 
         if client.client_secret != client_secret:
             log.debug('Authenticate client failed, secret not match.')
             return False
 
+        request.client = client
         log.debug('Authenticate client success.')
         return True
 
@@ -635,8 +618,9 @@ class OAuth2RequestValidator(RequestValidator):
         :param client_id: Client ID of the non-confidential client
         :param request: The Request object passed by oauthlib
         """
-        log.debug('Authenticate client %r.', client_id)
-        client = request.client or self._clientgetter(client_id)
+        log.debug('Authenticate client id %r.', client_id)
+
+        client = self._clientgetter(client_id)
         if not client:
             log.debug('Authenticate failed, client not found.')
             return False
