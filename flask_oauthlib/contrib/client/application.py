@@ -307,11 +307,12 @@ class OAuth2Application(BaseApplication):
 
         # patches session
         compliance_fixes = self.compliance_fixes
-        if compliance_fixes.startswith('.'):
-            compliance_fixes = \
-                'requests_oauthlib.compliance_fixes' + compliance_fixes
-        apply_fixes = import_string(compliance_fixes)
-        oauth = apply_fixes(oauth)
+        if compliance_fixes is not None:
+            if compliance_fixes.startswith('.'):
+                compliance_fixes = \
+                    'requests_oauthlib.compliance_fixes' + compliance_fixes
+            apply_fixes = import_string(compliance_fixes)
+            oauth = apply_fixes(oauth)
 
         return oauth
 
