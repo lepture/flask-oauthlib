@@ -14,7 +14,7 @@ from werkzeug import cached_property
 from flask import request, redirect, url_for
 from flask import make_response, abort
 from oauthlib.oauth1 import RequestValidator
-from oauthlib.oauth1 import WebApplicationServer as Server
+from oauthlib.oauth1 import WebApplicationServer, SignatureOnlyEndpoint
 from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA
 from oauthlib.common import to_unicode, add_params_to_uri, urlencode
 from oauthlib.oauth1.rfc5849 import errors
@@ -25,6 +25,12 @@ SIGNATURE_METHODS = (SIGNATURE_HMAC, SIGNATURE_RSA)
 __all__ = ('OAuth1Provider', 'OAuth1RequestValidator')
 
 log = logging.getLogger('flask_oauthlib')
+
+
+class Server(WebApplicationServer, SignatureOnlyEndpoint):
+    def __init__(self, request_validator):
+        WebApplicationServer.__init__(self, request_validator)
+        SignatureOnlyEndpoint.__init__(self, request_validator)
 
 
 class OAuth1Provider(object):
@@ -483,7 +489,7 @@ class OAuth1Provider(object):
                 return _error_response(e)
         return decorated
 
-    def require_oauth(self, *realms, **kwargs):
+    def require_oauth(self, *realms, **oauth_kwargs):
         """Protect resource with specified scopes."""
         def wrapper(f):
             @wraps(f)
@@ -497,9 +503,15 @@ class OAuth1Provider(object):
                 server = self.server
                 uri, http_method, body, headers = extract_params()
                 try:
-                    valid, req = server.validate_protected_resource_request(
-                        uri, http_method, body, headers, realms
-                    )
+                    if oauth_kwargs.get("require_user", True):
+                        valid, req = server.validate_protected_resource_request(
+                            uri, http_method, body, headers, realms
+                        )
+                    else:
+                        valid, req = server.validate_request(
+                            uri, http_method, body, headers
+                        )
+
                 except Exception as e:
                     log.warn('Exception: %r', e)
                     e.urlencoded = urlencode([('error', 'unknown')])
@@ -511,7 +523,8 @@ class OAuth1Provider(object):
                 if not valid:
                     return abort(401)
                 # alias user for convenience
-                req.user = req.access_token.user
+                if oauth_kwargs.get("require_user", True):
+                    req.user = req.access_token.user
                 request.oauth = req
                 return f(*args, **kwargs)
             return decorated
