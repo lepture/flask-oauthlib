@@ -15,6 +15,7 @@ except ImportError:
 
 from flask import current_app, redirect, request
 from requests_oauthlib import OAuth1Session, OAuth2Session
+from requests_oauthlib.oauth1_session import TokenMissing
 from oauthlib.oauth2.rfc6749.errors import MissingCodeError
 from werkzeug.utils import import_string
 
@@ -155,8 +156,6 @@ class OAuth1Application(BaseApplication):
 
     session_class = OAuth1Session
 
-    _session_request_token = WebSessionData('req_token')
-
     def make_client(self, token):
         """Creates a client with specific access token pair.
 
@@ -175,15 +174,16 @@ class OAuth1Application(BaseApplication):
             resource_owner_secret=access_token_secret)
 
     def authorize(self, callback_uri, code=302):
+        # TODO add support for oauth_callback=oob (out-of-band) here
+        #      http://tools.ietf.org/html/rfc5849#section-2.1
         oauth = self.make_oauth_session(callback_uri=callback_uri)
 
         # fetches request token
-        response = oauth.fetch_request_token(self.request_token_url)
-        request_token = response['oauth_token']
-        request_token_secret = response['oauth_token_secret']
-
-        # stores request token and callback uri
-        self._session_request_token = (request_token, request_token_secret)
+        oauth.fetch_request_token(self.request_token_url)
+        # TODO send signal and pass token here
+        #      http://flask.pocoo.org/docs/0.10/signals/
+        # TODO check oauth_callback_confirmed here
+        #      http://tools.ietf.org/html/rfc5849#section-2.1
 
         # redirects to third-part URL
         authorization_url = oauth.authorization_url(self.authorization_url)
@@ -194,26 +194,13 @@ class OAuth1Application(BaseApplication):
 
         # obtains verifier
         try:
-            response = oauth.parse_authorization_response(request.url)
-        except ValueError as e:
-            if 'denied' not in repr(e).split("'"):
-                raise
+            oauth.parse_authorization_response(request.url)
+        except TokenMissing:
             return  # authorization denied
-        verifier = response['oauth_verifier']
-
-        # restores request token from session
-        if not self._session_request_token:
-            return
-        request_token, request_token_secret = self._session_request_token
-        del self._session_request_token
 
         # obtains access token
-        oauth = self.make_oauth_session(
-            resource_owner_key=request_token,
-            resource_owner_secret=request_token_secret,
-            verifier=verifier)
-        oauth_tokens = oauth.fetch_access_token(self.access_token_url)
-        return OAuth1Response(oauth_tokens)
+        token = oauth.fetch_access_token(self.access_token_url)
+        return OAuth1Response(token)
 
     def make_oauth_session(self, **kwargs):
         oauth = self.session_class(
