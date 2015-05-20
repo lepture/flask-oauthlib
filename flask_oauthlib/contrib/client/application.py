@@ -22,6 +22,7 @@ from werkzeug.utils import import_string
 from .descriptor import OAuthProperty, WebSessionData
 from .structure import OAuth1Response, OAuth2Response
 from .exceptions import AccessTokenNotFound
+from .signals import request_token_fetched
 
 
 __all__ = ['OAuth1Application', 'OAuth2Application']
@@ -179,9 +180,8 @@ class OAuth1Application(BaseApplication):
         oauth = self.make_oauth_session(callback_uri=callback_uri)
 
         # fetches request token
-        oauth.fetch_request_token(self.request_token_url)
-        # TODO send signal and pass token here
-        #      http://flask.pocoo.org/docs/0.10/signals/
+        token = oauth.fetch_request_token(self.request_token_url)
+        request_token_fetched.send(self, response=OAuth1Response(token))
         # TODO check oauth_callback_confirmed here
         #      http://tools.ietf.org/html/rfc5849#section-2.1
 
