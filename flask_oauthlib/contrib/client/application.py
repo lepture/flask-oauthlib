@@ -165,8 +165,8 @@ class OAuth1Application(BaseApplication):
                   object.
         """
         if isinstance(token, dict):
-            access_token = token['token']
-            access_token_secret = token['token_secret']
+            access_token = token['oauth_token']
+            access_token_secret = token['oauth_token_secret']
         else:
             access_token, access_token_secret = token
         return self.make_oauth_session(
