@@ -1,6 +1,6 @@
 # Based on Stash API:
 #  https://confluence.atlassian.com/display/stash/Version+2
-# You must configure Outgoing App link for application
+# You must configure Incoming Authentication App link for application
 
 from flask import Flask, redirect, url_for, session, request, jsonify
 from flask_oauthlib.client import OAuth
