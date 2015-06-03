@@ -273,10 +273,7 @@ class OAuth2Application(BaseApplication):
         return OAuth2Response(token)
 
     def make_oauth_session(self, **kwargs):
-        # joins scope into unicode
         kwargs.setdefault('scope', self.scope)
-        if kwargs['scope']:
-            kwargs['scope'] = u','.join(kwargs['scope'])
 
         # configures automatic token refresh if possible
         if self.refresh_token_url:
