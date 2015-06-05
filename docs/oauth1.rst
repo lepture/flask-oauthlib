@@ -438,7 +438,7 @@ Just like request token handler, you can add more data in access token.
 Protect Resource
 ----------------
 
-Protect the resource of a user with ``require_oauth`` decorator now::
+Protect a resource with ``require_oauth`` decorator now::
 
     @app.route('/api/me')
     @oauth.require_oauth('email')
@@ -451,9 +451,21 @@ Protect the resource of a user with ``require_oauth`` decorator now::
     def user(username):
         user = User.query.filter_by(username=username).first()
         return jsonify(email=user.email, username=user.username)
+        
+    @app.route('/api/client')
+    @oauth.require_oauth(require_user=False)
+    def client():
+        client = Client.query.filter_by(client_key=request.oauth.client_key).first()
+        return jsonify(client_key=client.client_key, 
+                       name=client.name, 
+                       description=client.description, 
+                       user_id=client.user_id)
 
 The decorator accepts a list of realms, only the clients with the given realms
-can access the defined resources.
+can access the defined resources. Additionally, the decorator supports a require_user
+parameter that defaults to True. By setting this to false, this implements "0-legged"
+oauth which allows an authorized client to make requests without the context of a user.
+
 
 .. versionchanged:: 0.5.0
 
