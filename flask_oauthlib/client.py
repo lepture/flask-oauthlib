@@ -464,8 +464,12 @@ class OAuthRemoteApp(object):
             # change the uri, headers, or body.
             uri, headers, body = self.pre_request(uri, headers, body)
 
+        if body:
+            data = to_bytes(body, self.encoding)
+        else:
+            data = None
         resp, content = self.http_request(
-            uri, headers, data=to_bytes(body, self.encoding), method=method
+            uri, headers, data=data, method=method
         )
         return OAuthResponse(resp, content, self.content_type)
 
