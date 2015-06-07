@@ -1,10 +1,10 @@
 Flask-OAuthlib
 ==============
 
-.. image:: https://pypip.in/wheel/flask-oauthlib/badge.svg?style=flat
+.. image:: https://img.shields.io/pypi/wheel/flask-oauthlib.svg?style=flat
    :target: https://pypi.python.org/pypi/flask-OAuthlib/
    :alt: Wheel Status
-.. image:: https://pypip.in/version/flask-oauthlib/badge.svg?style=flat
+.. image:: https://img.shields.io/pypi/v/flask-oauthlib.svg?style=flat
    :target: https://pypi.python.org/pypi/flask-oauthlib/
    :alt: Latest Version
 .. image:: https://travis-ci.org/lepture/flask-oauthlib.svg?branch=master
