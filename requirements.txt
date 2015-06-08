@@ -3,3 +3,5 @@ Mock
 oauthlib
 requests-oauthlib
 Flask-SQLAlchemy
+flake8
+nose
