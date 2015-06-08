@@ -8,7 +8,7 @@ test:
 
 coverage:
 	@rm -f .coverage
-	@nosetests --with-coverage --cover-package=flask_oauthlib --cover-html
+	@py.test --cov flask_oauthlib --cov-report term-missing --cov-report html
 
 clean: clean-build clean-pyc clean-docs
 

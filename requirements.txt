@@ -6,3 +6,4 @@ Flask-SQLAlchemy
 flake8
 nose
 pytest
+pytest-cov
