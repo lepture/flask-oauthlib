@@ -47,7 +47,6 @@ setup(
         'requests-oauthlib>=0.5.0',
     ],
     tests_require=['nose', 'Flask-SQLAlchemy', 'mock'],
-    test_suite='nose.collector',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
