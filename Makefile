@@ -4,7 +4,7 @@ lint:
 	@flake8 flask_oauthlib tests
 
 test:
-	@nosetests -s --nologcapture
+	@py.test -s
 
 coverage:
 	@rm -f .coverage

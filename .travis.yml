@@ -8,7 +8,7 @@ python:
     - "pypy"
 
 script:
-    - nosetests -s
+    - py.test -s
 
 after_success:
     - pip install coveralls
