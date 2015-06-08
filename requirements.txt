@@ -4,6 +4,5 @@ oauthlib
 requests-oauthlib
 Flask-SQLAlchemy
 flake8
-nose
 pytest
 pytest-cov

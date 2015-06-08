@@ -46,7 +46,7 @@ setup(
         'oauthlib>=0.6.2',
         'requests-oauthlib>=0.5.0',
     ],
-    tests_require=['nose', 'Flask-SQLAlchemy', 'mock'],
+    tests_require=['pytest', 'Flask-SQLAlchemy', 'mock'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
