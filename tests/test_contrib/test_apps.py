@@ -1,9 +1,10 @@
 import unittest
 
 from flask import Flask
+import pytest
+
 from flask_oauthlib.client import OAuth
 from flask_oauthlib.contrib.apps import douban, linkedin
-from nose.tools import assert_raises
 
 
 class RemoteAppFactorySuite(unittest.TestCase):
@@ -20,8 +21,11 @@ class RemoteAppFactorySuite(unittest.TestCase):
         assert 'api.douban.com/v2' in c1.base_url
         assert c1.request_token_params.get('scope') == 'douban_basic_common'
 
-        assert_raises(KeyError, lambda: c1.consumer_key)
-        assert_raises(KeyError, lambda: c1.consumer_secret)
+        with pytest.raises(KeyError):
+            assert c1.consumer_key
+
+        with pytest.raises(KeyError):
+            assert c1.consumer_secret
 
         self.app.config['DOUBAN_CONSUMER_KEY'] = 'douban key'
         self.app.config['DOUBAN_CONSUMER_SECRET'] = 'douban secret'
@@ -31,7 +35,9 @@ class RemoteAppFactorySuite(unittest.TestCase):
         c2 = douban.register_to(self.oauth, 'doudou', scope=['a', 'b'])
         assert c2.request_token_params.get('scope') == 'a,b'
 
-        assert_raises(KeyError, lambda: c2.consumer_key)
+        with pytest.raises(KeyError):
+            assert c2.consumer_key
+
         self.app.config['DOUDOU_CONSUMER_KEY'] = 'douban2 key'
         assert c2.consumer_key == 'douban2 key'
 
