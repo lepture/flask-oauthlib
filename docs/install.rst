@@ -4,22 +4,14 @@ Installation
 ============
 
 This part of the documentation covers the installation of Flask-OAuthlib.
-The first step to using any software package is getting it properly installed.
 
 
-Distribute & Pip
-----------------
+Pip
+---
 
 Installing Flask-OAuthlib is simple with `pip <http://www.pip-installer.org/>`_::
 
     $ pip install Flask-OAuthlib
-
-or, with `easy_install <http://pypi.python.org/pypi/setuptools>`_::
-
-    $ easy_install Flask-OAuthlib
-
-But, you really `shouldn't do that <http://www.pip-installer.org/en/latest/other-tools.html#pip-compared-to-easy-install>`_.
-
 
 
 Cheeseshop Mirror
