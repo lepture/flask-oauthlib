@@ -3,11 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. _oauthlib: https://github.com/idan/oauthlib
+
 Flask-OAuthlib
 ==============
 
-Flask-OAuthlib is designed as a replacement for Flask-OAuth. It depends
-on the oauthlib module.
+Flask-OAuthlib is designed to be a replacement for Flask-OAuth. It depends on
+oauthlib_.
 
 The client part of Flask-OAuthlib shares the same API as Flask-OAuth,
 which is pretty and simple.
