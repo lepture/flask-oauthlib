@@ -310,7 +310,7 @@ and accessing resource flow. They are implemented with decorators as follows::
         for t in toks:
             db.session.delete(t)
 
-        expires_in = token.pop('expires_in')
+        expires_in = token.get('expires_in')
         expires = datetime.utcnow() + timedelta(seconds=expires_in)
 
         tok = Token(
