@@ -1,5 +1,6 @@
 from flask import Flask
-from nose.tools import raises
+import pytest
+
 from flask_oauthlib.client import encode_request_data
 from flask_oauthlib.client import OAuthRemoteApp, OAuth
 from flask_oauthlib.client import parse_response
@@ -65,18 +66,18 @@ def test_parse_xml():
     parse_response(resp, resp.read())
 
 
-@raises(AttributeError)
 def test_raise_app():
     app = Flask(__name__)
     app = create_client(app)
-    client = app.extensions['oauthlib.client']
-    assert client.demo.name == 'dev'
+
+    with pytest.raises(AttributeError):
+        assert app.extensions['oauthlib.client']
 
 
 class TestOAuthRemoteApp(object):
-    @raises(TypeError)
     def test_raise_init(self):
-        OAuthRemoteApp('oauth', 'twitter')
+        with pytest.raises(TypeError):
+            OAuthRemoteApp('oauth', 'twitter')
 
     def test_not_raise_init(self):
         OAuthRemoteApp('oauth', 'twitter', app_key='foo')

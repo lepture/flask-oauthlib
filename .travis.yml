@@ -8,11 +8,10 @@ python:
     - "pypy"
 
 script:
-    - nosetests -s
+    - py.test -s --cov flask_oauthlib --cov-report=term-missing
 
 after_success:
     - pip install coveralls
-    - coverage run --source=flask_oauthlib setup.py -q nosetests
     - coveralls
 
 branches:

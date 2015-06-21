@@ -2,8 +2,9 @@
 
 import time
 from mock import MagicMock
-from nose.tools import raises
 from flask import Flask
+import pytest
+
 from flask_oauthlib.client import OAuth, OAuthException
 from .server import create_server, db
 from .client import create_client
@@ -116,9 +117,9 @@ auth_dict = {
 
 
 class TestInvalid(OAuthSuite):
-    @raises(OAuthException)
     def test_request(self):
-        self.client.get('/login')
+        with pytest.raises(OAuthException):
+            self.client.get('/login')
 
     def test_request_token(self):
         rv = self.client.get('/oauth/request_token')

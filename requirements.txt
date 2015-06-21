@@ -3,3 +3,6 @@ Mock
 oauthlib
 requests-oauthlib
 Flask-SQLAlchemy
+flake8
+pytest
+pytest-cov
