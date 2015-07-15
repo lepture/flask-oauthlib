@@ -18,7 +18,7 @@ from werkzeug import cached_property
 from werkzeug.utils import import_string
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
-from oauthlib.common import to_unicode
+from oauthlib.common import to_unicode, add_params_to_uri
 from ..utils import extract_params, decode_base64, create_response
 
 __all__ = ('OAuth2Provider', 'OAuth2RequestValidator')
@@ -394,6 +394,11 @@ class OAuth2Provider(object):
                 except oauth2.OAuth2Error as e:
                     log.debug('OAuth2Error: %r', e)
                     return redirect(e.in_uri(redirect_uri))
+                except Exception as e:
+                    log.warning('Exception caught while processing request, %s.' % e)
+                    return redirect(add_params_to_uri(
+                        self.error_uri, {'error': str(e) }
+                    ))
 
             else:
                 redirect_uri = request.values.get(
@@ -408,6 +413,12 @@ class OAuth2Provider(object):
             except oauth2.OAuth2Error as e:
                 log.debug('OAuth2Error: %r', e)
                 return redirect(e.in_uri(redirect_uri))
+            except Exception as e:
+                log.warning('Exception caught while processing request, %s.' % e)
+                return redirect(add_params_to_uri(
+                    self.error_uri, {'error': str(e) }
+                ))
+
 
             if not isinstance(rv, bool):
                 # if is a response or redirect
@@ -447,6 +458,12 @@ class OAuth2Provider(object):
         except oauth2.OAuth2Error as e:
             log.debug('OAuth2Error: %r', e)
             return redirect(e.in_uri(redirect_uri or self.error_uri))
+        except Exception as e:
+            log.warning('Exception caught while processing request, %s.' % e)
+            return redirect(add_params_to_uri(
+                self.error_uri, {'error': str(e) }
+            ))
+
 
     def verify_request(self, scopes):
         """Verify current request, get the oauth data.
