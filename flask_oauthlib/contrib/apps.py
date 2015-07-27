@@ -158,10 +158,10 @@ google = RemoteAppFactory('google', {
 The OAuth app for Google API.
 
 :param scope: optional.
-              default: ``['https://www.googleapis.com/auth/userinfo.email']``.
+              default: ``['email']``.
 """)
 google.kwargs_processor(make_scope_processor(
-    'https://www.googleapis.com/auth/userinfo.email'))
+    'email'))
 
 
 twitter = RemoteAppFactory('twitter', {
