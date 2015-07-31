@@ -597,8 +597,11 @@ class OAuth2RequestValidator(RequestValidator):
                 log.debug('Authenticate client failed with exception: %r', e)
                 return False
         else:
-            client_id = request.client_id
-            client_secret = request.client_secret
+            client_id = client_secret = None
+            if hasattr(request, 'client_id'):
+                client_id = request.client_id
+            if hasattr(request, 'client_secret'):
+                client_secret = request.client_secret
 
         client = self._clientgetter(client_id)
         if not client:
