@@ -1,5 +1,5 @@
 Flask
 Mock
-oauthlib
+oauthlib~=1.0
 requests-oauthlib
 Flask-SQLAlchemy

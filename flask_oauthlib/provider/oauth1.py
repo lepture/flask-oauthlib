@@ -635,7 +635,7 @@ class OAuth1RequestValidator(RequestValidator):
         The client object must has ``client_secret`` attribute.
         """
         log.debug('Get client secret of %r', client_key)
-        if not request.client:
+        if not hasattr(request, 'client') or not getattr(request, 'client'):
             request.client = self._clientgetter(client_key=client_key)
         if request.client:
             return request.client.client_secret
@@ -674,7 +674,7 @@ class OAuth1RequestValidator(RequestValidator):
         """Default realms of the client."""
         log.debug('Get realms for %r', client_key)
 
-        if not request.client:
+        if not hasattr(request, 'client') or not getattr(request, 'client'):
             request.client = self._clientgetter(client_key=client_key)
 
         client = request.client
@@ -701,7 +701,7 @@ class OAuth1RequestValidator(RequestValidator):
 
     def get_rsa_key(self, client_key, request):
         """Retrieves a previously stored client provided RSA key."""
-        if not request.client:
+        if not hasattr(request, 'client') or not getattr(request, 'client'):
             request.client = self._clientgetter(client_key=client_key)
         if hasattr(request.client, 'rsa_key'):
             return request.client.rsa_key
@@ -714,7 +714,7 @@ class OAuth1RequestValidator(RequestValidator):
     def validate_client_key(self, client_key, request):
         """Validates that supplied client key."""
         log.debug('Validate client key for %r', client_key)
-        if not request.client:
+        if not hasattr(request, 'client') or not getattr(request, 'client'):
             request.client = self._clientgetter(client_key=client_key)
         if request.client:
             return True
@@ -765,7 +765,7 @@ class OAuth1RequestValidator(RequestValidator):
     def validate_redirect_uri(self, client_key, redirect_uri, request):
         """Validate if the redirect_uri is allowed by the client."""
         log.debug('Validate redirect_uri %r for %r', redirect_uri, client_key)
-        if not request.client:
+        if not hasattr(request, 'client') or not getattr(request, 'client'):
             request.client = self._clientgetter(client_key=client_key)
         if not request.client:
             return False
@@ -776,7 +776,7 @@ class OAuth1RequestValidator(RequestValidator):
 
     def validate_requested_realms(self, client_key, realms, request):
         log.debug('Validate requested realms %r for %r', realms, client_key)
-        if not request.client:
+        if not hasattr(request, 'client') or not getattr(request, 'client'):
             request.client = self._clientgetter(client_key=client_key)
 
         client = request.client
