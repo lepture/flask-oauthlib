@@ -29,10 +29,10 @@ class TestDefaultProvider(TestCase):
 
     def test_get_authorize(self):
         rv = self.client.get('/oauth/authorize')
-        assert 'invalid_client_id' in rv.location
+        assert 'Missing+client_id' in rv.location
 
         rv = self.client.get('/oauth/authorize?client_id=no')
-        assert 'invalid_client_id' in rv.location
+        assert 'Invalid+client_id' in rv.location
 
         url = '/oauth/authorize?client_id=%s' % self.oauth_client.client_id
         rv = self.client.get(url)

@@ -577,12 +577,15 @@ class OAuth2RequestValidator(RequestValidator):
         Authorization Code Grant: see `Section 4.1.3`_.
         Refresh Token Grant: see `Section 6`_.
 
+        Also returns true for null grant_types, which can be revocation
+        requests.
+
         .. _`Section 4.3.2`: http://tools.ietf.org/html/rfc6749#section-4.3.2
         .. _`Section 4.1.3`: http://tools.ietf.org/html/rfc6749#section-4.1.3
         .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
         """
         grant_types = ('password', 'authorization_code', 'refresh_token')
-        return request.grant_type in grant_types
+        return request.grant_type in grant_types or request.grant_type is None
 
     def authenticate_client(self, request, *args, **kwargs):
         auth = request.headers.get('Authorization', None)
