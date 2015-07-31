@@ -597,11 +597,8 @@ class OAuth2RequestValidator(RequestValidator):
                 log.debug('Authenticate client failed with exception: %r', e)
                 return False
         else:
-            client_id = client_secret = None
-            if hasattr(request, 'client_id'):
-                client_id = request.client_id
-            if hasattr(request, 'client_secret'):
-                client_secret = request.client_secret
+            client_id = getattr(request, 'client_id', None)
+            client_secret = getattr(request, 'client_secret', None)
 
         client = self._clientgetter(client_id)
         if not client:
@@ -925,7 +922,9 @@ class OAuth2RequestValidator(RequestValidator):
             if not tok:
                 tok = self._tokengetter(refresh_token=token)
 
-        if tok and tok.client_id == request.client.client_id:
+        if tok and tok.client_id == getattr(request.client,
+                                            'client_id',
+                                            None):
             request.client_id = tok.client_id
             request.user = tok.user
             tok.delete()
