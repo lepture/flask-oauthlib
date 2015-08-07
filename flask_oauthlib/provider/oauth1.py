@@ -576,7 +576,7 @@ class OAuth1RequestValidator(RequestValidator):
         )
 
     @property
-    def reqeust_token_length(self):
+    def request_token_length(self):
         return self._config.get(
             'OAUTH1_PROVIDER_KEY_LENGTH',
             (20, 30)
