@@ -68,7 +68,7 @@ class TestDefaultProvider(TestCase):
             'grant_type': 'password',
             'username': 'foo',
             'password': 'right',
-        }, headers={'Authorization': 'Basic %s' % auth})
+        }, headers={'Authorization': 'Basic %s' % (auth)})
         assert b'access_token' in rv.data
 
     def test_disallow_grant_type(self):

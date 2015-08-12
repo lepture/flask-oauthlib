@@ -588,14 +588,19 @@ class OAuth2RequestValidator(RequestValidator):
         auth = request.headers.get('Authorization', None)
         log.debug('Authenticate client %r', auth)
         if auth:
-            try:
-                _, s = auth.split(' ')
-                client_id, client_secret = decode_base64(s).split(':')
-                client_id = to_unicode(client_id, 'utf-8')
-                client_secret = to_unicode(client_secret, 'utf-8')
-            except Exception as e:
-                log.debug('Authenticate client failed with exception: %r', e)
-                return False
+            token_type, t = auth.split(' ')
+            if token_type == 'Bearer':
+                tok = self._tokengetter(access_token=t)
+                client_id = tok.client.client_id
+                client_secret = tok.client.client_secret
+            else:
+                try:
+                    client_id, client_secret = decode_base64(t).split(':')
+                    client_id = to_unicode(client_id, 'utf-8')
+                    client_secret = to_unicode(client_secret, 'utf-8')
+                except Exception as e:
+                    log.debug('Authenticate client failed with exception: %r', e)
+                    return False
         else:
             client_id = request.client_id
             client_secret = request.client_secret
