@@ -70,6 +70,16 @@ class TestDefaultProvider(TestCase):
         assert b'invalid_client' not in rv.data
         assert rv.status_code == 401
 
+    def test_invalid_redirect_uri(self):
+        authorize_url = (
+            '/oauth/authorize?response_type=code&client_id=dev'
+            '&redirect_uri=http://localhost:8000/authorized'
+            '&scope=invalid'
+        )
+        rv = self.client.get(authorize_url)
+        assert 'error=' in rv.location
+        assert 'trying+to+decode+a+non+urlencoded+string' in rv.location
+
     def test_get_token(self):
         expires = datetime.utcnow() + timedelta(seconds=100)
         grant = Grant(
