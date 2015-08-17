@@ -196,6 +196,8 @@ class OAuthRemoteApp(object):
     :param request_token_url: the url for requesting new tokens
     :param access_token_url: the url for token exchange
     :param authorize_url: the url for authorization
+    :param authorize_params: an optional dictionary of HTTP parameters to
+                             specify in the authorize url.
     :param consumer_key: the application specific consumer key
     :param consumer_secret: the application specific consumer secret
     :param request_token_params: an optional dictionary of parameters
@@ -223,6 +225,7 @@ class OAuthRemoteApp(object):
         request_token_url=None,
         access_token_url=None,
         authorize_url=None,
+        authorize_params=None,
         consumer_key=None,
         consumer_secret=None,
         request_token_params=None,
@@ -240,6 +243,7 @@ class OAuthRemoteApp(object):
         self._request_token_url = request_token_url
         self._access_token_url = access_token_url
         self._authorize_url = authorize_url
+        self._authorize_params = authorize_params
         self._consumer_key = consumer_key
         self._consumer_secret = consumer_secret
         self._request_token_params = request_token_params
@@ -481,6 +485,7 @@ class OAuthRemoteApp(object):
         :param kwargs: add optional key/value pairs to the query string
         """
         params = dict(self.request_token_params) or {}
+        params.update(self._authorize_params or {})
         params.update(**kwargs)
 
         if self.request_token_url:
