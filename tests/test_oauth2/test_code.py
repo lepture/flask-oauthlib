@@ -50,6 +50,10 @@ class TestDefaultProvider(TestCase):
         rv = self.client.post(url, data={'confirm': 'yes'})
         assert 'code' in rv.location
 
+        url = self.authorize_url + '&scope='
+        rv = self.client.post(url, data={'confirm': 'yes'})
+        assert 'error=Scopes+must+be+set' in rv.location
+
     def test_invalid_token(self):
         rv = self.client.get('/oauth/token')
         assert b'unsupported_grant_type' in rv.data
