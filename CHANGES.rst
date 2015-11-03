@@ -3,6 +3,16 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.9.2
+-------------
+
+Released on Nov 3, 2015
+
+- Bugfix in client parse_response when body is none.
+- Update contrib client by @tonyseek
+- Typo fix for OAuth1 provider
+- Fix OAuth2 provider on non credential clients by @Fleurer
+
 
 Version 0.9.1
 -------------
