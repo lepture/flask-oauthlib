@@ -146,16 +146,6 @@ class TestWebAuth(OAuthSuite):
         rv = self.client.get("/client")
         assert b'dev' in rv.data
 
-    def test_invalid_client_id(self):
-        authorize_url = (
-            '/oauth/authorize?response_type=code&client_id=confidential'
-            '&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauthorized'
-            '&scope=email'
-        )
-        rv = self.client.post(authorize_url, data={'confirm': 'yes'})
-        rv = self.client.get(clean_url(rv.location))
-        assert b'Invalid' in rv.data
-
     def test_invalid_response_type(self):
         authorize_url = (
             '/oauth/authorize?response_type=invalid&client_id=dev'
@@ -185,42 +175,6 @@ class TestWebAuthCached(TestWebAuth):
 
 
 class TestWebAuthSQLAlchemy(TestWebAuth):
-
-    def create_oauth_provider(self, app):
-        return sqlalchemy_provider(app)
-
-
-class TestPasswordAuth(OAuthSuite):
-
-    def create_oauth_provider(self, app):
-        return default_provider(app)
-
-    def test_get_access_token(self):
-        url = ('/oauth/token?grant_type=password&state=foo'
-               '&scope=email+address&username=admin&password=admin')
-        rv = self.client.get(url, headers={
-            'Authorization': 'Basic %s' % auth_code,
-        })
-        assert b'access_token' in rv.data
-        assert b'state' in rv.data
-
-    def test_invalid_user_credentials(self):
-        url = ('/oauth/token?grant_type=password&state=foo'
-               '&scope=email+address&username=fake&password=admin')
-        rv = self.client.get(url, headers={
-            'Authorization': 'Basic %s' % auth_code,
-        })
-
-        assert b'Invalid credentials given' in rv.data
-
-
-class TestPasswordAuthCached(TestPasswordAuth):
-
-    def create_oauth_provider(self, app):
-        return cache_provider(app)
-
-
-class TestPasswordAuthSQLAlchemy(TestPasswordAuth):
 
     def create_oauth_provider(self, app):
         return sqlalchemy_provider(app)
