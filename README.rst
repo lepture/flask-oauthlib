@@ -39,6 +39,13 @@ And request more features at `github issues`_.
 .. _`github issues`: https://github.com/lepture/flask-oauthlib/issues
 
 
+Security Reporting
+------------------
+
+If you found security bugs which can not be public, send me email at `me@lepture.com`.
+Attachment with patch is welcome.
+
+
 Installation
 ------------
 
