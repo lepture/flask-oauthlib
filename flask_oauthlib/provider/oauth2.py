@@ -823,13 +823,15 @@ class OAuth2RequestValidator(RequestValidator):
             'authorization_code', 'password',
             'client_credentials', 'refresh_token',
         )
-
-        if grant_type not in default_grant_types:
-            return False
-
-        if hasattr(client, 'allowed_grant_types') and \
-           grant_type not in client.allowed_grant_types:
-            return False
+        
+        # Grant type is allowed if it is part of the 'allowed_grant_types'
+        # of the selected client or if it is one of the default grant types
+        if hasattr(client, 'allowed_grant_types'):
+            if grant_type not in client.allowed_grant_types:
+                return False
+        else:
+            if grant_type not in default_grant_types:
+                return False
 
         if grant_type == 'client_credentials':
             if not hasattr(client, 'user'):
