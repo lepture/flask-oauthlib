@@ -35,13 +35,14 @@ class RedditOAuthRemoteApp(OAuthRemoteApp):
         }
         remote_args.update(self.access_token_params)
 
-        reddit_basic_auth = base64.encodestring('%s:%s' % (REDDIT_APP_ID, REDDIT_APP_SECRET)).replace('\n', '')
+        auth_frag = '%s:%s' % (REDDIT_APP_ID, REDDIT_APP_SECRET)
+        reddit_basic_auth = base64.encodestring(auth_frag.encode('utf8')).replace(b'\n', b'')
         body = client.prepare_request_body(**remote_args)
         while True:
             resp, content = self.http_request(
                 self.expand_url(self.access_token_url),
                 headers={'Content-Type': 'application/x-www-form-urlencoded',
-                         'Authorization': 'Basic %s' % reddit_basic_auth,
+                         'Authorization': 'Basic %s' % reddit_basic_auth.decode('utf8'),
                          'User-Agent': REDDIT_USER_AGENT},
                 data=to_bytes(body, self.encoding),
                 method=self.access_token_method,
@@ -90,18 +91,18 @@ def login():
 def reddit_authorized():
     resp = reddit.authorized_response()
     if isinstance(resp, OAuthException):
-        print resp.data
+        print(resp.data)
 
     if resp is None:
         return 'Access denied: error=%s' % request.args['error'],
-    print resp
+    print(resp)
     session['reddit_oauth_token'] = (resp['access_token'], '')
 
     # This request may fail(429 Too Many Requests)
     # If you plan to use API heavily(and not just for auth),
     # it may be better to use PRAW: https://github.com/praw-dev/praw
     me = reddit.get('me')
-    print me.data
+    print(me.data)
     return 'Logged in as name=%s link_karma=%s comment_karma=%s' % \
         (me.data['name'], me.data['link_karma'], me.data['comment_karma'])
 
