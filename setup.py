@@ -24,7 +24,7 @@ def fread(filename):
 
 
 setup(
-    name='Flask-OAuthlib',
+    name='Flask-OAuthlib-Curiosity',
     version=flask_oauthlib.__version__,
     author=author,
     author_email=author_email,
