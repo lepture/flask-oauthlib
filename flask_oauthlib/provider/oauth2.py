@@ -586,12 +586,12 @@ class OAuth2RequestValidator(RequestValidator):
         if request.grant_type == 'password':
             client = self._clientgetter(request.client_id)
             return (not client) or client.client_type == 'confidential' \
-                    or client.client_secret
+                or client.client_secret
         elif request.grant_type == 'authorization_code':
             client = self._clientgetter(request.client_id)
             return (not client) or client.client_type == 'confidential'
         return 'Authorization' in request.headers \
-                and request.grant_type == 'refresh_token'
+            and request.grant_type == 'refresh_token'
 
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
@@ -621,6 +621,11 @@ class OAuth2RequestValidator(RequestValidator):
             return False
 
         request.client = client
+
+        if request.grant_type == 'client_credentials' and \
+           client.client_type != 'confidential':
+                log.debug('Authenticate client failed, not confidential.')
+                return False
 
         if client.client_secret != client_secret:
             log.debug('Authenticate client failed, secret not match.')
@@ -839,7 +844,7 @@ class OAuth2RequestValidator(RequestValidator):
             'authorization_code', 'password',
             'client_credentials', 'refresh_token',
         )
-        
+
         # Grant type is allowed if it is part of the 'allowed_grant_types'
         # of the selected client or if it is one of the default grant types
         if hasattr(client, 'allowed_grant_types'):
