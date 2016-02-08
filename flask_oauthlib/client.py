@@ -519,6 +519,11 @@ class OAuthRemoteApp(object):
                 # state can be function for generate a random string
                 state = state()
 
+            # FIXME: (mike) Here strictly for debugging purposes
+            logging.warning('session: %s | redirect_uri: %s',
+                            session.get('littleBroID', ''),
+                            callback)
+
             session['%s_oauthredir' % self.name] = callback
             url = client.prepare_request_uri(
                 self.expand_url(self.authorize_url),
@@ -616,15 +621,21 @@ class OAuthRemoteApp(object):
             )
         return data
 
-    def handle_oauth2_response(self):
+    def handle_oauth2_response(self, default_redirect_uri=None):
         """Handles an oauth2 authorization response."""
 
         client = self.make_client()
         remote_args = {
             'code': request.args.get('code'),
             'client_secret': self.consumer_secret,
-            'redirect_uri': session.get('%s_oauthredir' % self.name)
+            'redirect_uri': session.get('%s_oauthredir' % self.name, default_redirect_uri)
         }
+
+        # FIXME: (mike) Here strictly for debugging purposes
+        logging.warning('session: %s | redirect_uri: %s',
+                        session.get('littleBroID', ''),
+                        remote_args.get('redirect_uri', ''))
+
         log.debug('Prepare oauth2 remote args %r', remote_args)
         remote_args.update(self.access_token_params)
         if self.access_token_method == 'POST':
@@ -661,12 +672,12 @@ class OAuthRemoteApp(object):
         """Handles a unknown authorization response."""
         return None
 
-    def authorized_response(self):
+    def authorized_response(self, default_redirect_uri=None):
         """Handles authorization response smartly."""
         if 'oauth_verifier' in request.args:
             data = self.handle_oauth1_response()
         elif 'code' in request.args:
-            data = self.handle_oauth2_response()
+            data = self.handle_oauth2_response(default_redirect_uri)
         else:
             data = self.handle_unknown_response()
 
