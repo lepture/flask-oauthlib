@@ -519,7 +519,7 @@ class OAuthRemoteApp(object):
                 # state can be function for generate a random string
                 state = state()
 
-            # FIXME: Here strictly for debugging purposes
+            # FIXME: (mike) Here strictly for debugging purposes
             logging.warning('session: %s | redirect_uri: %s',
                             session.get('littleBroID', ''),
                             callback)
@@ -631,7 +631,7 @@ class OAuthRemoteApp(object):
             'redirect_uri': session.get('%s_oauthredir' % self.name, default_redirect_uri)
         }
 
-        # FIXME: Here strictly for debugging purposes
+        # FIXME: (mike) Here strictly for debugging purposes
         logging.warning('session: %s | redirect_uri: %s',
                         session.get('littleBroID', ''),
                         remote_args.get('redirect_uri', ''))
