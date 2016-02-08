@@ -520,7 +520,7 @@ class OAuthRemoteApp(object):
                 state = state()
 
             # FIXME: Here strictly for debugging purposes
-            logging.warning('authorize session: (%s) redirect_uri (%s)',
+            logging.warning('session: %s | redirect_uri: %s',
                             session.get('littleBroID', ''),
                             callback)
 
@@ -632,7 +632,7 @@ class OAuthRemoteApp(object):
         }
 
         # FIXME: Here strictly for debugging purposes
-        logging.warning('handle_oauth2_response: session (%s) redirect_uri (%s)',
+        logging.warning('session: %s | redirect_uri: %s',
                         session.get('littleBroID', ''),
                         remote_args.get('redirect_uri', ''))
 
