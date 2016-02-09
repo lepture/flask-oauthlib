@@ -521,6 +521,7 @@ class OAuth2Provider(object):
             uri, http_method, body, headers = extract_params()
             ret = server.create_revocation_response(
                 uri, headers=headers, body=body, http_method=http_method)
+            f(*args, **kwargs)
             return create_response(*ret)
         return decorated
 
