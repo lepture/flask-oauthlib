@@ -520,7 +520,7 @@ class OAuthRemoteApp(object):
                 state = state()
 
             # FIXME: (mike) Here strictly for debugging purposes
-            logging.warning('session: %s | redirect_uri: %s',
+            logging.warning('Oauth authorize | session: %s | redirect_uri: %s',
                             session.get('littleBroID', ''),
                             callback)
 
@@ -652,7 +652,6 @@ class OAuthRemoteApp(object):
             'redirect_uri': redirect_uri
         }
 
-        # FIXME: (mike) Here strictly for debugging purposes
         logging.warning('session: %s | redirect_uri: %s',
                         session.get('littleBroID', ''),
                         remote_args.get('redirect_uri', ''))
@@ -660,6 +659,13 @@ class OAuthRemoteApp(object):
         log.debug('Prepare oauth2 remote args %r', remote_args)
         remote_args.update(self.access_token_params)
         if self.access_token_method == 'POST':
+
+            # FIXME: (mike) Here strictly for debugging purposes
+            logging.warning('Oauth response POST | session: %s | code: %s | redirect_uri: %s',
+                            session.get('littleBroID', ''),
+                            remote_args.get('code' , ''),
+                            redirect_uri)
+
             body = client.prepare_request_body(**remote_args)
             resp, content = self.http_request(
                 self.expand_url(self.access_token_url),
@@ -668,6 +674,13 @@ class OAuthRemoteApp(object):
                 method=self.access_token_method,
             )
         elif self.access_token_method == 'GET':
+
+            # FIXME: (mike) Here strictly for debugging purposes
+            logging.warning('Oauth response GET | session: %s | code: %s | redirect_uri: %s',
+                            session.get('littleBroID', ''),
+                            remote_args.get('code' , ''),
+                            redirect_uri)
+
             qs = client.prepare_request_body(**remote_args)
             url = self.expand_url(self.access_token_url)
             url += ('?' in url and '&' or '?') + qs
