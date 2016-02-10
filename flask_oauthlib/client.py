@@ -624,11 +624,32 @@ class OAuthRemoteApp(object):
     def handle_oauth2_response(self, default_redirect_uri=None):
         """Handles an oauth2 authorization response."""
 
+        # FIXME: (mike) Attempting to short-circuit bad oauth calls
+        redirect_uri = session.get('%s_oauthredir' % self.name, None)
+        if redirect_uri:
+            # Store in backup session variable in case we come back
+            # here without going through authorize(), as we normally should!!
+            session['%s_oauthredir_bak' % self.name] = redirect_uri
+        else:
+            # Else attempt to get redirect uri from backup session variable in 
+            # case we did come back here without going through authorize()
+            redirect_uri = session.get('%s_oauthredir_bak' % self.name, None)
+            if redirect_uri:
+                logging.warning('Using oauth backup redirect_uri | session: %s | redirect_uri: %s',
+                                session.get('littleBroID', ''),
+                                redirect_uri)
+            else:
+                # Else use our default_redirect_uri, as coded earlier by ben and nick
+                redirect_uri = default_redirect_uri
+                logging.warning('Using oauth default_redirect_uri | session: %s | redirect_uri: %s',
+                                session.get('littleBroID', ''),
+                                redirect_uri)
+
         client = self.make_client()
         remote_args = {
             'code': request.args.get('code'),
             'client_secret': self.consumer_secret,
-            'redirect_uri': session.get('%s_oauthredir' % self.name, default_redirect_uri)
+            'redirect_uri': redirect_uri
         }
 
         # FIXME: (mike) Here strictly for debugging purposes
