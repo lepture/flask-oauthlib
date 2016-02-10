@@ -652,10 +652,6 @@ class OAuthRemoteApp(object):
             'redirect_uri': redirect_uri
         }
 
-        logging.warning('session: %s | redirect_uri: %s',
-                        session.get('littleBroID', ''),
-                        remote_args.get('redirect_uri', ''))
-
         log.debug('Prepare oauth2 remote args %r', remote_args)
         remote_args.update(self.access_token_params)
         if self.access_token_method == 'POST':
@@ -695,6 +691,11 @@ class OAuthRemoteApp(object):
             )
 
         data = parse_response(resp, content, content_type=self.content_type)
+
+        logging.warning('Oauth response RESULT | session: %s | response code: %s',
+                        session.get('littleBroID', ''),
+                        str(resp.code))
+
         if resp.code not in (200, 201):
             raise OAuthException(
                 'Invalid response from %s' % self.name,
