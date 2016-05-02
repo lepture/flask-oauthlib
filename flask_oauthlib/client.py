@@ -575,6 +575,7 @@ class OAuthRemoteApp(object):
                 data=data,
             )
         tup = (data['oauth_token'], data['oauth_token_secret'])
+        session['%s_oauthtok' % self.name] = tup
         return tup
 
     def get_request_token(self):
@@ -666,6 +667,8 @@ class OAuthRemoteApp(object):
         else:
             data = self.handle_unknown_response()
 
+        # free request token
+        session.pop('%s_oauthtok' % self.name, None)
         return data
 
     def authorized_handler(self, f):
