@@ -14,16 +14,18 @@ import oauthlib.oauth2
 from copy import copy
 from functools import wraps
 from oauthlib.common import to_unicode, PY3, add_params_to_uri
-from flask import request, redirect, json, session, current_app
+from flask import request, redirect, json, current_app
 from werkzeug import url_quote, url_decode, url_encode
 from werkzeug import parse_options_header, cached_property
 from .utils import to_bytes
 try:
-    from urlparse import urljoin
+    from urllib import urlencode
+    from urlparse import parse_qsl, urljoin, urlparse, urlunparse
     import urllib2 as http
 except ImportError:
     from urllib import request as http
     from urllib.parse import urljoin
+    from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 log = logging.getLogger('flask_oauthlib')
 
 
@@ -519,7 +521,6 @@ class OAuthRemoteApp(object):
                 # state can be function for generate a random string
                 state = state()
 
-            session['%s_oauthredir' % self.name] = callback
             url = client.prepare_request_uri(
                 self.expand_url(self.authorize_url),
                 redirect_uri=callback,
@@ -576,7 +577,6 @@ class OAuthRemoteApp(object):
                 data=data,
             )
         tup = (data['oauth_token'], data['oauth_token_secret'])
-        session['%s_oauthtok' % self.name] = tup
         return tup
 
     def get_request_token(self):
@@ -619,11 +619,23 @@ class OAuthRemoteApp(object):
     def handle_oauth2_response(self):
         """Handles an oauth2 authorization response."""
 
+        # Remove the 'code' argument from current URL
+        oauth_redir_tuple = urlparse(request.url)
+        query_args = [
+            arg_pair for arg_pair in parse_qsl(oauth_redir_tuple.query)
+            if arg_pair[0] != 'code'
+        ]
+        oauth_redir = urlunparse(
+            oauth_redir_tuple[0:4] +
+            (urlencode(query_args, doseq=True),) +
+            oauth_redir_tuple[5:]
+        )
+
         client = self.make_client()
         remote_args = {
             'code': request.args.get('code'),
             'client_secret': self.consumer_secret,
-            'redirect_uri': session.get('%s_oauthredir' % self.name)
+            'redirect_uri': oauth_redir
         }
         log.debug('Prepare oauth2 remote args %r', remote_args)
         remote_args.update(self.access_token_params)
@@ -670,9 +682,6 @@ class OAuthRemoteApp(object):
         else:
             data = self.handle_unknown_response()
 
-        # free request token
-        session.pop('%s_oauthtok' % self.name, None)
-        session.pop('%s_oauthredir' % self.name, None)
         return data
 
     def authorized_handler(self, f):
