@@ -616,7 +616,6 @@ class OAuthRemoteApp(object):
 
     def handle_oauth2_response(self):
         """Handles an oauth2 authorization response."""
-
         client = self.make_client()
         remote_args = {
             'code': request.args.get('code'),
