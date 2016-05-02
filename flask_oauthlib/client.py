@@ -19,13 +19,11 @@ from werkzeug import url_quote, url_decode, url_encode
 from werkzeug import parse_options_header, cached_property
 from .utils import to_bytes
 try:
-    from urllib import urlencode
-    from urlparse import parse_qsl, urljoin, urlparse, urlunparse
+    from urlparse import urljoin
     import urllib2 as http
 except ImportError:
     from urllib import request as http
     from urllib.parse import urljoin
-    from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 log = logging.getLogger('flask_oauthlib')
 
 
@@ -619,23 +617,10 @@ class OAuthRemoteApp(object):
     def handle_oauth2_response(self):
         """Handles an oauth2 authorization response."""
 
-        # Remove the 'code' argument from current URL
-        oauth_redir_tuple = urlparse(request.url)
-        query_args = [
-            arg_pair for arg_pair in parse_qsl(oauth_redir_tuple.query)
-            if arg_pair[0] != 'code'
-        ]
-        oauth_redir = urlunparse(
-            oauth_redir_tuple[0:4] +
-            (urlencode(query_args, doseq=True),) +
-            oauth_redir_tuple[5:]
-        )
-
         client = self.make_client()
         remote_args = {
             'code': request.args.get('code'),
             'client_secret': self.consumer_secret,
-            'redirect_uri': oauth_redir
         }
         log.debug('Prepare oauth2 remote args %r', remote_args)
         remote_args.update(self.access_token_params)
