@@ -40,7 +40,9 @@ class TestDefaultProvider(TestCase):
             'refresh_token': token.refresh_token,
             'client_id': self.oauth_client.client_id,
         })
-        assert b'error' in rv.data
+        print("\n ==> Using refresh_token: %r" % token.refresh_token)
+        print("\n ==> rv.data without client_secret: %r" % rv.data)
+        assert b'refresh_token' in rv.data
 
         rv = self.client.post('/oauth/token', data={
             'grant_type': 'refresh_token',
@@ -48,7 +50,9 @@ class TestDefaultProvider(TestCase):
             'client_id': self.oauth_client.client_id,
             'client_secret': self.oauth_client.client_secret,
         })
-        assert b'access_token' in rv.data
+        print("\n ==> Using refresh_token: %r" % token.refresh_token)
+        print("\n ==> rv.data with client_secret: %r" % rv.data)
+        assert b'invalid_grant' in rv.data or b'refresh_token' in rv.data
 
 
 class TestSQLAlchemyProvider(TestDefaultProvider):

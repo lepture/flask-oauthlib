@@ -584,9 +584,6 @@ class OAuth2RequestValidator(RequestValidator):
         .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
         """
 
-        if 'Authorization' in request.headers:
-            return request.grant_type == 'refresh_token'
-
         client = self._clientgetter(request.client_id)
         client_type = client.client_type if \
             (client and hasattr(client, 'client_type')) else ''
@@ -598,7 +595,8 @@ class OAuth2RequestValidator(RequestValidator):
         if request.grant_type == 'authorization_code':
             return (not client) or client_type == 'confidential'
 
-        return False
+        return 'Authorization' in request.headers \
+            and request.grant_type == 'refresh_token'
 
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
