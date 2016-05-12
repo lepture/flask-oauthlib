@@ -777,8 +777,8 @@ class OAuth2RequestValidator(RequestValidator):
             msg = 'Bearer token is expired.'
             request.error_message = msg
             log.debug(msg)
-            log.debug("Current UTC: {}. Token expiration date: {}"
-                      .format(now, tok.expires))
+            log.debug("Current UTC: %r. Token expiration date: %r"
+                      % (now, tok.expires))
             return False
 
         # validate scopes
@@ -786,7 +786,7 @@ class OAuth2RequestValidator(RequestValidator):
             msg = 'Bearer token scope not valid.'
             request.error_message = msg
             log.debug(msg)
-            log.debug("Bearer token scope: {}".format(set(tok.scopes)))
+            log.debug("Bearer token scope: %r" % set(tok.scopes))
             return False
 
         request.access_token = tok
