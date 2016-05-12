@@ -232,7 +232,8 @@ class OAuth2Provider(object):
 
             - client_id: A random string
             - client_secret: A random string
-            - client_type: A string represents if it is `confidential`
+            - client_type: A string representing
+                a `confidential` or `public` type
             - redirect_uris: A list of redirect uris
             - default_redirect_uri: One of the redirect uris
             - default_scopes: Default scopes of the client
@@ -583,15 +584,21 @@ class OAuth2RequestValidator(RequestValidator):
         .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
         """
 
+        if 'Authorization' in request.headers:
+            return request.grant_type == 'refresh_token'
+
+        client = self._clientgetter(request.client_id)
+        client_type = client.client_type if \
+            (client and hasattr(client, 'client_type')) else ''
+
         if request.grant_type == 'password':
-            client = self._clientgetter(request.client_id)
-            return (not client) or client.client_type == 'confidential' \
+            return (not client) or client_type == 'confidential' \
                 or client.client_secret
-        elif request.grant_type == 'authorization_code':
-            client = self._clientgetter(request.client_id)
-            return (not client) or client.client_type == 'confidential'
-        return 'Authorization' in request.headers \
-            and request.grant_type == 'refresh_token'
+
+        if request.grant_type == 'authorization_code':
+            return (not client) or client_type == 'confidential'
+
+        return False
 
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
