@@ -63,12 +63,10 @@ class TestDefaultProvider(TestCase):
             '&code=nothing&client_id=%s'
         ) % self.oauth_client.client_id
         rv = self.client.get(url)
-        print("==> test_code.py - rv.data: %r" % rv.data)
         assert b'invalid_client' not in rv.data
 
         url += '&client_secret=' + self.oauth_client.client_secret
         rv = self.client.get(url)
-        print("==> test_code.py - rv.data: %r" % rv.data)
         assert b'invalid_client' not in rv.data
         assert rv.status_code == 401
 
@@ -90,12 +88,10 @@ class TestDefaultProvider(TestCase):
             '&code=test-get-token&client_id=%s'
         ) % self.oauth_client.client_id
         rv = self.client.get(url)
-        print("\n ==> test_code.py#get_token() - rv.data: %r" % rv.data)
         assert b'invalid_client' not in rv.data
 
         url += '&client_secret=' + self.oauth_client.client_secret
         rv = self.client.get(url)
-        print("\n ==> test_code.py#get_token() - rv.data: %r" % rv.data)
         assert b'access_token' not in rv.data
 
 
@@ -119,10 +115,8 @@ class TestCacheProvider(TestDefaultProvider):
             '&code=%s&client_id=%s'
         ) % (code, self.oauth_client.client_id)
         rv = self.client.get(url)
-        print("\n ==> test_code.py#test_get_token(): %r" % rv.data)
         assert b'invalid_client' not in rv.data
 
         url += '&client_secret=' + self.oauth_client.client_secret
         rv = self.client.get(url)
-        print("\n ==> test_code.py#test_get_token(): %r" % rv.data)
         assert b'access_token' not in rv.data
