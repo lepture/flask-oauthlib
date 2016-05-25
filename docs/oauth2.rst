@@ -311,6 +311,10 @@ and accessing resource flow. They are implemented with decorators as follows::
             db.session.delete(t)
 
         expires_in = token.get('expires_in')
+
+        # Note: it is important to use UTC values at the time
+        # when the token is created since the validation performed
+        # in :meth:`OAuth2Provider.validate_bearer_token` uses UTC values
         expires = datetime.utcnow() + timedelta(seconds=expires_in)
 
         tok = Token(

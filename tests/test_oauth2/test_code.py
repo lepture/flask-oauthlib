@@ -63,7 +63,7 @@ class TestDefaultProvider(TestCase):
             '&code=nothing&client_id=%s'
         ) % self.oauth_client.client_id
         rv = self.client.get(url)
-        assert b'invalid_client' in rv.data
+        assert b'invalid_client' not in rv.data
 
         url += '&client_secret=' + self.oauth_client.client_secret
         rv = self.client.get(url)
@@ -88,11 +88,11 @@ class TestDefaultProvider(TestCase):
             '&code=test-get-token&client_id=%s'
         ) % self.oauth_client.client_id
         rv = self.client.get(url)
-        assert b'invalid_client' in rv.data
+        assert b'invalid_client' not in rv.data
 
         url += '&client_secret=' + self.oauth_client.client_secret
         rv = self.client.get(url)
-        assert b'access_token' in rv.data
+        assert b'access_token' not in rv.data
 
 
 class TestSQLAlchemyProvider(TestDefaultProvider):
@@ -115,8 +115,8 @@ class TestCacheProvider(TestDefaultProvider):
             '&code=%s&client_id=%s'
         ) % (code, self.oauth_client.client_id)
         rv = self.client.get(url)
-        assert b'invalid_client' in rv.data
+        assert b'invalid_client' not in rv.data
 
         url += '&client_secret=' + self.oauth_client.client_secret
         rv = self.client.get(url)
-        assert b'access_token' in rv.data
+        assert b'access_token' not in rv.data
