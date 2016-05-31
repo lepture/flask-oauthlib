@@ -65,7 +65,7 @@ Additional Notes
 
 We keep documentation at `flask-oauthlib@readthedocs`_.
 
-.. _`flask-oauthlib@readthedocs`: https://flask-oauthlib.readthedocs.org
+.. _`flask-oauthlib@readthedocs`: https://flask-oauthlib.readthedocs.io
 
 If you are only interested in the client part, you can find some examples
 in the ``example`` directory.
