@@ -35,14 +35,11 @@ class Client(db.Model):
     _redirect_uris = db.Column(db.Text)
     default_scope = db.Column(db.Text, default='email address')
     disallow_grant_type = db.Column(db.String(20))
+    is_confidential = db.Column(db.Boolean, default=True)
 
     @property
     def user(self):
         return User.query.get(1)
-
-    @property
-    def is_confidential(self):
-        return True
 
     @property
     def redirect_uris(self):
