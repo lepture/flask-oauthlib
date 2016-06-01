@@ -208,6 +208,8 @@ class OAuthRemoteApp(object):
                                 forward to the access token url
     :param access_token_method: the HTTP method that should be used for
                                 the access_token_url. Default is ``GET``
+    :param access_token_headers: additonal headers that should be used for
+                                 the access_token_url.
     :param content_type: force to parse the content with this content_type,
                          usually used when the server didn't return the
                          right content type.
@@ -229,6 +231,7 @@ class OAuthRemoteApp(object):
         request_token_method=None,
         access_token_params=None,
         access_token_method=None,
+        access_token_headers=None,
         content_type=None,
         app_key=None,
         encoding='utf-8',
@@ -246,6 +249,7 @@ class OAuthRemoteApp(object):
         self._request_token_method = request_token_method
         self._access_token_params = access_token_params
         self._access_token_method = access_token_method
+        self._access_token_headers = access_token_headers or {}
         self._content_type = content_type
         self._tokengetter = None
 
@@ -469,7 +473,7 @@ class OAuthRemoteApp(object):
         else:
             data = None
         resp, content = self.http_request(
-            uri, headers, data=data, method=method
+            uri, headers, data=to_bytes(body, self.encoding), method=method
         )
         return OAuthResponse(resp, content, self.content_type)
 
@@ -603,6 +607,7 @@ class OAuthRemoteApp(object):
             self.expand_url(self.access_token_url),
             _encode(self.access_token_method)
         )
+        headers.update(self._access_token_headers)
 
         resp, content = self.http_request(
             uri, headers, to_bytes(data, self.encoding),
@@ -627,11 +632,13 @@ class OAuthRemoteApp(object):
         }
         log.debug('Prepare oauth2 remote args %r', remote_args)
         remote_args.update(self.access_token_params)
+        headers = copy(self._access_token_headers)
         if self.access_token_method == 'POST':
+            headers.update({'Content-Type': 'application/x-www-form-urlencoded'})
             body = client.prepare_request_body(**remote_args)
             resp, content = self.http_request(
                 self.expand_url(self.access_token_url),
-                headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                headers=headers,
                 data=to_bytes(body, self.encoding),
                 method=self.access_token_method,
             )
@@ -641,6 +648,7 @@ class OAuthRemoteApp(object):
             url += ('?' in url and '&' or '?') + qs
             resp, content = self.http_request(
                 url,
+                headers=headers,
                 method=self.access_token_method,
             )
         else:
