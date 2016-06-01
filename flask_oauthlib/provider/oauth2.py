@@ -588,16 +588,11 @@ class OAuth2RequestValidator(RequestValidator):
             if client_type and client_type == 'confidential':
                 return True
             return getattr(client, 'is_confidential', False)
-
-        if request.grant_type in ('password', 'refresh_token'):
-            client = self._clientgetter(request.client_id)
-            if not client:
-                return True
-            return is_confidential(client) or client.client_secret
-        elif request.grant_type == 'authorization_code':
+        grant_types = ('password', 'authorization_code', 'refresh_token')
+        if request.grant_type in grant_types:
             client = self._clientgetter(request.client_id)
             return (not client) or is_confidential(client)
-        return 'Authorization' in request.headers
+        return False
 
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
