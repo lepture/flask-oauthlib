@@ -90,18 +90,16 @@ def login():
 def reddit_authorized():
     resp = reddit.authorized_response()
     if isinstance(resp, OAuthException):
-        print resp.data
+        print(resp.data)
 
     if resp is None:
         return 'Access denied: error=%s' % request.args['error'],
-    print resp
     session['reddit_oauth_token'] = (resp['access_token'], '')
 
     # This request may fail(429 Too Many Requests)
     # If you plan to use API heavily(and not just for auth),
     # it may be better to use PRAW: https://github.com/praw-dev/praw
     me = reddit.get('me')
-    print me.data
     return 'Logged in as name=%s link_karma=%s comment_karma=%s' % \
         (me.data['name'], me.data['link_karma'], me.data['comment_karma'])
 
