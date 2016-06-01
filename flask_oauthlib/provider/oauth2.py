@@ -623,9 +623,11 @@ class OAuth2RequestValidator(RequestValidator):
 
         request.client = client
 
-        if client.client_secret != client_secret:
-            log.debug('Authenticate client failed, secret not match.')
-            return False
+        # http://tools.ietf.org/html/rfc6749#section-2
+        # The client MAY omit the parameter if the client secret is an empty string.
+        if hasattr(client, 'client_secret') and client.client_secret != client_secret:
+                log.debug('Authenticate client failed, secret not match.')
+                return False
 
         log.debug('Authenticate client success.')
         return True
