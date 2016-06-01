@@ -3,6 +3,16 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.9.3
+-------------
+
+Released on Jun 2, 2016
+
+- Revert the wrong implement of non credential oauth2 require auth
+- Catch all exceptions in OAuth2 providers
+- Bugfix for examples, docs and other things
+
+
 Version 0.9.2
 -------------
 
