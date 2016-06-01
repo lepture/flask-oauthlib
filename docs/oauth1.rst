@@ -58,7 +58,7 @@ An example of the data model in SQLAlchemy (SQLAlchemy is not required)::
         # creator of the client, not required
         user_id = db.Column(db.ForeignKey('user.id'))
         # required if you need to support client credential
-        user = relationship('User')
+        user = db.relationship('User')
 
         client_key = db.Column(db.String(40), primary_key=True)
         client_secret = db.Column(db.String(55), unique=True, index=True,
@@ -111,13 +111,13 @@ And the all in one token example::
         user_id = db.Column(
             db.Integer, db.ForeignKey('user.id', ondelete='CASCADE')
         )
-        user = relationship('User')
+        user = db.relationship('User')
 
         client_key = db.Column(
             db.String(40), db.ForeignKey('client.client_key'),
             nullable=False,
         )
-        client = relationship('Client')
+        client = db.relationship('Client')
 
         token = db.Column(db.String(255), index=True, unique=True)
         secret = db.Column(db.String(255), nullable=False)
@@ -161,7 +161,7 @@ Here is an example in SQLAlchemy::
             db.String(40), db.ForeignKey('client.client_key'),
             nullable=False,
         )
-        client = relationship('Client')
+        client = db.relationship('Client')
         request_token = db.Column(db.String(50))
         access_token = db.Column(db.String(50))
 
@@ -188,12 +188,12 @@ The implementation in SQLAlchemy::
             db.String(40), db.ForeignKey('client.client_key'),
             nullable=False,
         )
-        client = relationship('Client')
+        client = db.relationship('Client')
 
         user_id = db.Column(
             db.Integer, db.ForeignKey('user.id'),
         )
-        user = relationship('User')
+        user = db.relationship('User')
 
         token = db.Column(db.String(255))
         secret = db.Column(db.String(255))
