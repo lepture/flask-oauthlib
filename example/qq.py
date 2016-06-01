@@ -4,6 +4,7 @@ import json
 from flask import Flask, redirect, url_for, session, request, jsonify, Markup
 from flask_oauthlib.client import OAuth
 
+# get yours at http://connect.qq.com
 QQ_APP_ID = os.getenv('QQ_APP_ID', '101187283')
 QQ_APP_KEY = os.getenv('QQ_APP_KEY', '993983549da49e384d03adfead8b2489')
 
@@ -25,13 +26,17 @@ qq = oauth.remote_app(
 
 
 def json_to_dict(x):
-    '''OAuthResponse class can't not parse the JSON data with content-type
-    text/html, so we need reload the JSON data manually'''
-    if x.find('callback') > -1:
-        pos_lb = x.find('{')
-        pos_rb = x.find('}')
+    '''OAuthResponse class can't parse the JSON data with content-type
+-    text/html and because of a rubbish api, we can't just tell flask-oauthlib to treat it as json.'''
+    if x.find(b'callback') > -1:
+        # the rubbish api (https://graph.qq.com/oauth2.0/authorize) is handled here as special case
+        pos_lb = x.find(b'{')
+        pos_rb = x.find(b'}')
         x = x[pos_lb:pos_rb + 1]
+
     try:
+        if type(x) != str:  # Py3k
+            x = x.decode('utf-8')
         return json.loads(x, encoding='utf-8')
     except:
         return x
@@ -60,7 +65,7 @@ def get_user_info():
     if 'qq_token' in session:
         data = update_qq_api_request_data()
         resp = qq.get('/user/get_user_info', data=data)
-        return jsonify(status=resp.status, data=resp.data)
+        return jsonify(status=resp.status, data=json_to_dict(resp.data))
     return redirect(url_for('login'))
 
 
