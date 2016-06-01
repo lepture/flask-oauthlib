@@ -41,6 +41,10 @@ class Client(db.Model):
         return User.query.get(1)
 
     @property
+    def is_confidential(self):
+        return True
+
+    @property
     def redirect_uris(self):
         if self._redirect_uris:
             return self._redirect_uris.split()

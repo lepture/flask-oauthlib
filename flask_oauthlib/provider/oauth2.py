@@ -589,7 +589,7 @@ class OAuth2RequestValidator(RequestValidator):
                 return True
             return getattr(client, 'is_confidential', False)
 
-        if request.grant_type == 'password':
+        if request.grant_type in ('password', 'refresh_token'):
             client = self._clientgetter(request.client_id)
             if not client:
                 return True
@@ -597,8 +597,7 @@ class OAuth2RequestValidator(RequestValidator):
         elif request.grant_type == 'authorization_code':
             client = self._clientgetter(request.client_id)
             return (not client) or is_confidential(client)
-        return 'Authorization' in request.headers \
-                and request.grant_type == 'refresh_token'
+        return 'Authorization' in request.headers
 
     def authenticate_client(self, request, *args, **kwargs):
         """Authenticate itself in other means.
