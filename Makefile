@@ -13,7 +13,7 @@ coverage:
 	@rm -f .coverage
 	@nosetests --with-coverage --cover-package=flask_oauthlib --cover-html
 
-clean: clean-build clean-pyc clean-docs
+clean: clean-build clean-pyc clean-docs clean-tox
 
 
 clean-build:
@@ -31,6 +31,9 @@ clean-pyc:
 
 clean-docs:
 	@rm -fr  docs/_build
+
+clean-tox:
+	@rm -rf .tox/
 
 docs:
 	@$(MAKE) -C docs html
