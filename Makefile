@@ -1,12 +1,15 @@
 .PHONY: lint test coverage clean clean-pyc clean-build docs
 
 lint:
+	@which flake8 || pip install flake8
 	@flake8 flask_oauthlib tests
 
 test:
+	@which nosetests || pip install nose
 	@nosetests -s --nologcapture
 
 coverage:
+	@which nosetests || pip install nose
 	@rm -f .coverage
 	@nosetests --with-coverage --cover-package=flask_oauthlib --cover-html
 
