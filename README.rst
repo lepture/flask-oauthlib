@@ -1,6 +1,9 @@
 Flask-OAuthlib
 ==============
 
+.. image:: https://img.shields.io/badge/donate-lepture-green.svg
+   :target: https://lepture.herokuapp.com/?amount=1000&reason=lepture%2Fflask-oauthlib
+   :alt: Donate lepture
 .. image:: https://img.shields.io/pypi/wheel/flask-oauthlib.svg
    :target: https://pypi.python.org/pypi/flask-OAuthlib/
    :alt: Wheel Status
@@ -13,9 +16,6 @@ Flask-OAuthlib
 .. image:: https://coveralls.io/repos/lepture/flask-oauthlib/badge.svg?branch=master
    :target: https://coveralls.io/r/lepture/flask-oauthlib
    :alt: Coverage Status
-.. image:: https://img.shields.io/badge/donate-lepture-green.svg
-   :target: https://lepture.herokuapp.com/?amount=1000&reason=lepture%2Fflask-oauthlib
-   :alt: Donate leptjure
 
 
 Flask-OAuthlib is an extension to Flask that allows you to interact with
