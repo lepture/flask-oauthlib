@@ -59,8 +59,12 @@ def tweet():
     resp = twitter.post('statuses/update.json', data={
         'status': status
     })
+
     if resp.status == 403:
-        flash('Your tweet was too long.')
+        flash("Error: #%d, %s " % (
+            resp.data.get('errors')[0].get('code'),
+            resp.data.get('errors')[0].get('message'))
+        )
     elif resp.status == 401:
         flash('Authorization error with Twitter.')
     else:
