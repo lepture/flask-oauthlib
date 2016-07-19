@@ -833,6 +833,9 @@ class OAuth2RequestValidator(RequestValidator):
            datetime.datetime.utcnow() > grant.expires:
             log.debug('Grant is expired.')
             return False
+        if grant.code != code:
+            log.debug('Grant is invalid.')
+            return False
 
         request.state = kwargs.get('state')
         request.user = grant.user
@@ -859,7 +862,7 @@ class OAuth2RequestValidator(RequestValidator):
             'authorization_code', 'password',
             'client_credentials', 'refresh_token',
         )
-        
+
         # Grant type is allowed if it is part of the 'allowed_grant_types'
         # of the selected client or if it is one of the default grant types
         if hasattr(client, 'allowed_grant_types'):
