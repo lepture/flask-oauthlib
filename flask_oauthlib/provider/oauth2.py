@@ -536,6 +536,7 @@ class OAuth2Provider(object):
                 request.token = token
 
             uri, http_method, body, headers = extract_params()
+            headers['OAUTH2_ADDITIONAL_ENDPOINT'] = True
             ret = server.create_revocation_response(
                 uri, headers=headers, body=body, http_method=http_method)
             return create_response(*ret)
@@ -606,7 +607,7 @@ class OAuth2RequestValidator(RequestValidator):
                 return True
             return getattr(client, 'is_confidential', False)
         grant_types = ('password', 'authorization_code', 'refresh_token')
-        if request.grant_type in grant_types:
+        if request.grant_type in grant_types or 'OAUTH2_ADDITIONAL_ENDPOINT' in request.headers:
             client = self._clientgetter(request.client_id)
             return (not client) or is_confidential(client)
         return False
