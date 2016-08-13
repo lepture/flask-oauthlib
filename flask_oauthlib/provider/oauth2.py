@@ -960,7 +960,7 @@ class OAuth2RequestValidator(RequestValidator):
             if not tok:
                 tok = self._tokengetter(refresh_token=token)
 
-        if tok and tok.client_id == request.client.client_id:
+        if tok:
             request.client_id = tok.client_id
             request.user = tok.user
             tok.delete()
