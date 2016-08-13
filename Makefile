@@ -1,16 +1,19 @@
 .PHONY: lint test coverage clean clean-pyc clean-build docs
 
 lint:
+	@which flake8 || pip install flake8
 	@flake8 flask_oauthlib tests
 
 test:
+	@which nosetests || pip install nose
 	@nosetests -s --nologcapture
 
 coverage:
+	@which nosetests || pip install nose
 	@rm -f .coverage
 	@nosetests --with-coverage --cover-package=flask_oauthlib --cover-html
 
-clean: clean-build clean-pyc clean-docs
+clean: clean-build clean-pyc clean-docs clean-tox
 
 
 clean-build:
@@ -28,6 +31,9 @@ clean-pyc:
 
 clean-docs:
 	@rm -fr  docs/_build
+
+clean-tox:
+	@rm -rf .tox/
 
 docs:
 	@$(MAKE) -C docs html
