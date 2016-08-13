@@ -69,7 +69,7 @@ class TestWebAuth(OAuthSuite):
 
     def test_oauth_authorize_invalid_url(self):
         rv = self.client.get('/oauth/authorize')
-        assert 'invalid_client_id' in rv.location
+        assert 'Missing+client_id+parameter.' in rv.location
 
     def test_oauth_authorize_valid_url(self):
         rv = self.client.get(authorize_url)
