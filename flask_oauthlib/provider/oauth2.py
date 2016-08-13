@@ -390,13 +390,13 @@ class OAuth2Provider(object):
                     kwargs['scopes'] = scopes
                     kwargs.update(credentials)
                 except oauth2.FatalClientError as e:
-                    log.debug('Fatal client error %r', e)
+                    log.debug('Fatal client error %r', e, exc_info=True)
                     return redirect(e.in_uri(self.error_uri))
                 except oauth2.OAuth2Error as e:
-                    log.debug('OAuth2Error: %r', e)
+                    log.debug('OAuth2Error: %r', e, exc_info=True)
                     return redirect(e.in_uri(redirect_uri))
                 except Exception as e:
-                    log.warning('Exception caught while processing request, %s.' % e)
+                    log.warning('Exception caught while processing request, %s.' % e, exc_info=True)
                     return redirect(add_params_to_uri(
                         self.error_uri, {'error': str(e) }
                     ))
@@ -409,13 +409,13 @@ class OAuth2Provider(object):
             try:
                 rv = f(*args, **kwargs)
             except oauth2.FatalClientError as e:
-                log.debug('Fatal client error %r', e)
+                log.debug('Fatal client error %r', e, exc_info=True)
                 return redirect(e.in_uri(self.error_uri))
             except oauth2.OAuth2Error as e:
-                log.debug('OAuth2Error: %r', e)
+                log.debug('OAuth2Error: %r', e, exc_info=True)
                 return redirect(e.in_uri(redirect_uri))
             except Exception as e:
-                log.warning('Exception caught while processing request, %s.' % e)
+                log.warning('Exception caught while processing request, %s.' % e, exc_info=True)
                 return redirect(add_params_to_uri(
                     self.error_uri, {'error': str(e) }
                 ))
@@ -454,13 +454,13 @@ class OAuth2Provider(object):
             log.debug('Authorization successful.')
             return create_response(*ret)
         except oauth2.FatalClientError as e:
-            log.debug('Fatal client error %r', e)
+            log.debug('Fatal client error %r', e, exc_info=True)
             return redirect(e.in_uri(self.error_uri))
         except oauth2.OAuth2Error as e:
-            log.debug('OAuth2Error: %r', e)
+            log.debug('OAuth2Error: %r', e, exc_info=True)
             return redirect(e.in_uri(redirect_uri or self.error_uri))
         except Exception as e:
-            log.warning('Exception caught while processing request, %s.' % e)
+            log.warning('Exception caught while processing request, %s.' % e, exc_info=True)
             return redirect(add_params_to_uri(
                 self.error_uri, {'error': str(e) }
             ))
@@ -627,7 +627,7 @@ class OAuth2RequestValidator(RequestValidator):
                 client_id = to_unicode(client_id, 'utf-8')
                 client_secret = to_unicode(client_secret, 'utf-8')
             except Exception as e:
-                log.debug('Authenticate client failed with exception: %r', e)
+                log.warning('Authenticate client failed with exception: %r', e, exc_info=True)
                 return False
         else:
             client_id = request.client_id
