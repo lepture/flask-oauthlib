@@ -490,6 +490,8 @@ The ``request`` has an additional property ``oauth``, it contains at least:
 Example for OAuth 2
 -------------------
 
-Here is an example of OAuth 2 server: https://github.com/lepture/example-oauth2-server
+An examplary server (and client) can be found in the tests folder: https://github.com/lepture/flask-oauthlib/tree/master/tests/oauth2
 
-Also read this article http://lepture.com/en/2013/create-oauth-server.
+Other helpful resources include: 
+ - Another example of an OAuth 2 server: https://github.com/lepture/example-oauth2-server
+ - An article on how to create an OAuth server: http://lepture.com/en/2013/create-oauth-server.
