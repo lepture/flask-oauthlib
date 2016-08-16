@@ -3,6 +3,8 @@
 from .base import TestCase
 from .base import create_server, sqlalchemy_provider, cache_provider
 from .base import db, Client, User, Token
+from base64 import b64encode
+from json import loads as json_decode
 
 
 class TestDefaultProvider(TestCase):
@@ -79,6 +81,15 @@ class TestDefaultProvider(TestCase):
             'refresh_token': token.refresh_token,
             'client_id': self.confidential_client.client_id,
             'client_secret': self.confidential_client.client_secret,
+        })
+        assert b'access_token' in rv.data
+
+        token.refresh_token = json_decode(rv.data)['refresh_token']
+        rv = self.client.post('/oauth/token', data={
+            'grant_type': 'refresh_token',
+            'refresh_token': token.refresh_token,
+        }, headers={
+            'authorization': 'Basic ' + b64encode('%s:%s' % (self.confidential_client.client_id, self.confidential_client.client_secret))
         })
         assert b'access_token' in rv.data
 

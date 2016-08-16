@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from .base import TestCase
 from .base import create_server, sqlalchemy_provider, cache_provider
 from .base import db, Client, User, Grant
+from base64 import b64encode
 
 
 class TestDefaultProvider(TestCase):
@@ -104,8 +105,23 @@ class TestDefaultProvider(TestCase):
         rv = self.client.get(url)
         assert b'invalid_client' in rv.data
 
-        url += '&client_secret=' + self.oauth_client.client_secret
-        rv = self.client.get(url)
+        rv = self.client.get(url + '&client_secret=' + self.oauth_client.client_secret)
+        assert b'access_token' in rv.data
+
+        grant = Grant(
+            user_id=1,
+            client_id=self.oauth_client.client_id,
+            scope='email',
+            redirect_uri='http://localhost/authorized',
+            code='test-get-token',
+            expires=expires,
+        )
+        db.session.add(grant)
+        db.session.commit()
+
+        rv = self.client.get(url, headers={
+            'authorization': 'Basic ' + b64encode('%s:%s' % (self.oauth_client.client_id, self.oauth_client.client_secret))
+        })
         assert b'access_token' in rv.data
 
 

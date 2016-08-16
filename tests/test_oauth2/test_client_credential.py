@@ -3,6 +3,7 @@
 from .base import TestCase
 from .base import create_server, sqlalchemy_provider, cache_provider
 from .base import db, Client, User
+from base64 import b64encode
 
 
 class TestDefaultProvider(TestCase):
@@ -28,6 +29,13 @@ class TestDefaultProvider(TestCase):
             'grant_type': 'client_credentials',
             'client_id': self.oauth_client.client_id,
             'client_secret': self.oauth_client.client_secret,
+        })
+        assert b'access_token' in rv.data
+
+        rv = self.client.post('/oauth/token', data={
+            'grant_type': 'client_credentials'
+        }, headers={
+            'authorization': 'Basic ' + b64encode('%s:%s' % (self.oauth_client.client_id, self.oauth_client.client_secret))
         })
         assert b'access_token' in rv.data
 
