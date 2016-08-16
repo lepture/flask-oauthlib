@@ -585,6 +585,33 @@ class OAuth2RequestValidator(RequestValidator):
         self._grantgetter = grantgetter
         self._grantsetter = grantsetter
 
+    def _get_client_creds_from_request(self, request):
+        """Return client credentials based on the current request.
+
+        According to the rfc6749, client MAY use the HTTP Basic authentication
+        scheme as defined in [RFC2617] to authenticate with the authorization
+        server. The client identifier is encoded using the
+        "application/x-www-form-urlencoded" encoding algorithm per Appendix B,
+        and the encoded value is used as the username; the client password is
+        encoded using the same algorithm and used as the password. The
+        authorization server MUST support the HTTP Basic authentication scheme
+        for authenticating clients that were issued a client password.
+        See `Section 2.3.1`_.
+
+        .. _`Section 2.3.1`: https://tools.ietf.org/html/rfc6749#section-2.3.1
+        """
+        if request.client_id is not None:
+            return request.client_id, request.client_secret
+
+        auth = request.headers.get('Authorization')
+        # If Werkzeug successfully parsed the Authorization header,
+        # `extract_params` helper will replace the header with a parsed dict,
+        # otherwise, there is nothing useful in the header and we just skip it.
+        if isinstance(auth, dict):
+            return auth['username'], auth['password']
+
+        return None, None
+
     def client_authentication_required(self, request, *args, **kwargs):
         """Determine if client authentication is required for current request.
 
@@ -599,16 +626,20 @@ class OAuth2RequestValidator(RequestValidator):
         .. _`Section 4.1.3`: http://tools.ietf.org/html/rfc6749#section-4.1.3
         .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
         """
-
         def is_confidential(client):
+            if hasattr(client, 'is_confidential'):
+                return client.is_confidential
             client_type = getattr(client, 'client_type', None)
-            if client_type and client_type == 'confidential':
-                return True
-            return getattr(client, 'is_confidential', False)
+            if client_type:
+                return client_type == 'confidential'
+            return True
+
         grant_types = ('password', 'authorization_code', 'refresh_token')
-        if request.grant_type in grant_types:
-            client = self._clientgetter(request.client_id)
-            return (not client) or is_confidential(client)
+        client_id, _ = self._get_client_creds_from_request(request)
+        if client_id and request.grant_type in grant_types:
+            client = self._clientgetter(client_id)
+            if client:
+                return is_confidential(client)
         return False
 
     def authenticate_client(self, request, *args, **kwargs):
@@ -618,20 +649,8 @@ class OAuth2RequestValidator(RequestValidator):
 
         .. _`Section 3.2.1`: http://tools.ietf.org/html/rfc6749#section-3.2.1
         """
-        auth = request.headers.get('Authorization', None)
-        log.debug('Authenticate client %r', auth)
-        if auth:
-            try:
-                _, s = auth.split(' ')
-                client_id, client_secret = decode_base64(s).split(':')
-                client_id = to_unicode(client_id, 'utf-8')
-                client_secret = to_unicode(client_secret, 'utf-8')
-            except Exception as e:
-                log.warning('Authenticate client failed with exception: %r', e, exc_info=True)
-                return False
-        else:
-            client_id = request.client_id
-            client_secret = request.client_secret
+        client_id, client_secret = self._get_client_creds_from_request(request)
+        log.debug('Authenticate client %r', client_id)
 
         client = self._clientgetter(client_id)
         if not client:
@@ -643,8 +662,8 @@ class OAuth2RequestValidator(RequestValidator):
         # http://tools.ietf.org/html/rfc6749#section-2
         # The client MAY omit the parameter if the client secret is an empty string.
         if hasattr(client, 'client_secret') and client.client_secret != client_secret:
-                log.debug('Authenticate client failed, secret not match.')
-                return False
+            log.debug('Authenticate client failed, secret not match.')
+            return False
 
         log.debug('Authenticate client success.')
         return True
@@ -655,6 +674,9 @@ class OAuth2RequestValidator(RequestValidator):
         :param client_id: Client ID of the non-confidential client
         :param request: The Request object passed by oauthlib
         """
+        if client_id is None:
+            client_id, _ = self._get_client_creds_from_request(request)
+
         log.debug('Authenticate client %r.', client_id)
         client = request.client or self._clientgetter(client_id)
         if not client:

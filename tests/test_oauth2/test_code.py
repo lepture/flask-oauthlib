@@ -1,6 +1,7 @@
 # coding: utf-8
 
 from datetime import datetime, timedelta
+from .._base import to_base64
 from .base import TestCase
 from .base import create_server, sqlalchemy_provider, cache_provider
 from .base import db, Client, User, Grant
@@ -97,15 +98,39 @@ class TestDefaultProvider(TestCase):
         db.session.add(grant)
         db.session.commit()
 
-        url = (
-            '/oauth/token?grant_type=authorization_code'
-            '&code=test-get-token&client_id=%s'
-        ) % self.oauth_client.client_id
-        rv = self.client.get(url)
+        url = '/oauth/token?grant_type=authorization_code&code=test-get-token'
+        rv = self.client.get(
+            url + '&client_id=%s' % (self.oauth_client.client_id)
+        )
         assert b'invalid_client' in rv.data
 
-        url += '&client_secret=' + self.oauth_client.client_secret
-        rv = self.client.get(url)
+        rv = self.client.get(
+            url + '&client_id=%s&client_secret=%s' % (
+                self.oauth_client.client_id,
+                self.oauth_client.client_secret
+            )
+        )
+        assert b'access_token' in rv.data
+
+        grant = Grant(
+            user_id=1,
+            client_id=self.oauth_client.client_id,
+            scope='email',
+            redirect_uri='http://localhost/authorized',
+            code='test-get-token',
+            expires=expires,
+        )
+        db.session.add(grant)
+        db.session.commit()
+
+        rv = self.client.get(url, headers={
+            'authorization': 'Basic ' + to_base64(
+                    '%s:%s' % (
+                        self.oauth_client.client_id,
+                        self.oauth_client.client_secret
+                    )
+                )
+        })
         assert b'access_token' in rv.data
 
 
