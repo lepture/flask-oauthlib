@@ -585,6 +585,21 @@ class OAuth2RequestValidator(RequestValidator):
         self._grantgetter = grantgetter
         self._grantsetter = grantsetter
 
+    def _get_client_creds_from_request(self, request):
+        auth = request.headers.get('Authorization', None)
+        log.debug('Authenticate client %r', auth)
+        if auth:
+            try:
+                _, s = auth.split(' ')
+                client_id, client_secret = decode_base64(s).split(':')
+                request.client_id = to_unicode(client_id, 'utf-8')
+                request.client_secret = to_unicode(client_secret, 'utf-8')
+            except Exception as e:
+                log.debug('Authenticate client failed with exception: %r', e)
+                return None, None
+
+        return request.client_id, request.client_secret
+
     def client_authentication_required(self, request, *args, **kwargs):
         """Determine if client authentication is required for current request.
 
@@ -599,16 +614,20 @@ class OAuth2RequestValidator(RequestValidator):
         .. _`Section 4.1.3`: http://tools.ietf.org/html/rfc6749#section-4.1.3
         .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
         """
-
         def is_confidential(client):
+            if hasattr(client, 'is_confidential'):
+                return client.is_confidential
             client_type = getattr(client, 'client_type', None)
-            if client_type and client_type == 'confidential':
-                return True
-            return getattr(client, 'is_confidential', False)
+            if client_type:
+                return True if client_type == 'confidential' else False
+            return True
+
         grant_types = ('password', 'authorization_code', 'refresh_token')
-        if request.grant_type in grant_types:
-            client = self._clientgetter(request.client_id)
-            return (not client) or is_confidential(client)
+        client_id, client_secret = self._get_client_creds_from_request(request)
+        if client_id and request.grant_type in grant_types:
+            client = self._clientgetter(client_id)
+            if client:
+                return is_confidential(client)
         return False
 
     def authenticate_client(self, request, *args, **kwargs):
@@ -618,20 +637,7 @@ class OAuth2RequestValidator(RequestValidator):
 
         .. _`Section 3.2.1`: http://tools.ietf.org/html/rfc6749#section-3.2.1
         """
-        auth = request.headers.get('Authorization', None)
-        log.debug('Authenticate client %r', auth)
-        if auth:
-            try:
-                _, s = auth.split(' ')
-                client_id, client_secret = decode_base64(s).split(':')
-                client_id = to_unicode(client_id, 'utf-8')
-                client_secret = to_unicode(client_secret, 'utf-8')
-            except Exception as e:
-                log.debug('Authenticate client failed with exception: %r', e)
-                return False
-        else:
-            client_id = request.client_id
-            client_secret = request.client_secret
+        client_id, client_secret = self._get_client_creds_from_request(request);
 
         client = self._clientgetter(client_id)
         if not client:
@@ -643,8 +649,8 @@ class OAuth2RequestValidator(RequestValidator):
         # http://tools.ietf.org/html/rfc6749#section-2
         # The client MAY omit the parameter if the client secret is an empty string.
         if hasattr(client, 'client_secret') and client.client_secret != client_secret:
-                log.debug('Authenticate client failed, secret not match.')
-                return False
+            log.debug('Authenticate client failed, secret not match.')
+            return False
 
         log.debug('Authenticate client success.')
         return True
