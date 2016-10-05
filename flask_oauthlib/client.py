@@ -463,7 +463,7 @@ class OAuthRemoteApp(object):
             )
 
         if hasattr(self, 'pre_request'):
-            # This is desgined for some rubbish service like weibo.
+            # This is designed for some rubbish services like weibo.
             # Since they don't follow the standards, we need to
             # change the uri, headers, or body.
             uri, headers, body = self.pre_request(uri, headers, body)
