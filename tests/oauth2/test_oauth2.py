@@ -1,7 +1,6 @@
 # coding: utf-8
 
 import json
-import base64
 from flask import Flask
 from mock import MagicMock
 from .server import (
@@ -13,8 +12,7 @@ from .server import (
     Token
 )
 from .client import create_client
-from .._base import BaseSuite, clean_url
-from .._base import to_bytes as b
+from .._base import BaseSuite, clean_url, to_base64
 from .._base import to_unicode as u
 
 
@@ -51,11 +49,7 @@ authorize_url = (
 )
 
 
-def _base64(text):
-    return u(base64.b64encode(b(text)))
-
-
-auth_code = _base64('confidential:confidential')
+auth_code = to_base64('confidential:confidential')
 
 
 class TestWebAuth(OAuthSuite):
@@ -313,7 +307,7 @@ class TestCredentialAuth(OAuthSuite):
         assert b'invalid_client' in rv.data
 
     def test_no_client(self):
-        auth_code = _base64('none:confidential')
+        auth_code = to_base64('none:confidential')
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address')
         rv = self.client.get(url, headers={
@@ -322,7 +316,7 @@ class TestCredentialAuth(OAuthSuite):
         assert b'invalid_client' in rv.data
 
     def test_wrong_secret_client(self):
-        auth_code = _base64('confidential:wrong')
+        auth_code = to_base64('confidential:wrong')
         url = ('/oauth/token?grant_type=client_credentials'
                '&scope=email+address')
         rv = self.client.get(url, headers={

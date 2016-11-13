@@ -1,5 +1,7 @@
 # coding: utf-8
 
+import json
+from .._base import to_base64, to_unicode as u
 from .base import TestCase
 from .base import create_server, sqlalchemy_provider, cache_provider
 from .base import db, Client, User, Token
@@ -79,6 +81,20 @@ class TestDefaultProvider(TestCase):
             'refresh_token': token.refresh_token,
             'client_id': self.confidential_client.client_id,
             'client_secret': self.confidential_client.client_secret,
+        })
+        assert b'access_token' in rv.data
+
+        token.refresh_token = json.loads(u(rv.data))['refresh_token']
+        rv = self.client.post('/oauth/token', data={
+            'grant_type': 'refresh_token',
+            'refresh_token': token.refresh_token,
+        }, headers={
+            'authorization': 'Basic ' + to_base64(
+                    '%s:%s' % (
+                        self.confidential_client.client_id,
+                        self.confidential_client.client_secret
+                    )
+                )
         })
         assert b'access_token' in rv.data
 

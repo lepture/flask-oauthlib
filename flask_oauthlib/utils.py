@@ -27,6 +27,11 @@ def extract_params():
         del headers['wsgi.input']
     if 'wsgi.errors' in headers:
         del headers['wsgi.errors']
+    # Werkzeug, and subsequently Flask provide a safe Authorization header
+    # parsing, so we just replace the Authorization header with the extraced
+    # info if it was successfully parsed.
+    if request.authorization:
+        headers['Authorization'] = request.authorization
 
     body = request.form.to_dict()
     return uri, http_method, body, headers

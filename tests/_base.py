@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import base64
 import os
 import sys
 import tempfile
@@ -89,6 +90,10 @@ def to_bytes(text):
     if isinstance(text, string_type):
         text = text.encode('utf-8')
     return text
+
+
+def to_base64(text):
+    return to_unicode(base64.b64encode(to_bytes(text)))
 
 
 def clean_url(location):
