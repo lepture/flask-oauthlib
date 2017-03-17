@@ -26,12 +26,12 @@ User (Resource Owner)
 ---------------------
 
 A user, or resource owner, is usually the registered user on your site. You
-design your own user model, there is not much to say.
+need to design your own user model.
 
 Client (Application)
 ---------------------
 
-A client is the app which want to use the resource of a user. It is suggested
+A client is the app which wants to use the resource of a user. It is suggested
 that the client is registered by a user on your site, but it is not required.
 
 The client should contain at least these properties:
@@ -107,10 +107,10 @@ Grant Token
 -----------
 
 A grant token is created in the authorization flow, and will be destroyed
-when the authorization finished. In this case, it would be better to store
-the data in a cache, which would benefit a better performance.
+when the authorization is finished. In this case, it would be better to store
+the data in a cache, which leads to better performance.
 
-A grant token should contain at least these information:
+A grant token should contain at least this information:
 
 - client_id: A random string of client_id
 - code: A random string
@@ -120,7 +120,7 @@ A grant token should contain at least these information:
 - redirect_uri: A URI string
 - delete: A function to delete itself
 
-Also in SQLAlchemy model (would be better if it is in a cache)::
+Also in an SQLAlchemy model (this should be in a cache)::
 
     class Grant(db.Model):
         id = db.Column(db.Integer, primary_key=True)
@@ -159,9 +159,9 @@ Bearer Token
 
 A bearer token is the final token that could be used by the client. There
 are other token types, but bearer token is widely used. Flask-OAuthlib only
-comes with bearer token.
+comes with a bearer token.
 
-A bearer token requires at least these information:
+A bearer token requires at least this information:
 
 - access_token: A string token
 - refresh_token: A string token
@@ -209,7 +209,7 @@ An example of the data model in SQLAlchemy::
 Configuration
 -------------
 
-The oauth provider has some built-in defaults, you can change them with Flask
+The Oauth provider has some built-in defaults. You can change them with Flask
 config:
 
 ================================== ==========================================
@@ -225,18 +225,18 @@ config:
 Implementation
 --------------
 
-The implementation of authorization flow needs two handlers, one is the authorization
+The implementation of the authorization flow needs two handlers: one is the authorization
 handler for the user to confirm the grant, the other is the token handler for the client
 to exchange/refresh access tokens.
 
-Before the implementing of authorize and token handler, we need to set up some
+Before implementing the authorize and token handlers, we need to set up some
 getters and setters to communicate with the database.
 
 Client getter
 `````````````
 
 A client getter is required. It tells which client is sending the requests,
-creating the getter with decorator::
+creating the getter with a decorator::
 
     @oauth.clientgetter
     def load_client(client_id):
@@ -273,9 +273,9 @@ implemented with decorators::
 
 
 In the sample code, there is a ``get_current_user`` method, that will return
-the current user object, you should implement it yourself.
+the current user object. You should implement it yourself.
 
-The ``request`` object is defined by ``OAuthlib``, you can get at least this much
+The ``request`` object is defined by ``OAuthlib``. You can get at least this much
 information:
 
 - client: client model object
@@ -291,7 +291,7 @@ Token getter and setter
 ```````````````````````
 
 Token getter and setter are required. They are used in the authorization flow
-and accessing resource flow. They are implemented with decorators as follows::
+and the accessing resource flow. They are implemented with decorators as follows::
 
     @oauth.tokengetter
     def load_token(access_token=None, refresh_token=None):
@@ -326,7 +326,7 @@ and accessing resource flow. They are implemented with decorators as follows::
         db.session.commit()
         return tok
 
-The getter will receive two parameters, if you don't need to support refresh
+The getter will receive two parameters. If you don't need to support a refresh
 token, you can just load token by access token.
 
 The setter receives ``token`` and ``request`` parameters. The ``token`` is a
@@ -375,7 +375,7 @@ that you implemented it this way::
             confirm = request.form.get('confirm', 'no')
             return confirm == 'yes'
 
-The GET request will render a page for user to confirm the grant, parameters in
+The GET request will render a page for user to confirm the grant. The parameters in
 kwargs are:
 
 - client_id: id of the client
@@ -384,11 +384,11 @@ kwargs are:
 - redirect_uri: redirect_uri parameter
 - response_type: response_type parameter
 
-The POST request needs to return a bool value that tells whether user granted
+The POST request needs to return a boolean value that tells whether user granted
 access or not.
 
-There is a ``@require_login`` decorator in the sample code, you should
-implement it yourself.
+There is a ``@require_login`` decorator in the sample code. You should
+implement this yourself.
 
 
 Token handler
@@ -430,7 +430,7 @@ The authorization flow is finished, everything should be working now.
 Revoke handler
 ``````````````
 In some cases a user may wish to revoke access given to an application and the
-revoke handler makes it possible for an application to programmaticaly revoke
+revoke handler makes it possible for an application to programmatically revoke
 the access given to it. Also here you don't need to do much, allowing POST only
 is recommended::
 
@@ -476,7 +476,7 @@ can access the defined resources.
 
 .. versionchanged:: 0.5.0
 
-The ``request`` has an additional property ``oauth``, it contains at least:
+The ``request`` has an additional property ``oauth``, which contains at least:
 
 - client: client model object
 - scopes: a list of scopes
@@ -490,7 +490,7 @@ The ``request`` has an additional property ``oauth``, it contains at least:
 Example for OAuth 2
 -------------------
 
-An examplary server (and client) can be found in the tests folder: https://github.com/lepture/flask-oauthlib/tree/master/tests/oauth2
+An example server (and client) can be found in the tests folder: https://github.com/lepture/flask-oauthlib/tree/master/tests/oauth2
 
 Other helpful resources include: 
  - Another example of an OAuth 2 server: https://github.com/lepture/example-oauth2-server
