@@ -431,7 +431,7 @@ class OAuth2Provider(object):
                 return redirect(e.in_uri(redirect_uri))
             
             # Pass the scopes list as a string to match the format of a URL request
-            return self.confirm_authorization_request(" ".join(kwargs['request'].scopes))
+            return self.confirm_authorization_request(" ".join(scopes))
         return decorated
 
     def confirm_authorization_request(self, default_scopes = None):
