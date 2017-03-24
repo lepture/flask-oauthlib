@@ -435,8 +435,9 @@ class OAuth2Provider(object):
             try:
                 default_scopes = " ".join(scopes)
             except UnboundLocalError:
-                if 'request' in kwargs and hasattr(kwargs['request'], scopes):
-                    default_scopes = " ".join(kwargs['request'].scopes)
+                pass #Just use the default of empty scopes, which will likely return an error later
+                #if 'request' in kwargs and hasattr(kwargs['request'], scopes):
+                #    default_scopes = " ".join(kwargs['request'].scopes)
             return self.confirm_authorization_request(default_scopes)
         return decorated
 
