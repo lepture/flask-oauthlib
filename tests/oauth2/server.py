@@ -105,8 +105,10 @@ class Token(db.Model):
     scope = db.Column(db.Text)
 
     def __init__(self, **kwargs):
-        expires_in = kwargs.pop('expires_in')
-        self.expires = datetime.utcnow() + timedelta(seconds=expires_in)
+        expires_in = kwargs.pop('expires_in', None)
+        if expires_in is not None:
+            self.expires = datetime.utcnow() + timedelta(seconds=expires_in)
+
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -232,12 +234,17 @@ def prepare_app(app):
         user_id=1, client_id='dev', access_token='expired', expires_in=0
     )
 
+    access_token2 = Token(
+        user_id=1, client_id='dev', access_token='never_expire'
+    )
+
     try:
         db.session.add(client1)
         db.session.add(client2)
         db.session.add(user)
         db.session.add(temp_grant)
         db.session.add(access_token)
+        db.session.add(access_token2)
         db.session.commit()
     except:
         db.session.rollback()

@@ -819,7 +819,8 @@ class OAuth2RequestValidator(RequestValidator):
             return False
 
         # validate expires
-        if datetime.datetime.utcnow() > tok.expires:
+        if tok.expires is not None and \
+                datetime.datetime.utcnow() > tok.expires:
             msg = 'Bearer token is expired.'
             request.error_message = msg
             log.debug(msg)
@@ -892,7 +893,7 @@ class OAuth2RequestValidator(RequestValidator):
             'authorization_code', 'password',
             'client_credentials', 'refresh_token',
         )
-        
+
         # Grant type is allowed if it is part of the 'allowed_grant_types'
         # of the selected client or if it is one of the default grant types
         if hasattr(client, 'allowed_grant_types'):

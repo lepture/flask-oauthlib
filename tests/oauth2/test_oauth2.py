@@ -134,6 +134,14 @@ class TestWebAuth(OAuthSuite):
         rv = self.client.get('/method/put')
         assert b'token is expired' in rv.data
 
+    def test_never_expiring_bear_token(self):
+        @self.oauth_client.tokengetter
+        def get_oauth_token():
+            return 'never_expire', ''
+
+        rv = self.client.get('/method/put')
+        assert rv.status_code == 200
+
     def test_get_client(self):
         rv = self.client.post(authorize_url, data={'confirm': 'yes'})
         rv = self.client.get(clean_url(rv.location))
