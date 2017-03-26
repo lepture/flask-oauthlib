@@ -1,7 +1,7 @@
 # coding: utf-8
 from datetime import datetime, timedelta
 from flask import g, render_template, request, jsonify, make_response
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_oauthlib.provider import OAuth2Provider
 from flask_oauthlib.contrib.oauth2 import bind_sqlalchemy
