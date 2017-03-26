@@ -200,6 +200,32 @@ def default_provider(app):
     return oauth
 
 
+def provider_tokendeleter(app):
+    oauth = default_provider(app)
+
+    @oauth.tokendeleter
+    def delete_token(access_token=None, refresh_token=None):
+        if access_token:
+            Token.query.filter_by(access_token=access_token).delete()
+            db.session.commit()
+        if refresh_token:
+            Token.query.filter_by(refresh_token=refresh_token).delete()
+            db.session.commit()
+
+    return oauth
+
+
+def provider_grantdeleter(app):
+    oauth = default_provider(app)
+
+    @oauth.grantdeleter
+    def delete_grant(client_id, code):
+        Grant.query.filter_by(client_id=client_id, code=code).delete()
+        db.session.commit()
+
+    return oauth
+
+
 def prepare_app(app):
     db.init_app(app)
     db.app = app

@@ -3,6 +3,8 @@
 import json
 from flask import Flask
 from mock import MagicMock
+
+from tests.oauth2.server import provider_tokendeleter, provider_grantdeleter
 from .server import (
     create_server,
     db,
@@ -182,6 +184,12 @@ class TestWebAuthSQLAlchemy(TestWebAuth):
         return sqlalchemy_provider(app)
 
 
+class TestWebAuthWithCustomGrantDeleter(TestWebAuth):
+
+    def create_oauth_provider(self, app):
+        return provider_grantdeleter(app)
+
+
 class TestRefreshToken(OAuthSuite):
 
     def create_oauth_provider(self, app):
@@ -285,6 +293,12 @@ class TestRevokeTokenCached(TestRefreshToken):
 
     def create_oauth_provider(self, app):
         return cache_provider(app)
+
+
+class TestRevokeTokenWithCustomTokenDeleter(TestRevokeToken):
+
+    def create_oauth_provider(self, app):
+        return provider_tokendeleter(app)
 
 
 class TestRevokeTokenSQLAlchemy(TestRefreshToken):

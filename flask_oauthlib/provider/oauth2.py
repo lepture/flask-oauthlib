@@ -155,6 +155,14 @@ class OAuth2Provider(object):
             if hasattr(self, '_usergetter'):
                 usergetter = self._usergetter
 
+            tokendeleter = None
+            if hasattr(self, '_tokendeleter'):
+                tokendeleter = self._tokendeleter
+
+            grantdeleter = None
+            if hasattr(self, '_grantdeleter'):
+                grantdeleter = self._grantdeleter
+
             validator = OAuth2RequestValidator(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
@@ -162,6 +170,8 @@ class OAuth2Provider(object):
                 usergetter=usergetter,
                 tokensetter=self._tokensetter,
                 grantsetter=self._grantsetter,
+                tokendeleter=tokendeleter,
+                grantdeleter=grantdeleter,
             )
             self._validator = validator
             return Server(
@@ -329,6 +339,23 @@ class OAuth2Provider(object):
         self._tokensetter = f
         return f
 
+    def tokendeleter(self, f):
+        """Register a function as the token deleter.
+
+        The implementation of tokendeleter should accepts two parameters,
+        one is access_token the other is refresh_token::
+
+            @oauth.tokendeleter
+            def delete_token(access_token=None, refresh_token=None):
+                if access_token:
+                    return token_repository.delete(access_token=access_token)
+                if refresh_token:
+                    return token_repository.delete(refresh_token=refresh_token)
+                return None
+        """
+        self._tokendeleter = f
+        return f
+
     def grantgetter(self, f):
         """Register a function as the grant getter.
 
@@ -341,6 +368,10 @@ class OAuth2Provider(object):
         It returns a grant object with at least these information:
 
             - delete: A function to delete itself
+            
+        Alternatively you can register a grantdeleter function, which will be 
+        used for deleting the grant instead of the grant.delete() method.
+    
         """
         self._grantgetter = f
         return f
@@ -355,6 +386,19 @@ class OAuth2Provider(object):
                 save_grant(client_id, code, request.user, request.scopes)
         """
         self._grantsetter = f
+        return f
+
+    def grantdeleter(self, f):
+        """Register a function as the grant deleter.
+
+        The function accepts `client_id`, `code` and more::
+
+            @oauth.grantdeleter
+            def delete_grant(client_id, code):
+                grant_repository.delete(client_id, code)
+
+        """
+        self._grantdeleter = f
         return f
 
     def authorize_handler(self, f):
@@ -575,15 +619,20 @@ class OAuth2RequestValidator(RequestValidator):
     :param tokensetter: a function to save bearer token
     :param grantgetter: a function to get grant token
     :param grantsetter: a function to save grant token
+    :param tokendeleter: a function to delete a bearer token
+    :param grantdeleter: a function to delete a grant token
     """
     def __init__(self, clientgetter, tokengetter, grantgetter,
-                 usergetter=None, tokensetter=None, grantsetter=None):
+                 usergetter=None, tokensetter=None, grantsetter=None,
+                 tokendeleter=None, grantdeleter=None):
         self._clientgetter = clientgetter
         self._tokengetter = tokengetter
         self._usergetter = usergetter
         self._tokensetter = tokensetter
         self._grantgetter = grantgetter
         self._grantsetter = grantsetter
+        self._tokendeleter = tokendeleter
+        self._grantdeleter = grantdeleter
 
     def _get_client_creds_from_request(self, request):
         """Return client credentials based on the current request.
@@ -762,12 +811,15 @@ class OAuth2RequestValidator(RequestValidator):
         """Invalidate an authorization code after use.
 
         We keep the temporary code in a grant, which has a `delete`
-        function to destroy itself.
+        function or we use the registered grantdeleter to destroy the grant.
         """
         log.debug('Destroy grant token for client %r, %r', client_id, code)
-        grant = self._grantgetter(client_id=client_id, code=code)
-        if grant:
-            grant.delete()
+        if callable(self._grantdeleter):
+            self._grantdeleter(client_id=client_id, code=code)
+        else:
+            grant = self._grantgetter(client_id=client_id, code=code)
+            if grant:
+                grant.delete()
 
     def save_authorization_code(self, client_id, code, request,
                                 *args, **kwargs):
@@ -980,13 +1032,18 @@ class OAuth2RequestValidator(RequestValidator):
             tok = self._tokengetter(**{token_type_hint: token})
         else:
             tok = self._tokengetter(access_token=token)
+            token_type_hint = 'access_token'
             if not tok:
                 tok = self._tokengetter(refresh_token=token)
+                token_type_hint = 'refresh_token'
 
         if tok:
             request.client_id = tok.client_id
             request.user = tok.user
-            tok.delete()
+            if callable(self._tokendeleter):
+                self._tokendeleter(**{token_type_hint: token})
+            else:
+                tok.delete()
             return True
 
         msg = 'Invalid token supplied.'
