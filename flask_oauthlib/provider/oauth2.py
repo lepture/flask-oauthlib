@@ -348,10 +348,9 @@ class OAuth2Provider(object):
             @oauth.tokendeleter
             def delete_token(access_token=None, refresh_token=None):
                 if access_token:
-                    return token_repository.delete(access_token=access_token)
+                    token_repository.delete(access_token=access_token)
                 if refresh_token:
-                    return token_repository.delete(refresh_token=refresh_token)
-                return None
+                    token_repository.delete(refresh_token=refresh_token)
         """
         self._tokendeleter = f
         return f
