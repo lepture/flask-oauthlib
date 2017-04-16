@@ -53,6 +53,13 @@ def create_client(app, oauth=None):
             return jsonify(resp)
         return str(resp)
 
+    @app.route('/about')
+    def about():
+        ret = oauth.get('about')
+        if ret.status not in (200, 201):
+            return abort(ret.status)
+        return ret.raw_data
+
     @app.route('/address')
     def address():
         ret = oauth.get('address/hangzhou')

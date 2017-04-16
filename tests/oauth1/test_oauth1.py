@@ -39,6 +39,10 @@ class OAuthSuite(BaseSuite):
 
 
 class TestWebAuth(OAuthSuite):
+    def test_request_with_no_user_context(self):
+        rv = self.client.get('/about')
+        assert 'flask-oauthlib' in u(rv.data)
+
     def test_full_flow(self):
         rv = self.client.get('/login')
         assert 'oauth_token' in rv.location
