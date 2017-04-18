@@ -429,14 +429,16 @@ class OAuth2Provider(object):
                 # denied by user
                 e = oauth2.AccessDeniedError()
                 return redirect(e.in_uri(redirect_uri))
-            return self.confirm_authorization_request()
+            return self.confirm_authorization_request(kwargs.get('scopes', []))
         return decorated
 
-    def confirm_authorization_request(self):
+    def confirm_authorization_request(self, client_default_scopes=None):
         """When consumer confirm the authorization."""
         server = self.server
         scope = request.values.get('scope') or ''
         scopes = scope.split()
+        if client_default_scopes is not None:
+            scopes = list(set(client_default_scopes) | set(scopes))
         credentials = dict(
             client_id=request.values.get('client_id'),
             redirect_uri=request.values.get('redirect_uri', None),
