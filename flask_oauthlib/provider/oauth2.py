@@ -713,7 +713,8 @@ class OAuth2RequestValidator(RequestValidator):
             # For testing
             return True
 
-        return grant.redirect_uri == redirect_uri
+        stripped_redirect_uri = (redirect_uri or '').split('?', 1)[0]
+        return grant.redirect_uri == stripped_redirect_uri
 
     def get_original_scopes(self, refresh_token, request, *args, **kwargs):
         """Get the list of scopes associated with the refresh token.
