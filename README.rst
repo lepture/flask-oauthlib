@@ -2,7 +2,7 @@ Flask-OAuthlib
 ==============
 
 .. image:: https://img.shields.io/badge/donate-lepture-green.svg
-   :target: https://lepture.herokuapp.com/?amount=1000&reason=lepture%2Fflask-oauthlib
+   :target: https://typlog.com/donate?amount=10&reason=lepture%2Fflask-oauthlib
    :alt: Donate lepture
 .. image:: https://img.shields.io/pypi/wheel/flask-oauthlib.svg
    :target: https://pypi.python.org/pypi/flask-OAuthlib/
