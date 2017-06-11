@@ -3,6 +3,16 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.9.4
+-------------
+
+Released on Jun 9, 2017
+
+- Handle HTTP Basic Auth for client's access to token endpoint (#301)
+- Allow having access tokens without expiration date (#311)
+- Log exception traceback. (#281)
+
+
 Version 0.9.3
 -------------
 
