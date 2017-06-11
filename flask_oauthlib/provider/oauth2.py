@@ -242,6 +242,7 @@ class OAuth2Provider(object):
             - allowed_grant_types: A list of grant types
             - allowed_response_types: A list of response types
             - validate_scopes: A function to validate scopes
+            - validate_client_secret: A function to validate the client secret
 
         Implement the client getter::
 
@@ -612,6 +613,28 @@ class OAuth2RequestValidator(RequestValidator):
 
         return None, None
 
+    def _validate_client_secret(self, client, client_secret):
+        """Validate the given client secret against the stored client secret.
+
+        The `Client` class can either implement the method
+        `validate_client_secret(client_secret)` for complex validation
+        (e.g. validating a hashed secret, etc.) or provide the plain text
+        client secret via the `client_secret` property.
+
+        According to the rfc6749, the client MAY omit the client_secret
+        parameter if the client secret is an empty string.
+        See `Section 2`_.
+
+        .. _`Section 2`: https://tools.ietf.org/html/rfc6749#section-2
+        """
+        if hasattr(client, 'validate_client_secret'):
+            return client.validate_client_secret(client_secret)
+
+        if hasattr(client, 'client_secret'):
+            return client.client_secret == client_secret
+
+        return True
+
     def client_authentication_required(self, request, *args, **kwargs):
         """Determine if client authentication is required for current request.
 
@@ -659,14 +682,7 @@ class OAuth2RequestValidator(RequestValidator):
 
         request.client = client
 
-        client_secret_validator = getattr(client, 'validate_client_secret', None)
-        if callable(client_secret_validator) and not client_secret_validator(client_secret):
-            log.debug('Authenticate client failed, invalid secret.')
-            return False
-
-        # http://tools.ietf.org/html/rfc6749#section-2
-        # The client MAY omit the parameter if the client secret is an empty string.
-        if hasattr(client, 'client_secret') and client.client_secret != client_secret:
+        if not self._validate_client_secret(client, client_secret):
             log.debug('Authenticate client failed, secret not match.')
             return False
 

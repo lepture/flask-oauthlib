@@ -67,9 +67,6 @@ class Client(db.Model):
             types.remove(self.disallow_grant_type)
         return types
 
-    def validate_client_secret(self, client_secret):
-        return client_secret == self.client_secret
-
 
 class Grant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
