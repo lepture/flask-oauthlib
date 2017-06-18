@@ -396,9 +396,7 @@ class OAuth2Provider(object):
                     log.debug('OAuth2Error: %r', e, exc_info=True)
                     return redirect(e.in_uri(redirect_uri))
                 except Exception as e:
-                    log.warning(
-                        'Exception caught while processing request, %s.' % e,
-                        exc_info=True, stack_info=True)
+                    log.exception(e)
                     return redirect(add_params_to_uri(
                         self.error_uri, {'error': str(e)}
                     ))
@@ -456,9 +454,7 @@ class OAuth2Provider(object):
             log.debug('OAuth2Error: %r', e, exc_info=True)
             return redirect(e.in_uri(redirect_uri or self.error_uri))
         except Exception as e:
-            log.warning(
-                'Exception caught while processing request, %s.' % e,
-                exc_info=True, stack_info=True)
+            log.exception(e)
             return redirect(add_params_to_uri(
                 self.error_uri, {'error': str(e)}
             ))
