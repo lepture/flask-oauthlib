@@ -17,7 +17,7 @@ promising replacement for `python-oauth2`_.
 .. _`python-oauth2`: https://pypi.python.org/pypi/oauth2/
 
 There are lots of non-standard services that claim they are oauth providers, but
-their APIs are always broken. While rewriteing an oauth extension for Flask, I
+their APIs are always broken. While rewriting an oauth extension for Flask, I
 took them into consideration. Flask-OAuthlib does support these non-standard
 services.
 
