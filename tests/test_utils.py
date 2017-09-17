@@ -1,3 +1,4 @@
+import json
 import unittest
 import wsgiref.util
 from contextlib import contextmanager
@@ -8,7 +9,7 @@ from oauthlib.common import Request
 
 
 @contextmanager
-def set_flask_request(wsgi_environ):
+def set_flask_request(wsgi_environ, json=None):
     """
     Test helper context manager that mocks the flask request global I didn't
     need the whole request context just to test the functions in helpers and I
@@ -18,6 +19,7 @@ def set_flask_request(wsgi_environ):
     environ.update(wsgi_environ)
     wsgiref.util.setup_testing_defaults(environ)
     r = werkzeug.wrappers.Request(environ)
+    r.json = json
 
     with mock.patch.dict(extract_params.__globals__, {'request': r}):
         yield
@@ -42,3 +44,17 @@ class UtilsTestSuite(unittest.TestCase):
             # Request constructor will try to urldecode the querystring, make
             # sure this doesn't fail.
             Request(uri, http_method, body, headers)
+
+    def test_extract_params_with_json(self):
+        data = {'test': 'foo',
+                'foo': 'bar'}
+        json_payload = json.dumps(data).encode('utf-8')
+
+        wsgi_environ = {
+            'CONTENT_TYPE': 'application/json',
+            'CONTENT_LENGHT': str(len(data))
+        }
+        with set_flask_request(wsgi_environ, data):
+            uri, http_method, body, headers = extract_params()
+            Request(uri, http_method, body, headers)
+            self.assertEqual(body, {'test': 'foo', 'foo': 'bar'})
