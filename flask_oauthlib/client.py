@@ -499,7 +499,7 @@ class OAuthRemoteApp(object):
             if params:
                 url += '&' + url_encode(params)
         else:
-            assert callback is not None, 'Callback is required OAuth2'
+            assert callback is not None, 'Callback is required for OAuth2'
 
             client = self.make_client()
 
@@ -590,10 +590,10 @@ class OAuthRemoteApp(object):
             raise OAuthException('No token available', type='token_missing')
         return rv
 
-    def handle_oauth1_response(self):
+    def handle_oauth1_response(self, args):
         """Handles an oauth1 authorization response."""
         client = self.make_client()
-        client.verifier = request.args.get('oauth_verifier')
+        client.verifier = args.get('oauth_verifier')
         tup = session.get('%s_oauthtok' % self.name)
         if not tup:
             raise OAuthException(
@@ -621,15 +621,15 @@ class OAuthRemoteApp(object):
             )
         return data
 
-    def handle_oauth2_response(self):
+    def handle_oauth2_response(self, args):
         """Handles an oauth2 authorization response."""
 
         client = self.make_client()
         remote_args = {
-            'code': request.args.get('code'),
+            'code': args.get('code'),
             'client_secret': self.consumer_secret,
-            'redirect_uri': session.get('%s_oauthredir' % self.name)
         }
+        remote_args['redirect_uri'] = session.get('%s_oauthredir' % self.name)
         log.debug('Prepare oauth2 remote args %r', remote_args)
         remote_args.update(self.access_token_params)
         headers = copy(self._access_token_headers)
@@ -659,6 +659,7 @@ class OAuthRemoteApp(object):
 
         data = parse_response(resp, content, content_type=self.content_type)
         if resp.code not in (200, 201):
+            log.error(data)
             raise OAuthException(
                 'Invalid response from %s' % self.name,
                 type='invalid_response', data=data
@@ -671,10 +672,15 @@ class OAuthRemoteApp(object):
 
     def authorized_response(self):
         """Handles authorization response smartly."""
-        if 'oauth_verifier' in request.args:
-            data = self.handle_oauth1_response()
-        elif 'code' in request.args:
-            data = self.handle_oauth2_response()
+        args = None
+        if request.is_json:
+            args = request.get_json()
+        else:
+            args = request.args
+        if 'oauth_verifier' in args:
+            data = self.handle_oauth1_response(args)
+        elif 'code' in args:
+            data = self.handle_oauth2_response(args)
         else:
             data = self.handle_unknown_response()
 
