@@ -670,12 +670,9 @@ class OAuthRemoteApp(object):
         """Handles a unknown authorization response."""
         return None
 
-    def authorized_response(self):
+    def authorized_response(self, args=None):
         """Handles authorization response smartly."""
-        args = None
-        if request.is_json:
-            args = request.get_json()
-        else:
+        if args is None:
             args = request.args
         if 'oauth_verifier' in args:
             data = self.handle_oauth1_response(args)
