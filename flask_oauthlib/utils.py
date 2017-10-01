@@ -33,7 +33,11 @@ def extract_params():
     if request.authorization:
         headers['Authorization'] = request.authorization
 
-    body = request.form.to_dict()
+    if 'application/json' == request.content_type:
+        body = request.json
+    else:
+        body = request.form.to_dict()
+
     return uri, http_method, body, headers
 
 
