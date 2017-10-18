@@ -36,10 +36,11 @@ check out Auth0's PHP API SDK and free plan at `auth0.com/overview`_
 
 .. _`auth0.com/overview`: https://auth0.com/overview?utm_source=GHsponsor&utm_medium=GHsponsor&utm_campaign=flask-oauthlib&utm_content=auth
 
-.. |auth0 image| image:: https://cdn.auth0.com/styleguide/components/1.0.8/media/logos/img/badge.png
+.. |auth0 image| image:: https://user-images.githubusercontent.com/290496/31718461-031a6710-b44b-11e7-80f8-7c5920c73b8f.png
    :target: https://auth0.com/overview?utm_source=GHsponsor&utm_medium=GHsponsor&utm_campaign=flask-oauthlib&utm_content=auth
    :alt: Coverage Status
-   :width: 18
+   :width: 18px
+   :height: 18px
 
 Features
 --------
