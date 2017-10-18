@@ -31,7 +31,7 @@ Sponsored by
 ------------
 
 If you want to quickly add secure authentication to Flask, feel free to
-check out Auth0's PHP API SDK and free plan at `auth0.com/overview`_
+check out Auth0's Python API SDK and free plan at `auth0.com/overview`_
 |auth0 image|
 
 .. _`auth0.com/overview`: https://auth0.com/overview?utm_source=GHsponsor&utm_medium=GHsponsor&utm_campaign=flask-oauthlib&utm_content=auth
