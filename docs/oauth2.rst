@@ -388,7 +388,9 @@ The POST request needs to return a boolean value that tells whether user granted
 access or not.
 
 There is a ``@require_login`` decorator in the sample code. You should
-implement this yourself.
+implement this yourself. Here is an `example`_ by Flask documentation.
+
+.. _`example`: http://flask.pocoo.org/docs/0.12/patterns/viewdecorators/#login-required-decorator
 
 
 Token handler
