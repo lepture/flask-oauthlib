@@ -227,6 +227,8 @@ class OAuthRemoteApp(object):
         authorize_url=None,
         consumer_key=None,
         consumer_secret=None,
+        rsa_key=None,
+        signature_method=None,
         request_token_params=None,
         request_token_method=None,
         access_token_params=None,
@@ -245,6 +247,8 @@ class OAuthRemoteApp(object):
         self._authorize_url = authorize_url
         self._consumer_key = consumer_key
         self._consumer_secret = consumer_secret
+        self._rsa_key = rsa_key
+        self._signature_method = signature_method
         self._request_token_params = request_token_params
         self._request_token_method = request_token_method
         self._access_token_params = access_token_params
@@ -260,10 +264,8 @@ class OAuthRemoteApp(object):
         # Skip this check if app_key is specified, since the information is
         # specified in the Flask config, instead.
         if not app_key:
-            req_params = self.request_token_params or {}
-            if req_params.get("signature_method") == oauthlib.oauth1.SIGNATURE_RSA:
+            if signature_method == oauthlib.oauth1.SIGNATURE_RSA:
                 # check for consumer_key and rsa_key
-                rsa_key = req_params.get("rsa_key")
                 if not consumer_key or not rsa_key:
                     raise TypeError(
                         "OAuthRemoteApp with RSA authentication requires "
@@ -299,6 +301,14 @@ class OAuthRemoteApp(object):
     @cached_property
     def consumer_secret(self):
         return self._get_property('consumer_secret')
+
+    @cached_property
+    def rsa_key(self):
+        return self._get_property('rsa_key')
+
+    @cached_property
+    def signature_method(self):
+        return self._get_property('signature_method')
 
     @cached_property
     def request_token_params(self):
@@ -341,20 +351,29 @@ class OAuthRemoteApp(object):
             return app.config.get(config_key, default)
         return app.config[config_key]
 
+    def get_oauth1_client_params(self, token):
+        params = copy(self.request_token_params) or {}
+        if token and isinstance(token, (tuple, list)):
+            params["resource_owner_key"] = token[0]
+            params["resource_owner_secret"] = token[1]
+
+        # Set params for SIGNATURE_RSA
+        if self.signature_method == oauthlib.oauth1.SIGNATURE_RSA:
+            params["signature_method"] = self.signature_method
+            params["rsa_key"] = self.rsa_key
+
+        return params
+
     def make_client(self, token=None):
         # request_token_url is for oauth1
         if self.request_token_url:
-            params = copy(self.request_token_params) or {}
-            if token and isinstance(token, (tuple, list)):
-                params["resource_owner_key"] = token[0]
-                params["resource_owner_secret"] = token[1]
-
+            # get params for client
+            params = self.get_oauth1_client_params(token)
             client = oauthlib.oauth1.Client(
                 client_key=self.consumer_key,
                 client_secret=self.consumer_secret,
                 **params
             )
-
         else:
             if token and isinstance(token, (tuple, list)):
                 token = {'access_token': token[0]}
