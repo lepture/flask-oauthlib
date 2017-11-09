@@ -27,6 +27,12 @@ except ImportError:
 log = logging.getLogger('flask_oauthlib')
 
 
+if PY3:
+    string_types = (str,)
+else:
+    string_types = (str, unicode)
+
+
 __all__ = ('OAuth', 'OAuthRemoteApp', 'OAuthResponse', 'OAuthException')
 
 
@@ -375,8 +381,11 @@ class OAuthRemoteApp(object):
                 **params
             )
         else:
-            if token and isinstance(token, (tuple, list)):
-                token = {'access_token': token[0]}
+            if token:
+                if isinstance(token, (tuple, list)):
+                    token = {'access_token': token[0]}
+                elif isinstance(token, string_types):
+                    token = {'access_token': token}
             client = oauthlib.oauth2.WebApplicationClient(
                 self.consumer_key, token=token
             )

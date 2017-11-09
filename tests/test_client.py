@@ -3,6 +3,7 @@ from nose.tools import raises
 from flask_oauthlib.client import encode_request_data
 from flask_oauthlib.client import OAuthRemoteApp, OAuth
 from flask_oauthlib.client import parse_response
+from oauthlib.common import PY3
 
 try:
     import urllib2 as http
@@ -184,3 +185,32 @@ class TestOAuthRemoteApp(object):
         resp, content = OAuthRemoteApp.http_request('http://example.com')
         assert resp.code == 404
         assert b'o' in content
+
+    def test_token_types(self):
+        oauth = OAuth()
+        remote = oauth.remote_app('remote',
+                                  consumer_key='remote key',
+                                  consumer_secret='remote secret')
+
+        client_token = {'access_token': 'access token'}
+
+        if not PY3:
+            unicode_token = u'access token'
+            client = remote.make_client(token=unicode_token)
+            assert client.token == client_token
+
+        str_token = 'access token'
+        client = remote.make_client(token=str_token)
+        assert client.token == client_token
+
+        list_token = ['access token']
+        client = remote.make_client(token=list_token)
+        assert client.token == client_token
+
+        tuple_token = ('access token',)
+        client = remote.make_client(token=tuple_token)
+        assert client.token == client_token
+
+        dict_token = {'access_token': 'access token'}
+        client = remote.make_client(token=dict_token)
+        assert client.token == client_token
