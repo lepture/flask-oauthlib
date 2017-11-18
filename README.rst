@@ -20,11 +20,10 @@ Flask-OAuthlib
 Notification
 ------------
 
-    I'm planning to create a whole new authentication library which will contain OAuth 1, OAuth 2, OpenID clients and servers. It would be a ready to use library with Flask and Django frameworks built-in.
+I'm working on `Authlib <https://github.com/lepture/authlib`_ which will
+be the replacement of this project.
 
-    To make sure it will be sustainable, there will be commercial supports and paid services. Support this project now at https://www.patreon.com/lepture
-
-    Subscribe the Newsletter now https://tinyletter.com/authlib. I'll send your news when it's ready.
+=====
 
 Flask-OAuthlib is an extension to Flask that allows you to interact with
 remote OAuth enabled applications. On the client site, it is a replacement
