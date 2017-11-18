@@ -20,7 +20,7 @@ Flask-OAuthlib
 Notification
 ------------
 
-I'm working on `Authlib <https://github.com/lepture/authlib`_ which will
+I'm working on https://github.com/lepture/authlib which will
 be the replacement of this project.
 
 =====
