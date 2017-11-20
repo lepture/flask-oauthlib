@@ -17,6 +17,7 @@ from oauthlib.common import to_unicode, PY3, add_params_to_uri
 from flask import request, redirect, json, session, current_app
 from werkzeug import url_quote, url_decode, url_encode
 from werkzeug import parse_options_header, cached_property
+import gzip
 from .utils import to_bytes
 try:
     from urlparse import urljoin
@@ -121,6 +122,9 @@ def parse_response(resp, content, strict=False, content_type=None):
     if not content_type:
         content_type = resp.headers.get('content-type', 'application/json')
     ct, options = parse_options_header(content_type)
+
+    if resp.headers.get("Content-Encoding") in ['gzip', 'x-gzip']:
+        content = gzip.decompress(content)
 
     if ct in ('application/json', 'text/javascript'):
         if not content:
