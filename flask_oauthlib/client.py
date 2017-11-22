@@ -118,9 +118,27 @@ def parse_response(resp, content, strict=False, content_type=None):
     :param strict: strict mode for form urlencoded content
     :param content_type: assign a content type manually
     """
-    if not content_type:
-        content_type = resp.headers.get('content-type', 'application/json')
     ct, options = parse_options_header(content_type)
+    charset = options.get('charset', 'utf-8')
+
+    if not content_type:
+
+        try:
+            return json.loads(content)
+
+        except Exception as exception:
+            log.debug("The content is not json")
+
+        try:
+            return get_etree().fromstring(content)
+
+        except Exception as exception:
+            log.debug("The content is not XML")
+
+        if strict:
+            return content
+        else:
+            return url_decode(content, charset=charset).to_dict()
 
     if ct in ('application/json', 'text/javascript'):
         if not content:
@@ -132,7 +150,7 @@ def parse_response(resp, content, strict=False, content_type=None):
 
     if ct != 'application/x-www-form-urlencoded' and strict:
         return content
-    charset = options.get('charset', 'utf-8')
+
     return url_decode(content, charset=charset).to_dict()
 
 
@@ -641,13 +659,11 @@ class OAuthRemoteApp(object):
             uri, headers, to_bytes(data, self.encoding),
             method=self.access_token_method
         )
-        data = parse_response(resp, content)
+
         if resp.code not in (200, 201):
-            raise OAuthException(
-                'Invalid response from %s' % self.name,
-                type='invalid_response', data=data
-            )
-        return data
+            return {'accessToken':None,'code':resp.code, 'msg':resp.msg}
+
+        return parse_response(resp, content)
 
     def handle_oauth2_response(self, args):
         """Handles an oauth2 authorization response."""
@@ -685,13 +701,10 @@ class OAuthRemoteApp(object):
                 self.access_token_method
             )
 
-        data = parse_response(resp, content, content_type=self.content_type)
         if resp.code not in (200, 201):
-            raise OAuthException(
-                'Invalid response from %s' % self.name,
-                type='invalid_response', data=data
-            )
-        return data
+            return {'accessToken':None,'code':resp.code, 'msg':resp.msg}
+
+        return parse_response(resp, content, content_type=self.content_type)
 
     def handle_unknown_response(self):
         """Handles a unknown authorization response."""
