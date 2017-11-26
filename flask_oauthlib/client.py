@@ -122,22 +122,18 @@ def parse_response(resp, content, strict=False, content_type=None):
     charset = options.get('charset', 'utf-8')
 
     if not content_type:
-
         try:
             return json.loads(content)
-
         except Exception as exception:
             log.debug("The content is not json")
 
         try:
             return get_etree().fromstring(content)
-
         except Exception as exception:
             log.debug("The content is not XML")
 
         if strict:
             return content
-
         return url_decode(content, charset=charset).to_dict()
 
     if ct in ('application/json', 'text/javascript'):
