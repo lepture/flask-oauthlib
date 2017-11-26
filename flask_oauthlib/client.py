@@ -137,8 +137,8 @@ def parse_response(resp, content, strict=False, content_type=None):
 
         if strict:
             return content
-        else:
-            return url_decode(content, charset=charset).to_dict()
+
+        return url_decode(content, charset=charset).to_dict()
 
     if ct in ('application/json', 'text/javascript'):
         if not content:
@@ -659,11 +659,13 @@ class OAuthRemoteApp(object):
             uri, headers, to_bytes(data, self.encoding),
             method=self.access_token_method
         )
-
+        data = parse_response(resp, content)
         if resp.code not in (200, 201):
-            return {'accessToken':None,'code':resp.code, 'msg':resp.msg}
-
-        return parse_response(resp, content)
+            raise OAuthException(
+                'Invalid response from %s' % self.name,
+                type='invalid_response', data=data
+            )
+        return data
 
     def handle_oauth2_response(self, args):
         """Handles an oauth2 authorization response."""
@@ -701,10 +703,13 @@ class OAuthRemoteApp(object):
                 self.access_token_method
             )
 
+        data = parse_response(resp, content, content_type=self.content_type)
         if resp.code not in (200, 201):
-            return {'accessToken':None,'code':resp.code, 'msg':resp.msg}
-
-        return parse_response(resp, content, content_type=self.content_type)
+            raise OAuthException(
+                'Invalid response from %s' % self.name,
+                type='invalid_response', data=data
+            )
+        return data
 
     def handle_unknown_response(self):
         """Handles a unknown authorization response."""
