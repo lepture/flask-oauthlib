@@ -592,7 +592,7 @@ class OAuthRemoteApp(object):
         resp, content = self.http_request(
             uri, headers, method=self.request_token_method,
         )
-        data = parse_response(resp, content)
+        data = parse_response(resp, content, content_type=self.content_type)
         if not data:
             raise OAuthException(
                 'Invalid token response from %s' % self.name,
@@ -641,7 +641,7 @@ class OAuthRemoteApp(object):
             uri, headers, to_bytes(data, self.encoding),
             method=self.access_token_method
         )
-        data = parse_response(resp, content)
+        data = parse_response(resp, content, content_type=self.content_type)
         if resp.code not in (200, 201):
             raise OAuthException(
                 'Invalid response from %s' % self.name,
