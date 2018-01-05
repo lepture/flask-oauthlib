@@ -4,6 +4,8 @@ from flask_oauthlib.client import encode_request_data
 from flask_oauthlib.client import OAuthRemoteApp, OAuth
 from flask_oauthlib.client import parse_response
 from oauthlib.common import PY3
+import requests
+from requests import Request, Session
 
 try:
     import urllib2 as http
@@ -11,6 +13,8 @@ try:
 except ImportError:
     from urllib import request as http
     http_urlopen = 'urllib.request.urlopen'
+
+http_urlopen = 'requests.Session.send'
 
 from mock import patch
 
@@ -147,7 +151,7 @@ class TestOAuthRemoteApp(object):
         )
 
         resp, content = OAuthRemoteApp.http_request('http://example.com')
-        assert resp.code == 200
+        assert resp.status_code == 200
         assert b'foo' in content
 
         resp, content = OAuthRemoteApp.http_request(
