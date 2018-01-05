@@ -18,12 +18,18 @@ from flask import request, redirect, json, session, current_app
 from werkzeug import url_quote, url_decode, url_encode
 from werkzeug import parse_options_header, cached_property
 from .utils import to_bytes
+from requests import Request, Session
+
 try:
     from urlparse import urljoin
-    import urllib2 as http
 except ImportError:
-    from urllib import request as http
     from urllib.parse import urljoin
+
+try:
+    import urllib.error as urllib_error
+except ImportError:
+    import urllib2 as urllib_error
+
 log = logging.getLogger('flask_oauthlib')
 
 
@@ -398,14 +404,14 @@ class OAuthRemoteApp(object):
         )
 
         log.debug('Request %r with %r method' % (uri, method))
-        req = http.Request(uri, headers=headers, data=data)
-        req.get_method = lambda: method.upper()
         try:
-            resp = http.urlopen(req)
-            content = resp.read()
-            resp.close()
+            s = Session()
+            req = Request(method.upper(), uri, data=data, headers=headers)
+            prepped = req.prepare()
+            resp = s.send(prepped)
+            content = resp.content
             return resp, content
-        except http.HTTPError as resp:
+        except urllib_error.HTTPError as resp:
             content = resp.read()
             resp.close()
             return resp, content
