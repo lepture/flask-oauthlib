@@ -18,7 +18,7 @@ the imports::
 OAuth1 Client
 -------------
 
-The difference between OAuth1 and OAuth2 in the configuation is
+The difference between OAuth1 and OAuth2 in the configuration is
 ``request_token_url``. In OAuth1 it is required, in OAuth2 it should be
 ``None``.
 
