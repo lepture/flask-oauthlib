@@ -72,6 +72,7 @@ class OAuth2Provider(object):
     def __init__(self, app=None):
         self._before_request_funcs = []
         self._after_request_funcs = []
+        self._exception_handler = None
         self._invalid_response = None
         if app:
             self.init_app(app)
@@ -84,6 +85,13 @@ class OAuth2Provider(object):
         self.app = app
         app.extensions = getattr(app, 'extensions', {})
         app.extensions['oauthlib.provider.oauth2'] = self
+
+    def _on_exception(self, error, redirect_content=None):
+
+        if self._exception_handler:
+            return self._exception_handler(error, redirect_content)
+        else:
+            return redirect(redirect_content)
 
     @cached_property
     def error_uri(self):
@@ -206,6 +214,34 @@ class OAuth2Provider(object):
                 return valid, oauth
         """
         self._after_request_funcs.append(f)
+        return f
+
+    def exception_handler(self, f):
+        """Register a function as custom exception handler.
+
+        **As the default error handling is leaking error to the client, it is
+        STRONGLY RECOMMENDED to implement your own handler to mask
+        the server side errors in production environment.**
+
+        When an error occur during execution, we can
+        handle the error with with the registered function. The function
+        accepts two parameters:
+            - error: the error raised
+            - redirect_content: the content used in the redirect by default
+
+        usage with the flask error handler ::
+            @oauth.exception_handler
+            def custom_exception_handler(error, *args):
+                raise error
+
+            @app.errorhandler(Exception)
+            def all_exception_handler(*args):
+                # any treatment you need for the error
+                return "Server error", 500
+
+        If no function is registered, it will do a redirect with ``redirect_content`` as content.
+        """
+        self._exception_handler = f
         return f
 
     def invalid_response(self, f):
@@ -391,13 +427,13 @@ class OAuth2Provider(object):
                     kwargs.update(credentials)
                 except oauth2.FatalClientError as e:
                     log.debug('Fatal client error %r', e, exc_info=True)
-                    return redirect(e.in_uri(self.error_uri))
+                    return self._on_exception(e, e.in_uri(self.error_uri))
                 except oauth2.OAuth2Error as e:
                     log.debug('OAuth2Error: %r', e, exc_info=True)
-                    return redirect(e.in_uri(redirect_uri))
+                    return self._on_exception(e, e.in_uri(redirect_uri))
                 except Exception as e:
                     log.exception(e)
-                    return redirect(add_params_to_uri(
+                    return self._on_exception(e, add_params_to_uri(
                         self.error_uri, {'error': str(e)}
                     ))
 
@@ -410,10 +446,10 @@ class OAuth2Provider(object):
                 rv = f(*args, **kwargs)
             except oauth2.FatalClientError as e:
                 log.debug('Fatal client error %r', e, exc_info=True)
-                return redirect(e.in_uri(self.error_uri))
+                return self._on_exception(e, e.in_uri(self.error_uri))
             except oauth2.OAuth2Error as e:
                 log.debug('OAuth2Error: %r', e, exc_info=True)
-                return redirect(e.in_uri(redirect_uri))
+                return self._on_exception(e, e.in_uri(redirect_uri))
 
             if not isinstance(rv, bool):
                 # if is a response or redirect
@@ -422,7 +458,7 @@ class OAuth2Provider(object):
             if not rv:
                 # denied by user
                 e = oauth2.AccessDeniedError()
-                return redirect(e.in_uri(redirect_uri))
+                return self._on_exception(e, e.in_uri(redirect_uri))
             return self.confirm_authorization_request()
         return decorated
 
@@ -449,13 +485,13 @@ class OAuth2Provider(object):
             return create_response(*ret)
         except oauth2.FatalClientError as e:
             log.debug('Fatal client error %r', e, exc_info=True)
-            return redirect(e.in_uri(self.error_uri))
+            return self._on_exception(e, e.in_uri(self.error_uri))
         except oauth2.OAuth2Error as e:
             log.debug('OAuth2Error: %r', e, exc_info=True)
-            return redirect(e.in_uri(redirect_uri or self.error_uri))
+            return self._on_exception(e, e.in_uri(redirect_uri or self.error_uri))
         except Exception as e:
             log.exception(e)
-            return redirect(add_params_to_uri(
+            return self._on_exception(e, add_params_to_uri(
                 self.error_uri, {'error': str(e)}
             ))
 
