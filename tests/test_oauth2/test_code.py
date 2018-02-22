@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 from .._base import to_base64
-from .base import TestCase
+from .base import TestCase, default_provider
 from .base import create_server, sqlalchemy_provider, cache_provider
 from .base import db, Client, User, Grant
 
@@ -159,3 +159,25 @@ class TestCacheProvider(TestDefaultProvider):
         url += '&client_secret=' + self.oauth_client.client_secret
         rv = self.client.get(url)
         assert b'access_token' in rv.data
+
+
+class TestProviderWithExceptionHandler(TestCase):
+
+    def prepare_data(self):
+        oauth = default_provider(self.app)
+
+        @oauth.exception_handler
+        def custom_exception_handler(error, *args):
+            raise error
+
+        @self.app.errorhandler(Exception)
+        def all_exception_handler(*args):
+            return "Testing server error", 500
+
+        create_server(self.app, oauth=oauth)
+
+    def test_exception_handler(self):
+        rv = self.client.get('/oauth/authorize')
+
+        assert rv.status_code == 500
+        assert rv.data.decode("utf-8") == "Testing server error"
