@@ -1,6 +1,10 @@
 OAuth1 Server
 =============
 
+.. note::
+
+    Please read https://docs.authlib.org/en/latest/flask/oauth1.html
+
 This part of documentation covers the tutorial of setting up an OAuth1
 provider. An OAuth1 server concerns how to grant the authorization and
 how to protect the resource. Register an **OAuth** provider::
