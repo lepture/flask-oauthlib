@@ -3,6 +3,15 @@ Changelog
 
 Here you can see the full list of changes between each Flask-OAuthlib release.
 
+Version 0.9.5
+-------------
+
+Released on May 16, 2018
+
+- Fix error handlers
+- Update supported OAuthlib
+- Add support for string type token
+
 Version 0.9.4
 -------------
 

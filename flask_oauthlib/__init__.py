@@ -7,11 +7,11 @@
     remote OAuth enabled applications, and also helps you creating your own
     OAuth servers.
 
-    :copyright: (c) 2013 - 2017 by Hsiaoming Yang.
+    :copyright: (c) 2013 by Hsiaoming Yang.
     :license: BSD, see LICENSE for more details.
 """
 
-__version__ = "0.9.4"
+__version__ = "0.9.5"
 __author__ = "Hsiaoming Yang <me@lepture.com>"
 __homepage__ = 'https://github.com/lepture/flask-oauthlib'
 __license__ = 'BSD'
