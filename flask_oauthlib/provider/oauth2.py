@@ -69,10 +69,11 @@ class OAuth2Provider(object):
             return jsonify(request.oauth.user)
     """
 
-    def __init__(self, app=None):
+    def __init__(self, app=None, validator_class=None):
         self._before_request_funcs = []
         self._after_request_funcs = []
         self._invalid_response = None
+        self._validator_class = validator_class
         if app:
             self.init_app(app)
 
@@ -155,7 +156,10 @@ class OAuth2Provider(object):
             if hasattr(self, '_usergetter'):
                 usergetter = self._usergetter
 
-            validator = OAuth2RequestValidator(
+            validator_class = self._validator_class
+            if validator_class is None:
+                validator_class = OAuth2RequestValidator
+            validator = validator_class(
                 clientgetter=self._clientgetter,
                 tokengetter=self._tokengetter,
                 grantgetter=self._grantgetter,
