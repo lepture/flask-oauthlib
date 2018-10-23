@@ -949,7 +949,7 @@ class OAuth2RequestValidator(RequestValidator):
                         *args, **kwargs):
         """Ensure the client is authorized access to requested scopes."""
         if hasattr(client, 'validate_scopes'):
-            return client.validate_scopes(scopes)
+            return client.validate_scopes(scopes, request, *args, **kwargs)
         return set(client.default_scopes).issuperset(set(scopes))
 
     def validate_user(self, username, password, client, request,
