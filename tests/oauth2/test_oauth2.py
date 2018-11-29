@@ -81,12 +81,21 @@ class TestWebAuth(OAuthSuite):
         assert 'code=' in rv.location
         assert 'state' not in rv.location
 
-        # test state
+        # test state on access denied
+        # According to RFC 6749, state should be preserved on error response if it's present in the client request.
+        # Reference: https://tools.ietf.org/html/rfc6749#section-4.1.2
+        rv = self.client.post(authorize_url + '&state=foo', data=dict(
+            confirm='no'
+        ))
+        assert 'error=access_denied' in rv.location
+        assert 'state=foo' in rv.location
+
+        # test state on success
         rv = self.client.post(authorize_url + '&state=foo', data=dict(
             confirm='yes'
         ))
         assert 'code=' in rv.location
-        assert 'state' in rv.location
+        assert 'state=foo' in rv.location
 
     def test_http_head_oauth_authorize_valid_url(self):
         rv = self.client.head(authorize_url)
