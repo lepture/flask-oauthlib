@@ -435,13 +435,24 @@ class OAuth2Provider(object):
                 # denied by user
                 e = oauth2.AccessDeniedError(state=request.values.get('state'))
                 return redirect(e.in_uri(redirect_uri))
-            return self.confirm_authorization_request()
+            
+            # Pass the scopes list as a string to match the format of a URL request
+            default_scopes = ""  # default fallback if no scopes provided.
+            try:
+                default_scopes = " ".join(scopes)
+            except UnboundLocalError:
+                pass #Just use the default of empty scopes, which will likely return an error later
+                #if 'request' in kwargs and hasattr(kwargs['request'], scopes):
+                #    default_scopes = " ".join(kwargs['request'].scopes)
+            return self.confirm_authorization_request(default_scopes)
         return decorated
 
-    def confirm_authorization_request(self):
+    def confirm_authorization_request(self, default_scopes = None):
         """When consumer confirm the authorization."""
         server = self.server
-        scope = request.values.get('scope') or ''
+        # Use the value of scope provided in the URL, if any, the default scopes
+        # from the client object if not, or, failing that, use an empty list.
+        scope = request.values.get('scope') or default_scopes or ''
         scopes = scope.split()
         credentials = dict(
             client_id=request.values.get('client_id'),
