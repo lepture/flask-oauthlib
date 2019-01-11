@@ -1,6 +1,10 @@
 Client
 ======
 
+.. note::
+
+    Please read https://docs.authlib.org/en/latest/client/frameworks.html
+
 The client part keeps the same API as `Flask-OAuth`_. The only changes are
 the imports::
 

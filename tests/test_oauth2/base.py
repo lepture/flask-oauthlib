@@ -313,6 +313,7 @@ class TestCase(unittest.TestCase):
         app.debug = True
         app.secret_key = 'testing'
         app.config.update({
-            'SQLALCHEMY_DATABASE_URI': 'sqlite://'
+            'SQLALCHEMY_DATABASE_URI': 'sqlite://',
+            'SQLALCHEMY_TRACK_MODIFICATIONS': False
         })
         return app

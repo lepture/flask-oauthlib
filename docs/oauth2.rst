@@ -3,6 +3,10 @@
 OAuth2 Server
 =============
 
+.. note::
+
+    Please read https://docs.authlib.org/en/latest/flask/oauth2.html
+
 An OAuth2 server concerns how to grant the authorization and how to protect
 the resource. Register an **OAuth** provider::
 
@@ -495,5 +499,5 @@ Example for OAuth 2
 An example server (and client) can be found in the tests folder: https://github.com/lepture/flask-oauthlib/tree/master/tests/oauth2
 
 Other helpful resources include: 
- - Another example of an OAuth 2 server: https://github.com/lepture/example-oauth2-server
+ - Another example of an OAuth 2 server: https://github.com/authlib/example-oauth2-server
  - An article on how to create an OAuth server: http://lepture.com/en/2013/create-oauth-server.

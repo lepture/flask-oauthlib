@@ -14,6 +14,10 @@ oauthlib_.
 The client part of Flask-OAuthlib shares the same API as Flask-OAuth,
 which is pretty and simple.
 
+.. warning::
+
+    Please use https://github.com/lepture/authlib instead.
+
 
 Features
 --------

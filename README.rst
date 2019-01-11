@@ -17,11 +17,10 @@ Flask-OAuthlib
    :target: https://coveralls.io/r/lepture/flask-oauthlib
    :alt: Coverage Status
 
-Notification
-------------
+Notice
+------
 
-I'm working on https://github.com/lepture/authlib which will
-be the replacement of this project.
+**If you are a company, you should use https://github.com/lepture/authlib instead**.
 
 =====
 
