@@ -43,7 +43,7 @@ setup(
     license='BSD',
     install_requires=[
         'Flask',
-        'oauthlib>=1.1.2,!=2.0.3,!=2.0.4,!=2.0.5,<3.0.0',
+        'oauthlib>=1.1.2,!=2.0.3,!=2.0.4,!=2.0.5',
         'requests-oauthlib>=0.6.2,<1.2.0',
     ],
     tests_require=['nose', 'Flask-SQLAlchemy', 'mock'],
