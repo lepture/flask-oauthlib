@@ -20,7 +20,7 @@ Flask-OAuthlib
 Notice
 ------
 
-**If you are a company, you should use https://github.com/lepture/authlib instead**.
+**You SHOULD use https://github.com/lepture/authlib instead**.
 
 =====
 
