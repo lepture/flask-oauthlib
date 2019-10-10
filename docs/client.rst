@@ -3,7 +3,7 @@ Client
 
 .. note::
 
-    Please read https://docs.authlib.org/en/latest/client/frameworks.html
+    You SHOULD read `Flask OAuth Client <https://docs.authlib.org/en/latest/client/flask.html>`_ documentation.
 
 The client part keeps the same API as `Flask-OAuth`_. The only changes are
 the imports::

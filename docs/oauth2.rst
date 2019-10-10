@@ -5,7 +5,7 @@ OAuth2 Server
 
 .. note::
 
-    Please read https://docs.authlib.org/en/latest/flask/oauth2.html
+    You SHOULD read `Flask OAuth 2.0 Provider <https://docs.authlib.org/en/latest/flask/2/>`_ documentation.
 
 An OAuth2 server concerns how to grant the authorization and how to protect
 the resource. Register an **OAuth** provider::
