@@ -11,7 +11,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-__version__ = "0.9.5"
+__version__ = "10.0.0"
 __author__ = "Hsiaoming Yang <me@lepture.com>"
 __homepage__ = 'https://github.com/lepture/flask-oauthlib'
 __license__ = 'BSD'
