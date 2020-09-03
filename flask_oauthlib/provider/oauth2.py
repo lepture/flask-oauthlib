@@ -14,7 +14,7 @@ import datetime
 from functools import wraps
 from flask import request, url_for
 from flask import redirect, abort
-from werkzeug import cached_property
+from werkzeug.utils import cached_property
 from werkzeug.utils import import_string
 from oauthlib import oauth2
 from oauthlib.oauth2 import RequestValidator, Server
