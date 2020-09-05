@@ -45,6 +45,7 @@ setup(
         'Flask',
         'oauthlib>=1.1.2,!=2.0.3,!=2.0.4,!=2.0.5,<3.0.0',
         'requests-oauthlib>=0.6.2,<1.2.0',
+        'cachelib',
     ],
     tests_require=['nose', 'Flask-SQLAlchemy', 'mock'],
     test_suite='nose.collector',

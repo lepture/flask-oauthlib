@@ -1,7 +1,7 @@
 # coding: utf-8
 
-from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
-from werkzeug.contrib.cache import MemcachedCache, RedisCache
+from cachelib import NullCache, SimpleCache, FileSystemCache
+from cachelib import MemcachedCache, RedisCache
 
 
 class Cache(object):
