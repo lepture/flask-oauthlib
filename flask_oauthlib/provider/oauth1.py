@@ -10,7 +10,7 @@
 
 import logging
 from functools import wraps
-from werkzeug import cached_property
+from werkzeug.utils import cached_property
 from flask import request, redirect, url_for
 from flask import make_response, abort
 from oauthlib.oauth1 import RequestValidator
