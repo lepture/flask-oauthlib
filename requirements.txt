@@ -3,3 +3,4 @@ mock==2.0.0
 oauthlib==2.0.6
 requests-oauthlib==0.8.0
 Flask-SQLAlchemy==2.1
+cachelib==0.1.1
