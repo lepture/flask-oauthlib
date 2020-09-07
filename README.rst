@@ -17,12 +17,11 @@ Flask-OAuthlib
    :target: https://coveralls.io/r/lepture/flask-oauthlib
    :alt: Coverage Status
 
+
 Notice
 ------
 
 **You SHOULD use https://github.com/lepture/authlib instead**.
-
-=====
 
 Flask-OAuthlib is an extension to Flask that allows you to interact with
 remote OAuth enabled applications. On the client site, it is a replacement
@@ -32,6 +31,7 @@ OAuth providers.
 Flask-OAuthlib relies on oauthlib_.
 
 .. _oauthlib: https://github.com/idan/oauthlib
+
 
 Sponsored by
 ------------
@@ -48,6 +48,7 @@ check out Auth0's Python API SDK and free plan at `auth0.com/overview`_
    :width: 18px
    :height: 18px
 
+
 Features
 --------
 
@@ -57,10 +58,6 @@ Features
 - Basic support for remote method invocation of RESTful APIs
 - Support OAuth1 provider with HMAC and RSA signature
 - Support OAuth2 provider with Bearer token
-
-And request more features at `github issues`_.
-
-.. _`github issues`: https://github.com/lepture/flask-oauthlib/issues
 
 
 Security Reporting
@@ -73,25 +70,16 @@ Attachment with patch is welcome.
 Installation
 ------------
 
-Installing flask-oauthlib is simple with pip_::
+Installing flask-oauthlib is simple with pip::
 
     $ pip install Flask-OAuthlib
 
-If you don't have pip installed, try with easy_install::
-
-    $ easy_install Flask-OAuthlib
-
-.. _pip: http://www.pip-installer.org/
-
-
-Additional Notes
-----------------
-
-We keep documentation at `flask-oauthlib@readthedocs`_.
-
-.. _`flask-oauthlib@readthedocs`: https://flask-oauthlib.readthedocs.io
-
-If you are only interested in the client part, you can find some examples
-in the ``example`` directory.
-
 There is also a `development version <https://github.com/lepture/flask-oauthlib/archive/master.zip#egg=Flask-OAuthlib-dev>`_ on GitHub.
+
+
+Links
+-----
+
+- Documentation: https://flask-oauthlib.readthedocs.io
+- PyPI: https://pypi.org/project/Flask-OAuthlib/
+- Client Examples: https://github.com/lepture/flask-oauthlib/tree/master/example
