@@ -12,7 +12,7 @@ linkedin = oauth.remote_app(
     consumer_key='k8fhkgkkqzub',
     consumer_secret='ZZtLETQOQYNDjMrz',
     request_token_params={
-        'scope': 'r_basicprofile',
+        'scope': 'r_liteprofile',
         'state': 'RandomString',
     },
     base_url='https://api.linkedin.com/v1/',
