@@ -28,7 +28,7 @@ To implemente the oauthorization flow, we need to understand the data model.
 User (Resource Owner)
 ---------------------
 
-A user, or resource owner, is usally the registered user on your site. You
+A user, or resource owner, is usually the registered user on your site. You
 design your own user model, there is not much to say.
 
 
