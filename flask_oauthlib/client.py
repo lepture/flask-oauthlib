@@ -180,11 +180,6 @@ class OAuthException(RuntimeError):
         self.data = data
 
     def __str__(self):
-        if PY3:
-            return self.message
-        return self.message.encode('utf-8')
-
-    def __unicode__(self):
         return self.message
 
 
