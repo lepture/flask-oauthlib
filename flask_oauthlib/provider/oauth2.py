@@ -440,7 +440,7 @@ class OAuth2Provider(object):
                     state = request.values.get('state')
                     if state and not e.state:
                         e.state = state  # set e.state so e.in_uri() can add the state query parameter to redirect uri
-                    return self._on_exception(e, e.in_uri(redirect_uri))
+                    return self._on_exception(e, e.in_uri(self.error_uri))
 
                 except Exception as e:
                     log.exception(e)
@@ -464,7 +464,7 @@ class OAuth2Provider(object):
                 state = request.values.get('state')
                 if state and not e.state:
                     e.state = state  # set e.state so e.in_uri() can add the state query parameter to redirect uri
-                return self._on_exception(e, e.in_uri(redirect_uri))
+                return self._on_exception(e, e.in_uri(self.error_uri))
 
             if not isinstance(rv, bool):
                 # if is a response or redirect
@@ -473,7 +473,7 @@ class OAuth2Provider(object):
             if not rv:
                 # denied by user
                 e = oauth2.AccessDeniedError(state=request.values.get('state'))
-                return self._on_exception(e, e.in_uri(redirect_uri))
+                return self._on_exception(e, e.in_uri(self.error_uri))
 
             return self.confirm_authorization_request()
 
