@@ -8,17 +8,23 @@
     :copyright: (c) 2013 - 2014 by Hsiaoming Yang.
 """
 
-import os
-import logging
 import datetime
+import logging
+import os
 from functools import wraps
-from flask import request, url_for
+
 from flask import redirect, abort
+
+from flask import request, url_for
+
 from werkzeug.utils import import_string, cached_property
+
 from oauthlib import oauth2
+from oauthlib.common import add_params_to_uri
 from oauthlib.oauth2 import RequestValidator, Server
-from oauthlib.common import to_unicode, add_params_to_uri
-from ..utils import extract_params, decode_base64, create_response
+from werkzeug.utils import import_string, cached_property
+
+from ..utils import extract_params, create_response
 
 __all__ = ('OAuth2Provider', 'OAuth2RequestValidator')
 
@@ -154,10 +160,10 @@ class OAuth2Provider(object):
             )
 
         if hasattr(self, '_clientgetter') and \
-           hasattr(self, '_tokengetter') and \
-           hasattr(self, '_tokensetter') and \
-           hasattr(self, '_grantgetter') and \
-           hasattr(self, '_grantsetter'):
+                hasattr(self, '_tokengetter') and \
+                hasattr(self, '_tokensetter') and \
+                hasattr(self, '_grantgetter') and \
+                hasattr(self, '_grantsetter'):
 
             usergetter = None
             if hasattr(self, '_usergetter'):
@@ -412,6 +418,7 @@ class OAuth2Provider(object):
                 confirm = request.form.get('confirm', 'no')
                 return confirm == 'yes'
         """
+
         @wraps(f)
         def decorated(*args, **kwargs):
             # raise if server not implemented
@@ -437,7 +444,7 @@ class OAuth2Provider(object):
                     state = request.values.get('state')
                     if state and not e.state:
                         e.state = state  # set e.state so e.in_uri() can add the state query parameter to redirect uri
-                    return self._on_exception(e, e.in_uri(redirect_uri))
+                    return self._on_exception(e, e.in_uri(self.error_uri))
 
                 except Exception as e:
                     log.exception(e)
@@ -461,7 +468,7 @@ class OAuth2Provider(object):
                 state = request.values.get('state')
                 if state and not e.state:
                     e.state = state  # set e.state so e.in_uri() can add the state query parameter to redirect uri
-                return self._on_exception(e, e.in_uri(redirect_uri))
+                return self._on_exception(e, e.in_uri(self.error_uri))
 
             if not isinstance(rv, bool):
                 # if is a response or redirect
@@ -470,9 +477,10 @@ class OAuth2Provider(object):
             if not rv:
                 # denied by user
                 e = oauth2.AccessDeniedError(state=request.values.get('state'))
-                return self._on_exception(e, e.in_uri(redirect_uri))
-              
+                return self._on_exception(e, e.in_uri(self.error_uri))
+
             return self.confirm_authorization_request()
+
         return decorated
 
     def confirm_authorization_request(self):
@@ -501,7 +509,7 @@ class OAuth2Provider(object):
             return self._on_exception(e, e.in_uri(self.error_uri))
         except oauth2.OAuth2Error as e:
             log.debug('OAuth2Error: %r', e, exc_info=True)
-            
+
             # on auth error, we should preserve state if it's present according to RFC 6749
             state = request.values.get('state')
             if state and not e.state:
@@ -544,6 +552,7 @@ class OAuth2Provider(object):
             def access_token():
                 return None
         """
+
         @wraps(f)
         def decorated(*args, **kwargs):
             server = self.server
@@ -554,6 +563,7 @@ class OAuth2Provider(object):
                 uri, http_method, body, headers, credentials
             )
             return create_response(*ret)
+
         return decorated
 
     def revoke_handler(self, f):
@@ -573,6 +583,7 @@ class OAuth2Provider(object):
 
         .. _`RFC7009`: http://tools.ietf.org/html/rfc7009
         """
+
         @wraps(f)
         def decorated(*args, **kwargs):
             server = self.server
@@ -586,10 +597,12 @@ class OAuth2Provider(object):
             ret = server.create_revocation_response(
                 uri, headers=headers, body=body, http_method=http_method)
             return create_response(*ret)
+
         return decorated
 
     def require_oauth(self, *scopes):
         """Protect resource with specified scopes."""
+
         def wrapper(f):
             @wraps(f)
             def decorated(*args, **kwargs):
@@ -610,7 +623,9 @@ class OAuth2Provider(object):
                     return abort(401)
                 request.oauth = req
                 return f(*args, **kwargs)
+
             return decorated
+
         return wrapper
 
 
@@ -623,6 +638,7 @@ class OAuth2RequestValidator(RequestValidator):
     :param grantgetter: a function to get grant token
     :param grantsetter: a function to save grant token
     """
+
     def __init__(self, clientgetter, tokengetter, grantgetter,
                  usergetter=None, tokensetter=None, grantsetter=None):
         self._clientgetter = clientgetter
@@ -673,6 +689,7 @@ class OAuth2RequestValidator(RequestValidator):
         .. _`Section 4.1.3`: http://tools.ietf.org/html/rfc6749#section-4.1.3
         .. _`Section 6`: http://tools.ietf.org/html/rfc6749#section-6
         """
+
         def is_confidential(client):
             if hasattr(client, 'is_confidential'):
                 return client.is_confidential
@@ -900,7 +917,7 @@ class OAuth2RequestValidator(RequestValidator):
             log.debug('Grant not found.')
             return False
         if hasattr(grant, 'expires') and \
-           datetime.datetime.utcnow() > grant.expires:
+                datetime.datetime.utcnow() > grant.expires:
             log.debug('Grant is expired.')
             return False
 
