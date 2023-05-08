@@ -15,8 +15,9 @@ from copy import copy
 from functools import wraps
 from oauthlib.common import to_unicode, PY3, add_params_to_uri
 from flask import request, redirect, json, session, current_app
-from werkzeug import url_quote, url_decode, url_encode
-from werkzeug import parse_options_header, cached_property
+from werkzeug.urls import url_quote, url_decode, url_encode
+from werkzeug.http import parse_options_header
+from werkzeug.utils import cached_property
 from .utils import to_bytes
 try:
     from urlparse import urljoin

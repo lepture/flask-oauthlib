@@ -14,7 +14,11 @@ import os
 from functools import wraps
 
 from flask import redirect, abort
+
 from flask import request, url_for
+
+from werkzeug.utils import import_string, cached_property
+
 from oauthlib import oauth2
 from oauthlib.common import add_params_to_uri
 from oauthlib.oauth2 import RequestValidator, Server
