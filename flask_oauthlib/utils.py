@@ -2,7 +2,7 @@
 
 import base64
 from flask import request, Response
-from oauthlib.common import to_unicode, bytes_type
+from oauthlib.common import to_unicode
 
 
 def _get_uri_from_request(request):
@@ -31,7 +31,7 @@ def extract_params():
     # parsing, so we just replace the Authorization header with the extraced
     # info if it was successfully parsed.
     if request.authorization:
-        headers['Authorization'] = request.authorization
+        headers['Authorization'] = str(request.authorization)
 
     body = request.form.to_dict()
     return uri, http_method, body, headers
@@ -41,7 +41,7 @@ def to_bytes(text, encoding='utf-8'):
     """Make sure text is bytes type."""
     if not text:
         return text
-    if not isinstance(text, bytes_type):
+    if not isinstance(text, bytes):
         text = text.encode(encoding)
     return text
 
