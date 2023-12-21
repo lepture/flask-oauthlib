@@ -119,9 +119,23 @@ def parse_response(resp, content, strict=False, content_type=None):
     :param strict: strict mode for form urlencoded content
     :param content_type: assign a content type manually
     """
-    if not content_type:
-        content_type = resp.headers.get('content-type', 'application/json')
     ct, options = parse_options_header(content_type)
+    charset = options.get('charset', 'utf-8')
+
+    if not content_type:
+        try:
+            return json.loads(content)
+        except Exception as exception:
+            log.debug("The content is not json")
+
+        try:
+            return get_etree().fromstring(content)
+        except Exception as exception:
+            log.debug("The content is not XML")
+
+        if strict:
+            return content
+        return url_decode(content, charset=charset).to_dict()
 
     if ct in ('application/json', 'text/javascript'):
         if not content:
@@ -133,7 +147,7 @@ def parse_response(resp, content, strict=False, content_type=None):
 
     if ct != 'application/x-www-form-urlencoded' and strict:
         return content
-    charset = options.get('charset', 'utf-8')
+
     return url_decode(content, charset=charset).to_dict()
 
 
