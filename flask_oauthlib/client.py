@@ -506,15 +506,15 @@ class OAuthRemoteApp(object):
         )
         return OAuthResponse(resp, content, self.content_type)
 
-    def authorize(self, callback=None, state=None, **kwargs):
+
+    def generate_authorize_url(self, callback=None, state=None, **kwargs):
         """
-        Returns a redirect response to the remote authorization URL with
-        the signed callback given.
+        Returns remote authorization URL.
 
         :param callback: a redirect url for the callback
         :param state: an optional value to embed in the OAuth request.
-                      Use this if you want to pass around application
-                      state (e.g. CSRF tokens).
+                    Use this if you want to pass around application
+                    state (e.g. CSRF tokens).
         :param kwargs: add optional key/value pairs to the query string
         """
         params = dict(self.request_token_params) or {}
@@ -560,6 +560,25 @@ class OAuthRemoteApp(object):
                 state=state,
                 **params
             )
+        return url
+
+
+    def authorize(self, callback=None, state=None, **kwargs):
+        """
+        Returns a redirect response to the remote authorization URL with
+        the signed callback given.
+
+        :param callback: a redirect url for the callback
+        :param state: an optional value to embed in the OAuth request.
+                      Use this if you want to pass around application
+                      state (e.g. CSRF tokens).
+        :param kwargs: add optional key/value pairs to the query string
+        """
+        url = self.generate_authorize_url(
+            callback=callback, 
+            state=state, 
+            **kwargs
+        )
         return redirect(url)
 
     def tokengetter(self, f):
