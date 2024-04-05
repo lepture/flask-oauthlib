@@ -16,15 +16,14 @@ from functools import wraps
 from oauthlib.common import to_unicode, add_params_to_uri
 from flask import request, redirect, json, session, current_app
 from werkzeug.http import parse_options_header
-from werkzeug.urls import url_quote, url_decode, url_encode
+from urllib.parse import parse_qsl, quote, urlencode, urlparse, urljoin
 from werkzeug.utils import cached_property
 from .utils import to_bytes
 try:
-    from urlparse import urljoin
     import urllib2 as http
 except ImportError:
     from urllib import request as http
-    from urllib.parse import urljoin
+
 log = logging.getLogger('flask_oauthlib')
 
 
@@ -127,9 +126,12 @@ def parse_response(resp, content, strict=False, content_type=None):
 
     if ct != 'application/x-www-form-urlencoded' and strict:
         return content
-    charset = options.get('charset', 'utf-8')
-    return url_decode(content, charset=charset).to_dict()
 
+    charset = options.get('charset', 'utf-8')
+    parsed = urlparse(content)
+    return parse_qsl(
+        parsed.query, encoding=charset, strict_parsing=strict, keep_blank_values=True
+    )
 
 def prepare_request(uri, headers=None, data=None, method=None):
     """Make request parameters right."""
@@ -154,7 +156,7 @@ def encode_request_data(data, format):
     if format == 'json':
         return json.dumps(data or {}), 'application/json'
     if format == 'urlencoded':
-        return url_encode(data or {}), 'application/x-www-form-urlencoded'
+        return urlencode(data or {}, encoding='application/x-www-form-urlencoded')
     raise TypeError('Unknown format %r' % format)
 
 
@@ -512,10 +514,10 @@ class OAuthRemoteApp(object):
         if self.request_token_url:
             token = self.generate_request_token(callback)[0]
             url = '%s?oauth_token=%s' % (
-                self.expand_url(self.authorize_url), url_quote(token)
+                self.expand_url(self.authorize_url), quote(token)
             )
             if params:
-                url += '&' + url_encode(params)
+                url += '&' + urlencode(params)
         else:
             assert callback is not None, 'Callback is required for OAuth2'
 
